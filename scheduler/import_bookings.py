@@ -87,9 +87,11 @@ def is_generic_name(name):
 
 # Function to insert or update customer data into PostgreSQL
 def insert_or_update_customer(cursor, booking_data):
-    # Check if the customer exists based on phone number
-    cursor.execute("SELECT customer_id, name FROM Customers WHERE phone_number=%s", (booking_data['phone_number'],))
-    existing_customer = cursor.fetchone()
+    existing_customer = False
+    if booking_data['phone_number'] and not booking_data['phone_number'].endswith('000000'):
+        # Check if the customer exists based on phone number
+        cursor.execute("SELECT customer_id, name FROM Customers WHERE phone_number=%s", (booking_data['phone_number'],))
+        existing_customer = cursor.fetchone()
 
     if existing_customer:
         customer_id, existing_name = existing_customer
