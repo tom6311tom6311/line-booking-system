@@ -1,0 +1,31 @@
+version: '3'
+services:
+  line-bot-server:
+    build: ./line-bot-server
+    ports:
+      - "${PORT_LINE_BOT_SERVER}:5000"
+    depends_on:
+      - db
+    environment:
+      FLASK_ENV: development
+      BASE_URL: ${BASE_URL}
+      DB_HOST: db
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      LINE_CHANNEL_ACCESS_TOKEN: ${LINE_CHANNEL_ACCESS_TOKEN}
+      LINE_CHANNEL_SECRET: ${LINE_CHANNEL_SECRET}
+
+  db:
+    build: ./db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${PORT_DB}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
