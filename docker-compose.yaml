@@ -18,6 +18,11 @@ services:
 
   db:
     build: ./db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d ${DB_NAME} -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -26,6 +31,18 @@ services:
       - "${PORT_DB}:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+
+  scheduler:
+    build: ./scheduler
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+    command: ["python", "import_bookings.py"]
 
 volumes:
   db_data:

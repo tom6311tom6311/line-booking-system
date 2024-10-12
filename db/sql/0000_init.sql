@@ -1,4 +1,5 @@
 -- Create Enums
+CREATE TYPE room_types AS ENUM ('standard_double_room', 'standard_family_room', 'economic_family_room', 'backpacker_bed', 'washitsu', 'grass');
 CREATE TYPE room_statuses AS ENUM ('available', 'closed');
 CREATE TYPE booking_sources AS ENUM ('direct', 'Booking.com', 'FB', 'Expedia', 'Taiwanstay', 'Airbnb');
 CREATE TYPE booking_statuses AS ENUM ('new', 'prepaid', 'canceled');
@@ -19,9 +20,10 @@ CREATE TABLE Customers (
 
 -- Create Rooms table
 CREATE TABLE Rooms (
-    room_name VARCHAR(100) PRIMARY KEY,
-    room_number INT NOT NULL,
-    room_type VARCHAR(50),
+    room_id VARCHAR(1) PRIMARY KEY,
+    room_name VARCHAR(100) UNIQUE,
+    room_count INT NOT NULL,
+    room_type room_types,
     capacity INT NOT NULL,
     holiday_price_per_night DECIMAL(10, 2),
     weekday_price_per_night DECIMAL(10, 2),
@@ -51,8 +53,8 @@ CREATE TABLE Bookings (
 -- Create RoomBooking junction table for many-to-many relationship between Bookings and Rooms
 CREATE TABLE RoomBookings (
     booking_id INT REFERENCES Bookings(booking_id) ON DELETE CASCADE,
-    room_name VARCHAR(100) REFERENCES Rooms(room_name) ON DELETE CASCADE,
-    PRIMARY KEY (booking_id, room_name),
+    room_id VARCHAR(100) REFERENCES Rooms(room_id) ON DELETE CASCADE,
+    PRIMARY KEY (booking_id, room_id),
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -60,7 +62,7 @@ CREATE TABLE RoomBookings (
 -- Create RoomClosure table
 CREATE TABLE RoomClosures (
     room_closure_id SERIAL PRIMARY KEY,
-    room_name VARCHAR(100) REFERENCES Rooms(room_name) ON DELETE CASCADE,
+    room_id VARCHAR(100) REFERENCES Rooms(room_id) ON DELETE CASCADE,
     start_date DATE NOT NULL,
     last_date DATE NOT NULL,
     reason TEXT,
