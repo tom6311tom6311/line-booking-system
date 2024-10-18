@@ -1,7 +1,7 @@
 -- Create Enums
 CREATE TYPE room_types AS ENUM ('standard_double_room', 'standard_family_room', 'economic_family_room', 'backpacker_bed', 'washitsu', 'grass');
 CREATE TYPE room_statuses AS ENUM ('available', 'closed');
-CREATE TYPE booking_sources AS ENUM ('direct', 'Booking.com', 'FB', 'Expedia', 'Taiwanstay', 'Airbnb');
+CREATE TYPE booking_sources AS ENUM ('自洽', 'Booking_com', 'FB', 'Agoda', '台灣旅宿', 'Airbnb');
 CREATE TYPE booking_statuses AS ENUM ('new', 'prepaid', 'canceled');
 
 
