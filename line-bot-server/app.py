@@ -131,7 +131,7 @@ def handle_message(event):
   try:
     booking_id = int(event.message.text)
     booking_info = get_booking_info(booking_id)
-    reply_message = format_booking_info(booking_info) | "找不到ID對應的訂單"
+    reply_message = format_booking_info(booking_info) or "找不到ID對應的訂單"
   except ValueError:
     reply_message = "ID 應該是個數字哦"
 
