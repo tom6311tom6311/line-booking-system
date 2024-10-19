@@ -1,10 +1,11 @@
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot.models import MessageEvent, TextMessage, TextSendMessage,  QuickReply, QuickReplyButton, DatetimePickerAction
 from const import db_config
-from const.line_config import LINE_CHANNEL_ACCESS_TOKEN, LINE_CHANNEL_SECRET, RICH_MENU_ACTION_BOOKING_LOOKUP
+from const.line_config import LINE_CHANNEL_ACCESS_TOKEN, LINE_CHANNEL_SECRET, COMMAND_BOOKING_LOOKUP, COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE
 from data_access.booking_dao import BookingDAO
+from utils.datetime_utils import is_valid_date
 from utils.booking_utils import format_booking_info
 from utils.line_messaging_utils import create_booking_carousel_message
 
@@ -29,7 +30,11 @@ def get_booking(booking_id):
 
 @app.route('/query/bookings/<keyword>')
 def search_bookings(keyword):
-  matches = booking_dao.search_booking_by_keyword(keyword)
+  matches = None
+  if is_valid_date(keyword):
+    matches = booking_dao.search_booking_by_check_in_date(keyword)
+  else:
+    matches = booking_dao.search_booking_by_keyword(keyword)
   if not matches:
     reply_message = "找不到任何訂單"
   else:
@@ -50,11 +55,30 @@ def callback():
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
   user_message = event.message.text
+  app.logger.debug(f"User message: {user_message}")
 
-  if user_message == RICH_MENU_ACTION_BOOKING_LOOKUP:
+  if user_message == COMMAND_BOOKING_LOOKUP:
+    quick_reply_buttons = [
+      QuickReplyButton(action=DatetimePickerAction(label="以入住日查詢", data=COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE, mode="date"))
+    ]
+
+    quick_reply = QuickReply(items=quick_reply_buttons)
     line_bot_api.reply_message(
       event.reply_token,
-      TextSendMessage(text="請提供關鍵字 (ID、電話末3碼、姓名):")
+      TextSendMessage(text="請提供關鍵字\n(ID、電話末3碼、姓名):", quick_reply=quick_reply)
+    )
+  elif COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE in user_message:
+    selected_date = event.postback.params['date']
+    matches = booking_dao.search_booking_by_check_in_date(selected_date)
+
+    if not matches:
+      reply_message = TextSendMessage(text="找不到任何訂單")
+    else:
+      reply_message = create_booking_carousel_message(matches)
+
+    line_bot_api.reply_message(
+      event.reply_token,
+      reply_message
     )
   else:
     # Assuming the user provides a keyword

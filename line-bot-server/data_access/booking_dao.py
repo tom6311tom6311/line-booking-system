@@ -155,3 +155,56 @@ class BookingDAO:
 
     finally:
         self.release_connection(connection)
+
+  def search_booking_by_check_in_date(self, check_in_date):
+    connection = self.get_connection()
+    if not connection:
+      return None
+
+    try:
+      cursor = connection.cursor()
+
+      # SQL query to search for bookings by check-in date
+      query = """
+      SELECT b.booking_id, b.status, c.name, c.phone_number, b.check_in_date, b.last_date,
+        b.total_price, b.notes, b.source, b.prepayment, b.prepayment_status,
+        STRING_AGG(r.room_id, '') AS room_ids
+      FROM Bookings b
+      JOIN Customers c ON b.customer_id = c.customer_id
+      JOIN RoomBookings rb ON b.booking_id = rb.booking_id
+      JOIN Rooms r ON rb.room_id = r.room_id
+      WHERE b.check_in_date = %s
+      GROUP BY b.booking_id, c.name, c.phone_number
+      ORDER BY b.booking_id;
+      """
+
+      cursor.execute(query, (check_in_date,))
+      rows = cursor.fetchall()
+      cursor.close()
+
+      matches = []
+      for row in rows:
+        booking_info = BookingInfo(
+          booking_id=row[0],
+          status=row[1],
+          customer_name=row[2],
+          phone_number=row[3],
+          check_in_date=row[4],
+          last_date=row[5],
+          total_price=row[6],
+          notes=row[7],
+          source=row[8],
+          prepayment=row[9],
+          prepayment_status=row[10],
+          room_ids=row[11]
+        )
+        matches.append(booking_info)
+
+      return matches
+
+    except Exception as e:
+      self.logger.error(f"Error searching bookings by check-in date: {e}")
+      return None
+
+    finally:
+      self.release_connection(connection)
