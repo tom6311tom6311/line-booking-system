@@ -118,6 +118,7 @@ class BookingDAO:
         OR c.phone_number LIKE %s
         OR c.name LIKE %s
       GROUP BY b.booking_id, c.name, c.phone_number
+      ORDER BY b.booking_id DESC
       LIMIT %s;
       """
 

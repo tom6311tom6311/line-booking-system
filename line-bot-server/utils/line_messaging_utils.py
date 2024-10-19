@@ -12,7 +12,7 @@ def create_booking_carousel_message(matches: typing.Optional[Sequence[BookingInf
   # Iterate over each match and create a carousel column
   for match in matches:
     column = CarouselColumn(
-      title=f"#{match.booking_id}",
+      title=f"ID: {match.booking_id}",
       text=format_booking_info(match, 'carousel'),
       actions=[
         PostbackAction(label="檢視", display_text="檢視", data=json.dumps({ 'action': 'VIEW_BOOKING', 'booking_id': match.booking_id })),
