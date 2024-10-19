@@ -3,6 +3,7 @@ CREATE TYPE room_types AS ENUM ('standard_double_room', 'standard_family_room', 
 CREATE TYPE room_statuses AS ENUM ('available', 'closed');
 CREATE TYPE booking_sources AS ENUM ('自洽', 'Booking_com', 'FB', 'Agoda', '台灣旅宿', 'Airbnb');
 CREATE TYPE booking_statuses AS ENUM ('new', 'prepaid', 'canceled');
+CREATE TYPE prepayment_statuses AS ENUM ('unpaid', 'paid', 'refunded', 'hanging');
 
 
 -- Create Customers table
@@ -37,14 +38,15 @@ CREATE TABLE Rooms (
 -- Create Bookings table
 CREATE TABLE Bookings (
     booking_id SERIAL PRIMARY KEY,
+    status booking_statuses,
     customer_id INT REFERENCES Customers(customer_id),
     check_in_date DATE NOT NULL,
     last_date DATE NOT NULL,
     total_price DECIMAL(10, 2),
     prepayment DECIMAL(10, 2),
     prepayment_note TEXT,
+    prepayment_status prepayment_statuses,
     source booking_sources,
-    status booking_statuses,
     notes TEXT,
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP

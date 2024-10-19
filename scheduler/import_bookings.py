@@ -1,12 +1,13 @@
 import os
 import re
 import psycopg2
+from datetime import datetime, timedelta
 
 GENERIC_NAMES = ['先生', '小姐', '無名氏']
 VALID_BOOKING_SOURCES = ['自洽', 'Booking_com', 'FB', 'Agoda', '台灣旅宿', 'Airbnb']
 INVALID_PHONE_NUMBER_POSTFIX = '000000'
 
-# Connection details (replace with your actual values)
+# DB Connection details
 DB_HOST = os.getenv('DB_HOST')
 DB_USER = os.getenv('DB_USER')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
@@ -42,7 +43,8 @@ def parse_booking(text):
 
     booking_data['room_name_string'] = re.search(r'預計讓他睡：(.+)', text).group(1)  # This will be processed later to extract rooms
     booking_data['check_in_date'] = re.search(r'入住日期：(\d{4}/\d{2}/\d{2})', text).group(1)
-    booking_data['check_out_date'] = re.search(r'退房日期：(\d{4}/\d{2}/\d{2})', text).group(1)
+    check_out_date = re.search(r'退房日期：(\d{4}/\d{2}/\d{2})', text).group(1)
+    booking_data['last_date'] = (datetime.strptime(check_out_date, '%Y/%m/%d') - timedelta(days=1)).strftime('%Y/%m/%d')
     booking_data['total_price'] = float(re.search(r'總金額：(\d+)', text).group(1))
     booking_data['source'] = re.search(r'來源：(.+)', text).group(1).replace('_', '.')
 
@@ -52,9 +54,12 @@ def parse_booking(text):
     # Parse the prepayment and status from the "訂金" line
     prepayment_info = re.search(r'訂金：(\d+)元/(.+)', text)
     booking_data['prepayment'] = float(prepayment_info.group(1))
+    booking_data['prepayment_status'] = 'unpaid'
     prepayment_status = prepayment_info.group(2)
     if prepayment_status == '已付':
-      booking_data['status'] = 'prepaid'  # If paid, mark as 'prepaid'
+      booking_data['prepayment_status'] = 'paid'
+      if booking_data['status'] == 'new':
+        booking_data['status'] = 'prepaid'
 
     booking_data['notes'] = re.search(r'備註：(.*)', text).group(1)
 
@@ -75,8 +80,8 @@ def validate_booking(booking_data):
     print(f"[Validation Error] #{booking_data['booking_id']} with no room specified")
   if (len(booking_data['check_in_date']) <= 0):
     print(f"[Validation Error] #{booking_data['booking_id']} with no check_in_date")
-  if (len(booking_data['check_out_date']) <= 0):
-    print(f"[Validation Error] #{booking_data['booking_id']} with no check_out_date")
+  if (len(booking_data['last_date']) <= 0):
+    print(f"[Validation Error] #{booking_data['booking_id']} with no last_date")
   if (booking_data['total_price'] <= 0):
     print(f"[Validation Error] #{booking_data['booking_id']} with total_price <= 0")
   if (booking_data['source'] not in VALID_BOOKING_SOURCES):
@@ -145,18 +150,19 @@ def insert_booking(booking_data):
 
     # Insert booking data
     insert_booking_query = """
-    INSERT INTO Bookings (customer_id, check_in_date, last_date, total_price, prepayment, source, status, notes)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    INSERT INTO Bookings (customer_id, status, check_in_date, last_date, total_price, prepayment, prepayment_status, source, notes)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
     RETURNING booking_id;
     """
     cursor.execute(insert_booking_query, (
       customer_id,
+      booking_data['status'],  # Status: new, prepaid, or canceled
       booking_data['check_in_date'],
-      booking_data['check_out_date'],
+      booking_data['last_date'],
       booking_data['total_price'],
       booking_data['prepayment'],
+      booking_data['prepayment_status'],  # Prepayment Status: unpaid, paid
       booking_data['source'],
-      booking_data['status'],  # Status: new, prepaid, or canceled
       booking_data['notes']
     ))
 
