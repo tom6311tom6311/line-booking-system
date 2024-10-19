@@ -1,6 +1,6 @@
 import typing
 from collections.abc import Sequence
-from linebot.models import CarouselColumn, CarouselTemplate, TemplateSendMessage, TextSendMessage
+from linebot.models import CarouselColumn, CarouselTemplate, TemplateSendMessage, MessageAction
 from data_access.data_class.booking_info import BookingInfo
 from utils.booking_utils import format_booking_info
 
@@ -14,7 +14,7 @@ def create_booking_carousel_message(matches: typing.Optional[Sequence[BookingInf
       title=f"#{match.booking_id}",
       text=format_booking_info(match),
       actions=[
-          TextSendMessage(label="更改", text="更改")
+        MessageAction(label="更改", text="更改")
       ]
     )
     columns.append(column)
