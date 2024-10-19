@@ -25,9 +25,10 @@ def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant
   message = ""
   if variant == 'carousel':
     message = (
-    f"{booking_info.customer_name}\n"
-    f"{booking_info.phone_number}\n"
-    f"{booking_info.check_in_date.strftime('%Y/%m/%d')}入住{nights}晚\n"
+    f"姓名：{booking_info.customer_name}\n"
+    f"電話：{booking_info.phone_number}\n"
+    f"入住：{booking_info.check_in_date.strftime('%Y/%m/%d')}\n"
+    f"晚數：{nights}\n"
     f"總金額：{total_price}\n"
   )
   else:
