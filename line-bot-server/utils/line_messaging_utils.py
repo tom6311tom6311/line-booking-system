@@ -15,8 +15,8 @@ def create_booking_carousel_message(matches: typing.Optional[Sequence[BookingInf
       title=f"#{match.booking_id}",
       text=format_booking_info(match, 'carousel'),
       actions=[
-        PostbackAction(display_text="檢視", data=json.dumps({ 'action': 'VIEW_BOOKING', 'booking_id': match.booking_id })),
-        PostbackAction(display_text="更改", data=json.dumps({ 'action': 'EDIT_BOOKING', 'booking_id': match.booking_id }))
+        PostbackAction(label="檢視", display_text="檢視", data=json.dumps({ 'action': 'VIEW_BOOKING', 'booking_id': match.booking_id })),
+        PostbackAction(label="更改", display_text="更改", data=json.dumps({ 'action': 'EDIT_BOOKING', 'booking_id': match.booking_id }))
       ]
     )
     columns.append(column)
