@@ -1,4 +1,4 @@
-version: '3'
+version: '2.1'
 services:
   line-bot-server:
     build: ./line-bot-server
@@ -38,6 +38,7 @@ services:
       db:
         condition: service_healthy
     environment:
+      SHOULD_IMPORT_HISTORICAL_BOOKINGS: ${SHOULD_IMPORT_HISTORICAL_BOOKINGS}
       DB_HOST: db
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}

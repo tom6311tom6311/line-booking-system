@@ -7,6 +7,8 @@ GENERIC_NAMES = ['先生', '小姐', '無名氏']
 VALID_BOOKING_SOURCES = ['自洽', 'Booking_com', 'FB', 'Agoda', '台灣旅宿', 'Airbnb']
 INVALID_PHONE_NUMBER_POSTFIX = '000000'
 
+SHOULD_IMPORT_HISTORICAL_BOOKINGS = os.getenv('SHOULD_IMPORT_HISTORICAL_BOOKINGS')
+
 # DB Connection details
 DB_HOST = os.getenv('DB_HOST')
 DB_USER = os.getenv('DB_USER')
@@ -194,12 +196,15 @@ def insert_booking(booking_data):
       cursor.close()
       conn.close()
 
-# with open(SORTED_BOOKINGS_FILE_PATH, 'r', encoding='utf-8') as f:
-#   content = f.read()
-#   booking_text_list = content.split("\n\n")
-#   for booking_text in booking_text_list:
-#     booking_data = parse_booking(booking_text)
-#     if (not booking_data):
-#       continue
-#     validate_booking(booking_data)
-#     insert_booking(booking_data)
+if SHOULD_IMPORT_HISTORICAL_BOOKINGS:
+  with open(SORTED_BOOKINGS_FILE_PATH, 'r', encoding='utf-8') as f:
+    content = f.read()
+    booking_text_list = content.split("\n\n")
+    for booking_text in booking_text_list:
+      booking_data = parse_booking(booking_text)
+      if (not booking_data):
+        continue
+      validate_booking(booking_data)
+      insert_booking(booking_data)
+else:
+  print(f"Skip importing historical bookings")
