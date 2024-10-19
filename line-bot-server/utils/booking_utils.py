@@ -4,7 +4,7 @@ from const.booking_const import BOOKING_STATUS_MARK, PREPAYMENT_STATUS_MAP
 from data_access.data_class.booking_info import BookingInfo
 
 # Function to format the booking info as per the required format
-def format_booking_info(booking_info: typing.Optional[BookingInfo]=None):
+def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant='normal'):
   if not booking_info:
     return None
 
@@ -22,19 +22,30 @@ def format_booking_info(booking_info: typing.Optional[BookingInfo]=None):
   booking_info.prepayment_status = PREPAYMENT_STATUS_MAP[booking_info.prepayment_status]
 
   # Format the response message
-  message = (
-    f"[訂單]{status_mark}\n"
-    f"ＩＤ：{booking_info.booking_id}\n"
+  message = ""
+  if variant == 'compressed':
+    message = (
+    f"{status_mark}#{booking_info.booking_id}\n"
     f"姓名：{booking_info.customer_name}\n"
     f"電話：{booking_info.phone_number}\n"
-    f"入住日期：{booking_info.check_in_date.strftime('%Y/%m/%d')}\n"
-    f"退房日期：{check_out_date.strftime('%Y/%m/%d')}\n"
+    f"入住：{booking_info.check_in_date.strftime('%Y/%m/%d')}\n"
     f"晚數：{nights}\n"
     f"總金額：{total_price}\n"
-    f"備註：{booking_info.notes}\n"
-    f"來源：{booking_info.source}\n"
-    f"訂金：{prepayment}元/{booking_info.prepayment_status}\n"
-    f"預計讓他睡：{booking_info.room_ids}"
   )
+  else:
+    message = (
+      f"[訂單]{status_mark}\n"
+      f"ＩＤ：{booking_info.booking_id}\n"
+      f"姓名：{booking_info.customer_name}\n"
+      f"電話：{booking_info.phone_number}\n"
+      f"入住日期：{booking_info.check_in_date.strftime('%Y/%m/%d')}\n"
+      f"退房日期：{check_out_date.strftime('%Y/%m/%d')}\n"
+      f"晚數：{nights}\n"
+      f"總金額：{total_price}\n"
+      f"備註：{booking_info.notes}\n"
+      f"來源：{booking_info.source}\n"
+      f"訂金：{prepayment}元/{booking_info.prepayment_status}\n"
+      f"預計讓他睡：{booking_info.room_ids}"
+    )
 
   return message

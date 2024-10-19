@@ -12,7 +12,7 @@ def create_booking_carousel_message(matches: typing.Optional[Sequence[BookingInf
   for match in matches:
     column = CarouselColumn(
       title=f"#{match.booking_id}",
-      text=format_booking_info(match),
+      text=format_booking_info(match, 'compressed'),
       actions=[
         MessageAction(label="更改", text="更改")
       ]
