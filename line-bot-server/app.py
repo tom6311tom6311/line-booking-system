@@ -1,7 +1,7 @@
 import os
 import datetime
 import psycopg2
-from flask import Flask, request
+from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
@@ -122,7 +122,7 @@ def callback():
   try:
     handler.handle(body, signature)
   except InvalidSignatureError:
-    return 'Invalid signature', 400
+    abort(400)
   return 'OK'
 
 @handler.add(MessageEvent, message=TextMessage)
