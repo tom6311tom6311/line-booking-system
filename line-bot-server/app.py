@@ -62,7 +62,7 @@ def handle_message(event):
     matches = booking_dao.search_booking_by_keyword(keyword)
 
     if not matches:
-      reply_message = "找不到任何訂單"
+      reply_message = TextSendMessage(text="找不到任何訂單")
     else:
       reply_message = create_booking_carousel_message(matches)
 
