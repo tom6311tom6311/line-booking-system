@@ -33,7 +33,7 @@ def search_bookings(keyword):
   if not matches:
     reply_message = "找不到任何訂單"
   else:
-    reply_message = '\n\n'.join([format_booking_info(match, 'compressed') for match in matches])
+    reply_message = '\n\n'.join([format_booking_info(match, 'carousel') for match in matches])
   return reply_message
 
 # LINE messaging API handlers
