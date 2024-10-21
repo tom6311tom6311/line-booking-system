@@ -1,7 +1,7 @@
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage,  QuickReply, QuickReplyButton, DatetimePickerAction
+from linebot.models import MessageEvent, PostbackEvent, TextMessage, TextSendMessage,  QuickReply, QuickReplyButton, DatetimePickerAction
 from const import db_config
 from const.line_config import LINE_CHANNEL_ACCESS_TOKEN, LINE_CHANNEL_SECRET, COMMAND_BOOKING_LOOKUP, COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE
 from data_access.booking_dao import BookingDAO
@@ -65,20 +65,7 @@ def handle_message(event):
     quick_reply = QuickReply(items=quick_reply_buttons)
     line_bot_api.reply_message(
       event.reply_token,
-      TextSendMessage(text="請提供關鍵字\n(ID、電話末3碼、姓名):", quick_reply=quick_reply)
-    )
-  elif COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE in user_message:
-    selected_date = event.postback.params['date']
-    matches = booking_dao.search_booking_by_check_in_date(selected_date)
-
-    if not matches:
-      reply_message = TextSendMessage(text="找不到任何訂單")
-    else:
-      reply_message = create_booking_carousel_message(matches)
-
-    line_bot_api.reply_message(
-      event.reply_token,
-      reply_message
+      TextSendMessage(text="請提供關鍵字:\n(ID、電話末3碼、姓名)", quick_reply=quick_reply)
     )
   else:
     # Assuming the user provides a keyword
@@ -91,6 +78,23 @@ def handle_message(event):
       reply_message = create_booking_carousel_message(matches)
 
     # Send the reply (either results or no matches)
+    line_bot_api.reply_message(
+      event.reply_token,
+      reply_message
+    )
+
+@handler.add(PostbackEvent)
+def handle_message_postback(event):
+  app.logger.debug(f"event: {event}")
+  if event.postback.data == COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE:
+    selected_date = event.postback.params['date']
+    matches = booking_dao.search_booking_by_check_in_date(selected_date)
+
+    if not matches:
+      reply_message = TextSendMessage(text="找不到任何訂單")
+    else:
+      reply_message = create_booking_carousel_message(matches)
+
     line_bot_api.reply_message(
       event.reply_token,
       reply_message
