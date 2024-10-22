@@ -1,9 +1,10 @@
+import json
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, PostbackEvent, TextMessage, TextSendMessage,  QuickReply, QuickReplyButton, DatetimePickerAction
 from const import db_config
-from const.line_config import LINE_CHANNEL_ACCESS_TOKEN, LINE_CHANNEL_SECRET, COMMAND_BOOKING_LOOKUP, COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE
+from const.line_config import LINE_CHANNEL_ACCESS_TOKEN, LINE_CHANNEL_SECRET, USER_COMMAND_SEARCH_BOOKING_BY_KEYWORD, POSTBACK_COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE, POSTBACK_COMMAND_VIEW_FULL_BOOKING_INFO
 from data_access.booking_dao import BookingDAO
 from utils.datetime_utils import is_valid_date
 from utils.booking_utils import format_booking_info
@@ -25,7 +26,7 @@ def get_booking(booking_id):
   # app.logger.critical("A log message in level critical")
   booking_info = booking_dao.get_booking_info(int(booking_id))
   app.logger.info(booking_info.booking_id)
-  reply_message = format_booking_info(booking_info) or "找不到ID對應的訂單"
+  reply_message = format_booking_info(booking_info, 'normal') or "找不到ID對應的訂單"
   return reply_message
 
 @app.route('/query/bookings/<keyword>')
@@ -57,9 +58,13 @@ def handle_message(event):
   user_message = event.message.text
   app.logger.debug(f"User message: {user_message}")
 
-  if user_message == COMMAND_BOOKING_LOOKUP:
+  if user_message == USER_COMMAND_SEARCH_BOOKING_BY_KEYWORD:
     quick_reply_buttons = [
-      QuickReplyButton(action=DatetimePickerAction(label="以入住日查詢", data=COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE, mode="date"))
+      QuickReplyButton(action=DatetimePickerAction(
+        label="以入住日查詢",
+        data=json.dumps({ 'command': POSTBACK_COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE }),
+        mode="date")
+      )
     ]
 
     quick_reply = QuickReply(items=quick_reply_buttons)
@@ -85,7 +90,14 @@ def handle_message(event):
 
 @handler.add(PostbackEvent)
 def handle_message_postback(event):
-  if event.postback.data == COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE:
+  command_obj = None
+  try:
+    command_obj = json.loads(event.postback.data)
+  except ValueError:
+    app.logger.error("Failed to parse postback event data as json")
+    return
+
+  if command_obj['command'] == POSTBACK_COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE:
     selected_date = event.postback.params['date']
 
     reply_messages = []
@@ -101,6 +113,20 @@ def handle_message_postback(event):
       event.reply_token,
       reply_messages
     )
+  elif command_obj['command'] == POSTBACK_COMMAND_VIEW_FULL_BOOKING_INFO:
+    booking_id = command_obj['booking_id']
+    booking_info = booking_dao.get_booking_info(int(booking_id))
+
+    reply_messages = []
+    reply_messages.append(TextSendMessage(text=f"檢視訂單 #{booking_id}"))
+    reply_messages.append(TextSendMessage(format_booking_info(booking_info, 'normal') or "找不到ID對應的訂單"))
+
+    line_bot_api.reply_message(
+      event.reply_token,
+      reply_messages
+    )
+  else:
+    app.logger.warning(f"Unrecognized postback command: {command_obj['command']}")
 
 if __name__ == "__main__":
   app.run(debug=True)

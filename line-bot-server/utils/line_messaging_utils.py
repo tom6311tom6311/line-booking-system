@@ -2,6 +2,7 @@ import typing
 import json
 from collections.abc import Sequence
 from linebot.models import CarouselColumn, CarouselTemplate, TemplateSendMessage, PostbackAction
+from const.line_config import POSTBACK_COMMAND_VIEW_FULL_BOOKING_INFO, POSTBACK_COMMAND_EDIT_BOOKING, POSTBACK_COMMAND_CANCEL_BOOKING
 from data_access.data_class.booking_info import BookingInfo
 from utils.booking_utils import format_booking_info
 
@@ -15,9 +16,9 @@ def create_booking_carousel_message(matches: typing.Optional[Sequence[BookingInf
       title=f"ID: {match.booking_id}",
       text=format_booking_info(match, 'carousel'),
       actions=[
-        PostbackAction(label="檢視", display_text="檢視", data=json.dumps({ 'action': 'VIEW_BOOKING', 'booking_id': match.booking_id })),
-        PostbackAction(label="更改", display_text="更改", data=json.dumps({ 'action': 'EDIT_BOOKING', 'booking_id': match.booking_id })),
-        PostbackAction(label="取消", display_text="取消", data=json.dumps({ 'action': 'CANCEL_BOOKING', 'booking_id': match.booking_id }))
+        PostbackAction(label="檢視", display_text="檢視", data=json.dumps({ 'command': POSTBACK_COMMAND_VIEW_FULL_BOOKING_INFO, 'booking_id': match.booking_id })),
+        PostbackAction(label="更改", display_text="更改", data=json.dumps({ 'command': POSTBACK_COMMAND_EDIT_BOOKING, 'booking_id': match.booking_id })),
+        PostbackAction(label="取消", display_text="取消", data=json.dumps({ 'command': POSTBACK_COMMAND_CANCEL_BOOKING, 'booking_id': match.booking_id }))
       ]
     )
     columns.append(column)
