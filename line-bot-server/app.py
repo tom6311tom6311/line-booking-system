@@ -88,20 +88,18 @@ def handle_message_postback(event):
   if event.postback.data == COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE:
     selected_date = event.postback.params['date']
 
-    line_bot_api.reply_message(
-      event.reply_token,
-      TextSendMessage(text=f"查詢{selected_date.replace('-', '/')}入住的訂單...")
-    )
+    reply_messages = []
+    reply_messages.append(TextSendMessage(text=f"查詢{selected_date.replace('-', '/')}入住的訂單"))
 
     matches = booking_dao.search_booking_by_check_in_date(selected_date)
     if not matches:
-      reply_message = TextSendMessage(text="找不到任何訂單")
+      reply_messages.append(TextSendMessage(text="找不到任何訂單"))
     else:
-      reply_message = create_booking_carousel_message(matches)
+      reply_messages.append(create_booking_carousel_message(matches))
 
     line_bot_api.reply_message(
       event.reply_token,
-      reply_message
+      reply_messages
     )
 
 if __name__ == "__main__":
