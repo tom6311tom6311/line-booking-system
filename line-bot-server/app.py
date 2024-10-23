@@ -72,13 +72,6 @@ def handle_message(event):
     quick_reply = QuickReply(items=quick_reply_buttons)
     reply_messages.append(TextSendMessage(text="請提供關鍵字:\n(ID、電話末3碼、姓名)", quick_reply=quick_reply))
 
-  elif date := extract_date_from_string_template(USER_COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE, user_message):
-    matches = booking_dao.search_booking_by_check_in_date(date)
-    if not matches:
-      reply_messages.append(TextSendMessage(text="找不到任何訂單"))
-    else:
-      reply_messages.append(create_booking_carousel_message(matches))
-
   else:
     # Assuming the user provides a keyword
     keyword = user_message
@@ -89,10 +82,11 @@ def handle_message(event):
     else:
       reply_messages.append(create_booking_carousel_message(matches))
 
-  line_bot_api.reply_message(
-    event.reply_token,
-    reply_messages
-  )
+  if (len(reply_messages) > 0):
+    line_bot_api.reply_message(
+      event.reply_token,
+      reply_messages
+    )
 
 @handler.add(PostbackEvent)
 def handle_message_postback(event):
@@ -108,6 +102,12 @@ def handle_message_postback(event):
     selected_date = event.postback.params['date']
 
     reply_messages.append(TextSendMessage(USER_COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE.format(date=selected_date.replace('-', '/'))))
+
+    matches = booking_dao.search_booking_by_check_in_date(selected_date)
+    if not matches:
+      reply_messages.append(TextSendMessage(text="找不到任何訂單"))
+    else:
+      reply_messages.append(create_booking_carousel_message(matches))
 
   elif command_obj['command'] == POSTBACK_COMMAND_VIEW_FULL_BOOKING_INFO:
     booking_id = command_obj['booking_id']
