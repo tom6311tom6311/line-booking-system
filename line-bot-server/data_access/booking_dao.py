@@ -156,12 +156,13 @@ class BookingDAO:
     finally:
         self.release_connection(connection)
 
-  def search_booking_by_check_in_date(self, check_in_date):
+  def search_booking_by_date(self, date, is_check_in = True):
     connection = self.get_connection()
     if not connection:
       return None
 
     try:
+      date_field = 'check_in_date' if is_check_in else 'last_date'
       cursor = connection.cursor()
 
       # SQL query to search for bookings by check-in date
@@ -173,12 +174,12 @@ class BookingDAO:
       JOIN Customers c ON b.customer_id = c.customer_id
       JOIN RoomBookings rb ON b.booking_id = rb.booking_id
       JOIN Rooms r ON rb.room_id = r.room_id
-      WHERE b.check_in_date = %s
+      WHERE b.%s = %s
       GROUP BY b.booking_id, c.name, c.phone_number
       ORDER BY b.booking_id;
       """
 
-      cursor.execute(query, (check_in_date,))
+      cursor.execute(query, (date_field, date))
       rows = cursor.fetchall()
       cursor.close()
 
