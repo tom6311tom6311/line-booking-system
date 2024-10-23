@@ -174,12 +174,12 @@ class BookingDAO:
       JOIN Customers c ON b.customer_id = c.customer_id
       JOIN RoomBookings rb ON b.booking_id = rb.booking_id
       JOIN Rooms r ON rb.room_id = r.room_id
-      WHERE b.%s = %s
+      WHERE b.{date_field} = %s
       GROUP BY b.booking_id, c.name, c.phone_number
       ORDER BY b.booking_id;
       """
 
-      cursor.execute(query, (date_field, date))
+      cursor.execute(query.format(date_field=date_field), (date,))
       rows = cursor.fetchall()
       cursor.close()
 
