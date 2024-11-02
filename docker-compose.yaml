@@ -15,12 +15,15 @@ services:
       DB_NAME: ${DB_NAME}
       LINE_CHANNEL_ACCESS_TOKEN: ${LINE_CHANNEL_ACCESS_TOKEN}
       LINE_CHANNEL_SECRET: ${LINE_CHANNEL_SECRET}
+    volumes:
+      - ./utils:/app/utils
+      - ./const:/app/const
 
   db:
     build: ./db
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d ${DB_NAME} -U ${DB_USER}"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 5
     environment:
@@ -38,12 +41,15 @@ services:
       db:
         condition: service_healthy
     environment:
-      SHOULD_IMPORT_HISTORICAL_BOOKINGS: ${SHOULD_IMPORT_HISTORICAL_BOOKINGS}
       DB_HOST: db
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
-    command: ["python", "import_bookings.py"]
+      GOOGLE_SERVICE_ACCOUNT_CRED_FILE: ${GOOGLE_SERVICE_ACCOUNT_CRED_FILE}
+      GOOGLE_CALENDAR_ID: ${GOOGLE_CALENDAR_ID}
+    volumes:
+      - ./utils:/app/utils
+      - ./const:/app/const
 
 volumes:
   db_data:

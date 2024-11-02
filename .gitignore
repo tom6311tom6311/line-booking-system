@@ -1,3 +1,5 @@
 .env
 **/.DS_Store
 scheduler/data/*
+**/google_service_account_cred-*.json
+**/__pycache__

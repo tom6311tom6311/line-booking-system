@@ -1,13 +1,12 @@
 import os
 import re
+import logging
 import psycopg2
 from datetime import datetime, timedelta
 
 GENERIC_NAMES = ['先生', '小姐', '無名氏']
 VALID_BOOKING_SOURCES = ['自洽', 'Booking_com', 'FB', 'Agoda', '台灣旅宿', 'Airbnb']
 INVALID_PHONE_NUMBER_POSTFIX = '000000'
-
-SHOULD_IMPORT_HISTORICAL_BOOKINGS = os.getenv('SHOULD_IMPORT_HISTORICAL_BOOKINGS') == '1'
 
 # DB Connection details
 DB_HOST = os.getenv('DB_HOST')
@@ -67,27 +66,27 @@ def parse_booking(text):
 
     return booking_data
   except Exception as e:
-    print(f"Error parsing text: {text}\n Error: {e}")
+    logging.error(f"Error parsing text: {text}\n Error: {e}")
     return None
 
 # Function to do sanity check on the booking field values. Print error if any invalid field found
 def validate_booking(booking_data):
   if (booking_data['booking_id'] <= 0):
-    print(f"[Validation Error] Invalid booking_id: {booking_data['booking_id']}")
+    logging.warning(f"[Validation Warning] Invalid booking_id: {booking_data['booking_id']}")
   if (len(booking_data['customer_name']) <= 0):
-    print(f"[Validation Error] #{booking_data['booking_id']} with no customer name")
+    logging.warning(f"[Validation Warning] #{booking_data['booking_id']} with no customer name")
   if (len(booking_data['phone_number']) <= 0):
-    print(f"[Validation Error] #{booking_data['booking_id']} with no phone number")
+    logging.warning(f"[Validation Warning] #{booking_data['booking_id']} with no phone number")
   if (len(booking_data['room_name_string']) <= 0):
-    print(f"[Validation Error] #{booking_data['booking_id']} with no room specified")
+    logging.warning(f"[Validation Warning] #{booking_data['booking_id']} with no room specified")
   if (len(booking_data['check_in_date']) <= 0):
-    print(f"[Validation Error] #{booking_data['booking_id']} with no check_in_date")
+    logging.warning(f"[Validation Warning] #{booking_data['booking_id']} with no check_in_date")
   if (len(booking_data['last_date']) <= 0):
-    print(f"[Validation Error] #{booking_data['booking_id']} with no last_date")
+    logging.warning(f"[Validation Warning] #{booking_data['booking_id']} with no last_date")
   if (booking_data['total_price'] <= 0):
-    print(f"[Validation Error] #{booking_data['booking_id']} with total_price <= 0")
+    logging.warning(f"[Validation Warning] #{booking_data['booking_id']} with total_price <= 0")
   if (booking_data['source'] not in VALID_BOOKING_SOURCES):
-    print(f"[Validation Error] #{booking_data['booking_id']} with invalid source: {booking_data['source']}")
+    logging.warning(f"[Validation Warning] #{booking_data['booking_id']} with invalid source: {booking_data['source']}")
 
 # Function to extract associated room_ids from room_name_string
 def extract_room_ids(cursor, room_name_string):
@@ -122,7 +121,7 @@ def insert_or_update_customer(cursor, booking_data):
     customer_id, existing_name = existing_customer
     # Compare names and update if necessary
     if is_generic_name(existing_name) and not is_generic_name(booking_data['customer_name']):
-      print(f"Updating customer name from {existing_name} to {booking_data['customer_name']}")
+      logging.info(f"Updating customer name from {existing_name} to {booking_data['customer_name']}")
       cursor.execute("UPDATE Customers SET name=%s WHERE customer_id=%s", (booking_data['customer_name'], customer_id))
   else:
     # Insert a new customer record
@@ -187,16 +186,16 @@ def insert_booking(booking_data):
 
     # Commit the transaction
     conn.commit()
-    print(f"Booking #{booking_id} imported successfully with rooms: {room_ids}")
+    logging.info(f"Booking #{booking_id} imported successfully with rooms: {room_ids}")
 
   except Exception as e:
-    print(f"Error: {e}")
+    logging.error(f"Error: {e}")
   finally:
     if conn:
       cursor.close()
       conn.close()
 
-if SHOULD_IMPORT_HISTORICAL_BOOKINGS:
+def import_historical_bookings():
   with open(SORTED_BOOKINGS_FILE_PATH, 'r', encoding='utf-8') as f:
     content = f.read()
     booking_text_list = content.split("\n\n")
@@ -206,5 +205,3 @@ if SHOULD_IMPORT_HISTORICAL_BOOKINGS:
         continue
       validate_booking(booking_data)
       insert_booking(booking_data)
-else:
-  print(f"Skip importing historical bookings")

@@ -4,6 +4,7 @@ CREATE TYPE room_statuses AS ENUM ('available', 'closed');
 CREATE TYPE booking_sources AS ENUM ('自洽', 'Booking_com', 'FB', 'Agoda', '台灣旅宿', 'Airbnb');
 CREATE TYPE booking_statuses AS ENUM ('new', 'prepaid', 'canceled');
 CREATE TYPE prepayment_statuses AS ENUM ('unpaid', 'paid', 'refunded', 'hanging');
+CREATE TYPE sync_types AS ENUM ('sql_to_google_calendar', 'sql_to_notion', 'notion_to_sql');
 
 
 -- Create Customers table
@@ -70,6 +71,16 @@ CREATE TABLE RoomClosures (
     reason TEXT,
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create SyncRecord table
+CREATE TABLE SyncRecords (
+    sync_id SERIAL PRIMARY KEY,
+    sync_type sync_types,
+    synced_booking_ids TEXT NOT NULL,  -- Stores booking IDs as a comma-separated string or JSON array
+    success BOOLEAN NOT NULL,
+    error_message TEXT,  -- Optional column to store any error messages if the sync fails
+    synced_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create a function to automatically update the modified column

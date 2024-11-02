@@ -4,4 +4,4 @@ COPY requirements.txt requirements.txt
 RUN apt-get update && apt-get -y install libpq-dev gcc
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
-CMD ["python", "import_bookings.py"]
+CMD ["python", "main.py"]

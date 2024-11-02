@@ -2,8 +2,8 @@ import typing
 import json
 from collections.abc import Sequence
 from linebot.models import CarouselColumn, CarouselTemplate, TemplateSendMessage, PostbackAction
-from const.line_config import POSTBACK_COMMAND_VIEW_FULL_BOOKING_INFO, POSTBACK_COMMAND_EDIT_BOOKING, POSTBACK_COMMAND_CANCEL_BOOKING
-from data_access.data_class.booking_info import BookingInfo
+from app_const.line_config import POSTBACK_COMMAND_VIEW_FULL_BOOKING_INFO, POSTBACK_COMMAND_EDIT_BOOKING, POSTBACK_COMMAND_CANCEL_BOOKING
+from utils.data_access.data_class.booking_info import BookingInfo
 from utils.booking_utils import format_booking_info
 
 

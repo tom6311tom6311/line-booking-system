@@ -1,7 +1,7 @@
 import datetime
 import typing
 from const.booking_const import BOOKING_STATUS_MARK, PREPAYMENT_STATUS_MAP
-from data_access.data_class.booking_info import BookingInfo
+from utils.data_access.data_class.booking_info import BookingInfo
 
 # Function to format the booking info as per the required format
 def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant='normal'):
@@ -31,6 +31,14 @@ def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant
     f"晚數：{nights}\n"
     f"總金額：{total_price}\n"
   )
+  elif variant == 'calendar':
+    message = (
+      f"ＩＤ：{booking_info.booking_id}\n"
+      f"電話：{booking_info.phone_number}\n"
+      f"訂金：{prepayment}元/{booking_info.prepayment_status}\n"
+      f"來源：{booking_info.source}\n"
+      f"備註：{booking_info.notes}\n"
+    )
   else:
     message = (
       f"[訂單]{status_mark}\n"

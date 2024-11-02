@@ -4,8 +4,12 @@
   ],
   "cSpell.words": [
     "Agoda",
+    "creds",
     "Postback",
     "psycopg",
     "washitsu"
+  ],
+  "python.analysis.extraPaths": [
+    "./utils"
   ]
 }

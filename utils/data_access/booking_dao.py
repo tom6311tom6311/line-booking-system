@@ -1,6 +1,7 @@
 import psycopg2
 import psycopg2.pool
-from data_access.data_class.booking_info import BookingInfo
+from datetime import datetime
+from .data_class.booking_info import BookingInfo
 
 class BookingDAO:
   _instance = None
@@ -206,6 +207,116 @@ class BookingDAO:
     except Exception as e:
       self.logger.error(f"Error searching bookings by check-in date: {e}")
       return None
+
+    finally:
+      self.release_connection(connection)
+
+  def get_latest_bookings(self, last_sync_time):
+    connection = self.get_connection()
+    if not connection:
+      return None
+
+    try:
+      cursor = connection.cursor()
+
+      # SQL query to get bookings created or modified after the last sync time
+      query = """
+      SELECT b.booking_id, b.status, c.name, c.phone_number, b.check_in_date, b.last_date,
+        b.total_price, b.notes, b.source, b.prepayment, b.prepayment_status,
+        STRING_AGG(r.room_id, '') AS room_ids
+      FROM Bookings b
+      JOIN Customers c ON b.customer_id = c.customer_id
+      JOIN RoomBookings rb ON b.booking_id = rb.booking_id
+      JOIN Rooms r ON rb.room_id = r.room_id
+      WHERE b.created >= %s OR b.modified >= %s
+      GROUP BY b.booking_id, c.name, c.phone_number;
+      """
+
+      cursor.execute(query, (last_sync_time, last_sync_time))
+      rows = cursor.fetchall()
+      cursor.close()
+
+      matches = []
+      for row in rows:
+        booking_info = BookingInfo(
+          booking_id=row[0],
+          status=row[1],
+          customer_name=row[2],
+          phone_number=row[3],
+          check_in_date=row[4],
+          last_date=row[5],
+          total_price=row[6],
+          notes=row[7],
+          source=row[8],
+          prepayment=row[9],
+          prepayment_status=row[10],
+          room_ids=row[11]
+        )
+        matches.append(booking_info)
+
+      return matches
+
+    except Exception as e:
+      self.logger.error(f"Error fetching latest bookings: {e}")
+      return None
+
+    finally:
+      self.release_connection(connection)
+
+
+  ##########################################
+  ###  SyncRecord data access functions  ###
+  ##########################################
+
+  def get_latest_sync_time(self, sync_type="sql_to_google_calendar"):
+    connection = self.get_connection()
+    latest_sync_time = None
+
+    try:
+      cursor = connection.cursor()
+
+      # Query to get the latest successful sync time for the specified sync type
+      query = """
+      SELECT synced_time
+      FROM SyncRecords
+      WHERE sync_type = %s AND success = TRUE
+      ORDER BY synced_time DESC
+      LIMIT 1;
+      """
+
+      cursor.execute(query, (sync_type,))
+      result = cursor.fetchone()
+      if result:
+        latest_sync_time = result[0]  # Get the timestamp from the query result
+
+      cursor.close()
+
+    except Exception as e:
+      self.logger.error(f"Error retrieving latest sync time for {sync_type}: {e}")
+
+    finally:
+      self.release_connection(connection)
+
+    return latest_sync_time or datetime.min  # Return minimum datetime if no successful sync found
+
+  def log_sync_record(self, sync_type, synced_booking_ids, success, error_message=None):
+    connection = self.get_connection()
+
+    try:
+      cursor = connection.cursor()
+
+      # Insert sync record into SyncRecords table
+      query = """
+      INSERT INTO SyncRecords (sync_type, synced_booking_ids, success, error_message)
+      VALUES (%s, %s, %s, %s)
+      """
+
+      cursor.execute(query, (sync_type, ' , '.join([str(booking_id) for booking_id in synced_booking_ids]), success, error_message))
+      connection.commit()
+      cursor.close()
+
+    except Exception as e:
+      self.logger.error(f"Error logging sync record: {e}")
 
     finally:
       self.release_connection(connection)
