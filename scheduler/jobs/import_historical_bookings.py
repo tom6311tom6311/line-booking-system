@@ -1,12 +1,11 @@
 import os
 import re
 import logging
-import psycopg2
 from datetime import datetime, timedelta
-
-GENERIC_NAMES = ['先生', '小姐', '無名氏']
-VALID_BOOKING_SOURCES = ['自洽', 'Booking_com', 'FB', 'Agoda', '台灣旅宿', 'Airbnb']
-INVALID_PHONE_NUMBER_POSTFIX = '000000'
+from const import db_config
+from const.booking_const import VALID_BOOKING_SOURCES
+from utils.data_access.data_class.booking_info import BookingInfo
+from utils.data_access.booking_dao import BookingDAO
 
 # DB Connection details
 DB_HOST = os.getenv('DB_HOST')
@@ -89,119 +88,46 @@ def validate_booking(booking_data):
     logging.warning(f"[Validation Warning] #{booking_data['booking_id']} with invalid source: {booking_data['source']}")
 
 # Function to extract associated room_ids from room_name_string
-def extract_room_ids(cursor, room_name_string):
+def extract_room_ids(available_room_ids, room_name_string):
   room_ids = []
-  # Query to get all available room short_names
-  cursor.execute("SELECT room_id FROM Rooms")
-  available_room_ids = [row[0] for row in cursor.fetchall()]
-
   # Match each character in room_name_string to an available room_id
   for char in room_name_string:
     if char in available_room_ids:
       room_ids.append(char)
-
   return room_ids
 
-# Function to determine if a customer name is generic
-def is_generic_name(name):
-  for g_name in GENERIC_NAMES:
-    if g_name in name:
-      return True
-  return False
-
-# Function to insert or update customer data into PostgreSQL
-def insert_or_update_customer(cursor, booking_data):
-  existing_customer = False
-  if booking_data['phone_number'] and not booking_data['phone_number'].endswith(INVALID_PHONE_NUMBER_POSTFIX):
-    # Check if the customer exists based on phone number
-    cursor.execute("SELECT customer_id, name FROM Customers WHERE phone_number=%s", (booking_data['phone_number'],))
-    existing_customer = cursor.fetchone()
-
-  if existing_customer:
-    customer_id, existing_name = existing_customer
-    # Compare names and update if necessary
-    if is_generic_name(existing_name) and not is_generic_name(booking_data['customer_name']):
-      logging.info(f"Updating customer name from {existing_name} to {booking_data['customer_name']}")
-      cursor.execute("UPDATE Customers SET name=%s WHERE customer_id=%s", (booking_data['customer_name'], customer_id))
-  else:
-    # Insert a new customer record
-    cursor.execute("""
-    INSERT INTO Customers (name, phone_number)
-    VALUES (%s, %s)
-    RETURNING customer_id;
-    """, (booking_data['customer_name'], booking_data['phone_number']))
-    customer_id = cursor.fetchone()[0]
-
-  return customer_id
-
-# Function to insert booking data into PostgreSQL
-def insert_booking(booking_data):
-  try:
-    # Connect to the PostgreSQL database
-    conn = psycopg2.connect(
-      host=DB_HOST,
-      dbname=DB_NAME,
-      user=DB_USER,
-      password=DB_PASSWORD
-    )
-    cursor = conn.cursor()
-
-    # Insert or update customer data
-    customer_id = insert_or_update_customer(cursor, booking_data)
-
-    # Insert booking data
-    insert_booking_query = """
-    INSERT INTO Bookings (customer_id, status, check_in_date, last_date, total_price, prepayment, prepayment_status, source, notes)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-    RETURNING booking_id;
-    """
-    cursor.execute(insert_booking_query, (
-      customer_id,
-      booking_data['status'],  # Status: new, prepaid, or canceled
-      booking_data['check_in_date'],
-      booking_data['last_date'],
-      booking_data['total_price'],
-      booking_data['prepayment'],
-      booking_data['prepayment_status'],  # Prepayment Status: unpaid, paid
-      booking_data['source'],
-      booking_data['notes']
-    ))
-
-    # Get the booking ID
-    booking_id = cursor.fetchone()[0]
-
-    # Extract associated room_ids from room_name_string
-    room_ids = extract_room_ids(cursor, booking_data['room_name_string'])
-
-    # Insert room-booking relationships into RoomBookings table
-    for room_id in room_ids:
-      insert_room_booking_query = """
-      INSERT INTO RoomBookings (booking_id, room_id)
-      VALUES (%s, %s);
-      """
-      cursor.execute(insert_room_booking_query, (
-        booking_id,
-        room_id
-      ))
-
-    # Commit the transaction
-    conn.commit()
-    logging.info(f"Booking #{booking_id} imported successfully with rooms: {room_ids}")
-
-  except Exception as e:
-    logging.error(f"Error: {e}")
-  finally:
-    if conn:
-      cursor.close()
-      conn.close()
-
 def import_historical_bookings():
+  booking_dao = BookingDAO.get_instance(db_config, logging)
+  all_room_ids = booking_dao.get_all_room_ids()
+
+  if not all_room_ids:
+    logging.warning(f"Failed to load available Room IDs. Aborted")
+    return
+
   with open(SORTED_BOOKINGS_FILE_PATH, 'r', encoding='utf-8') as f:
     content = f.read()
     booking_text_list = content.split("\n\n")
     for booking_text in booking_text_list:
+      if (not booking_text):
+        continue
       booking_data = parse_booking(booking_text)
       if (not booking_data):
         continue
       validate_booking(booking_data)
-      insert_booking(booking_data)
+      booking_info = BookingInfo(
+        booking_id=booking_data['booking_id'],
+        status=booking_data['status'],
+        customer_name=booking_data['customer_name'],
+        phone_number=booking_data['phone_number'],
+        check_in_date=booking_data['check_in_date'],
+        last_date=booking_data['last_date'],
+        total_price=booking_data['total_price'],
+        notes=booking_data['notes'],
+        source=booking_data['source'],
+        prepayment=booking_data['prepayment'],
+        prepayment_note='',
+        prepayment_status=booking_data['prepayment_status'],
+        room_ids=extract_room_ids(all_room_ids, booking_data['room_name_string'])
+      )
+      booking_id = booking_dao.upsert_booking(booking_info)
+      logging.info(f"Booking #{booking_id} imported successfully")

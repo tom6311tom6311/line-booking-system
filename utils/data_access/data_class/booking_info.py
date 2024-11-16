@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 
 @dataclass
 class BookingInfo:
@@ -13,5 +13,8 @@ class BookingInfo:
   notes: str
   source: str
   prepayment: float
+  prepayment_note: str
   prepayment_status: str
   room_ids: str
+  created: datetime = None
+  modified: datetime = None

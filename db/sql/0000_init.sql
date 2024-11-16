@@ -4,7 +4,7 @@ CREATE TYPE room_statuses AS ENUM ('available', 'closed');
 CREATE TYPE booking_sources AS ENUM ('自洽', 'Booking_com', 'FB', 'Agoda', '台灣旅宿', 'Airbnb');
 CREATE TYPE booking_statuses AS ENUM ('new', 'prepaid', 'canceled');
 CREATE TYPE prepayment_statuses AS ENUM ('unpaid', 'paid', 'refunded', 'hanging');
-CREATE TYPE sync_types AS ENUM ('sql_to_google_calendar', 'sql_to_notion', 'notion_to_sql');
+CREATE TYPE sync_types AS ENUM ('sql_to_google_calendar', 'sql_with_notion');
 
 
 -- Create Customers table

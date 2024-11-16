@@ -1,6 +1,7 @@
 import os
 import logging
 from typing import List
+from datetime import datetime
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from const import db_config
@@ -11,11 +12,14 @@ from utils.data_access.data_class.booking_info import BookingInfo
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 GOOGLE_SERVICE_ACCOUNT_CRED_FILE=os.getenv('GOOGLE_SERVICE_ACCOUNT_CRED_FILE')
 GOOGLE_CALENDAR_ID = os.getenv('GOOGLE_CALENDAR_ID')
+GOOGLE_CALENDAR_SYNC_MIN_TIME = datetime.strptime(os.getenv('GOOGLE_CALENDAR_SYNC_MIN_TIME'), '%Y-%m-%d')
 
 # Task to load latest bookings and sync to Google Calendar
 def sync_bookings_to_google_calendar():
   booking_dao = BookingDAO.get_instance(db_config, logging)
   latest_sync_time = booking_dao.get_latest_sync_time(sync_type="sql_to_google_calendar")
+  if latest_sync_time < GOOGLE_CALENDAR_SYNC_MIN_TIME:
+    latest_sync_time = GOOGLE_CALENDAR_SYNC_MIN_TIME
   latest_bookings = booking_dao.get_latest_bookings(latest_sync_time)
   if not latest_bookings:
     logging.info("No new bookings to sync.")

@@ -30,6 +30,8 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
+      TZ: Asia/Taipei
+      PGTZ: Asia/Taipei
     ports:
       - "${PORT_DB}:5432"
     volumes:
@@ -47,6 +49,10 @@ services:
       DB_NAME: ${DB_NAME}
       GOOGLE_SERVICE_ACCOUNT_CRED_FILE: ${GOOGLE_SERVICE_ACCOUNT_CRED_FILE}
       GOOGLE_CALENDAR_ID: ${GOOGLE_CALENDAR_ID}
+      GOOGLE_CALENDAR_SYNC_MIN_TIME: ${GOOGLE_CALENDAR_SYNC_MIN_TIME}
+      NOTION_TOKEN: ${NOTION_TOKEN}
+      NOTION_DATABASE_ID: ${NOTION_DATABASE_ID}
+      NOTION_SYNC_MIN_TIME: ${NOTION_SYNC_MIN_TIME}
     volumes:
       - ./utils:/app/utils
       - ./const:/app/const

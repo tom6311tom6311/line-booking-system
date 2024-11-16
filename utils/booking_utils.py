@@ -1,6 +1,6 @@
 import datetime
 import typing
-from const.booking_const import BOOKING_STATUS_MARK, PREPAYMENT_STATUS_MAP
+from const.booking_const import GENERIC_NAMES, BOOKING_STATUS_MARK, PREPAYMENT_STATUS_MAP
 from utils.data_access.data_class.booking_info import BookingInfo
 
 # Function to format the booking info as per the required format
@@ -56,3 +56,10 @@ def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant
     )
 
   return message
+
+# Function to determine if a customer name is generic
+def is_generic_name(name):
+  for g_name in GENERIC_NAMES:
+    if g_name in name:
+      return True
+  return False
