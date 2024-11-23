@@ -42,7 +42,7 @@ def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant
   else:
     message = (
       f"[訂單]{status_mark}\n"
-      f"ＩＤ：{booking_info.booking_id}\n"
+      f"ＩＤ：{booking_info.booking_id if booking_info.booking_id > 0 else ''}\n"
       f"姓名：{booking_info.customer_name}\n"
       f"電話：{booking_info.phone_number}\n"
       f"入住日期：{booking_info.check_in_date.strftime('%Y/%m/%d')}\n"

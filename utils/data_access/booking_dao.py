@@ -1,7 +1,7 @@
 import psycopg2
 import psycopg2.pool
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 from const.booking_const import INVALID_PHONE_NUMBER_POSTFIX
 from utils.booking_utils import is_generic_name
 from .data_class.booking_info import BookingInfo
@@ -455,6 +455,93 @@ class BookingDAO:
     finally:
       self.release_connection(connection)
     return available_room_ids
+
+  ##########################################
+  ### RoomBooking data access functions  ###
+  ##########################################
+
+  def get_available_room_ids(self, check_in_date, last_date):
+    connection = self.get_connection()
+    if not connection:
+        return None
+
+    available_room_ids = None
+    try:
+      cursor = connection.cursor()
+
+      query = """
+      SELECT r.room_id
+      FROM Rooms r
+      WHERE r.room_status = 'available' -- Ensure room is not permanently closed
+        AND r.room_id NOT IN (
+          SELECT rb.room_id
+          FROM RoomBookings rb
+          JOIN Bookings b ON rb.booking_id = b.booking_id
+          WHERE b.status != 'canceled' -- Ignore canceled bookings
+            AND (b.check_in_date <= %s AND b.last_date >= %s)
+        )
+      """
+
+      # Execute query with date range parameters
+      cursor.execute(query, (last_date, check_in_date))
+      available_room_ids = [row[0] for row in cursor.fetchall()]
+      cursor.close()
+    except Exception as e:
+      self.logger.error(f"Error fetching available room ids: {e}")
+    finally:
+      self.release_connection(connection)
+    return available_room_ids
+
+  def get_total_price_estimation(self, room_ids, check_in_date, last_date):
+    connection = self.get_connection()
+    if not connection:
+        return None
+
+    total_price = None
+    try:
+      cursor = connection.cursor()
+
+      # Fetch pricing details for the specified rooms
+      query = """
+      SELECT room_id, holiday_price_per_night, weekday_price_per_night
+      FROM Rooms
+      WHERE room_id IN %s
+      """
+      cursor.execute(query, (tuple(room_ids),))
+      rooms = cursor.fetchall()
+
+      # Map room pricing for quick lookup
+      room_pricing = {
+          room_id: {
+              "holiday_price": holiday_price,
+              "weekday_price": weekday_price
+          }
+          for room_id, holiday_price, weekday_price in rooms
+      }
+
+      # Calculate total price
+      total_price = 0
+      current_date = check_in_date
+
+      while current_date <= last_date:
+        # Determine if the current date is a holiday (Saturday)
+        is_holiday = current_date.weekday() == 5  # 5 = Saturday
+
+        # Add price for each room for the current date
+        for room_id in room_ids:
+          if is_holiday:
+            total_price += room_pricing[room_id]["holiday_price"]
+          else:
+            total_price += room_pricing[room_id]["weekday_price"]
+
+        # Move to the next day
+        current_date += timedelta(days=1)
+
+    except Exception as e:
+      self.logger.error(f"Error calculating total price: {e}")
+    finally:
+      self.release_connection(connection)
+    return total_price
 
   ##########################################
   ###  SyncRecord data access functions  ###
