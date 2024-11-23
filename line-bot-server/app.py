@@ -59,7 +59,7 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-  user_id = event.source.userId
+  user_id = event.source.user_id
   user_message = event.message.text
   app.logger.debug(f"User Id: {user_id}, message: {user_message}")
 
@@ -87,7 +87,7 @@ def handle_message(event):
 
 @handler.add(PostbackEvent)
 def handle_message_postback(event):
-  user_id = event.source.userId
+  user_id = event.source.user_id
   command_obj = None
   try:
     command_obj = json.loads(event.postback.data)
