@@ -78,7 +78,7 @@ def handle_message(event):
     reply_messages.append(TextSendMessage(text="已取消"))
 
   elif session['flow'] == line_config.USER_FLOW_CREATE_BOOKING:
-    reply_messages = handle_create_booking_messages(user_message, session)
+    reply_messages = handle_create_booking_messages(user_message, session, booking_dao)
 
   if (len(reply_messages) > 0):
     line_bot_api.reply_message(
@@ -121,7 +121,7 @@ def handle_message_postback(event):
 
   elif command_obj['command'] == line_config.POSTBACK_COMMAND_CREATE_BOOKING__SELECT_CHECK_IN_DATE:
     selected_date = event.postback.params['date']
-    reply_messages = handle_create_booking_messages(selected_date, session)
+    reply_messages = handle_create_booking_messages(selected_date, session, booking_dao)
 
   else:
     app.logger.warning(f"Unrecognized postback command: {command_obj['command']}")
