@@ -193,7 +193,7 @@ class BookingDAO:
     next_id = None
     try:
       cursor = connection.cursor()
-      query = "SELECT nextval('bookings_booking_id_seq')"
+      query = "SELECT COALESCE(MAX(booking_id), 0) + 1 AS next_booking_id FROM Bookings;"
       cursor.execute(query)
       next_id = cursor.fetchone()[0]
     except Exception as e:
