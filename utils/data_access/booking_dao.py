@@ -185,6 +185,23 @@ class BookingDAO:
       self.release_connection(connection)
     return booking_id
 
+  def get_next_booking_id(self):
+    connection = self.get_connection()
+    if not connection:
+      return None
+
+    next_id = None
+    try:
+      cursor = connection.cursor()
+      query = "SELECT nextval('bookings_booking_id_seq')"
+      cursor.execute(query)
+      next_id = cursor.fetchone()[0]
+    except Exception as e:
+      self.logger.error(f"Error fetching next booking_id: {e}")
+    finally:
+      self.release_connection(connection)
+    return next_id
+
   def search_booking_by_keyword(self, keyword, limit=3) -> Optional[list[BookingInfo]]:
     connection = self.get_connection()
     if not connection:
@@ -530,9 +547,9 @@ class BookingDAO:
         # Add price for each room for the current date
         for room_id in room_ids:
           if is_holiday:
-            total_price += room_pricing[room_id]["holiday_price"]
+            total_price += int(room_pricing[room_id]["holiday_price"])
           else:
-            total_price += room_pricing[room_id]["weekday_price"]
+            total_price += int(room_pricing[room_id]["weekday_price"])
 
         # Move to the next day
         current_date += timedelta(days=1)

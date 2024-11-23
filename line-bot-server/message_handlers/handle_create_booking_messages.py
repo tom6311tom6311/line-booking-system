@@ -256,7 +256,7 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
         )
       )
       booking_info = BookingInfo(
-        booking_id=-1,
+        booking_id=booking_dao.get_next_booking_id(),
         status='new',
         customer_name=session['data']['customer_name'],
         phone_number=session['data']['phone_number'],
@@ -271,7 +271,8 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
         room_ids=''.join(session['data']['room_ids'])
       )
       booking_info_preview_text = format_booking_info(booking_info, 'normal')
-      reply_messages.append(TextSendMessage(text=f"請確認訂單資訊:\n{booking_info_preview_text}", quick_reply=QuickReply(items=quick_reply_buttons)))
+      reply_messages.append(TextSendMessage(text=f"請確認訂單資訊:"))
+      reply_messages.append(TextSendMessage(text=booking_info_preview_text, quick_reply=QuickReply(items=quick_reply_buttons)))
       session['step'] = line_config.USER_FLOW_STEP_CREATE_BOOKING__CONFIRM
 
   elif session['step'] == line_config.USER_FLOW_STEP_CREATE_BOOKING__CONFIRM:
@@ -285,7 +286,7 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
       reply_messages.append(TextSendMessage(text=f"是否確認新增訂單？請點擊確認或取消", quick_reply=QuickReply(items=quick_reply_buttons)))
     else:
       booking_info = BookingInfo(
-        booking_id=-1,
+        booking_id=booking_dao.get_next_booking_id(),
         status='new',
         customer_name=session['data']['customer_name'],
         phone_number=session['data']['phone_number'],
@@ -300,8 +301,7 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
         room_ids=''.join(session['data']['room_ids'])
       )
       booking_id = booking_dao.upsert_booking(booking_info)
-      quick_reply_buttons = []
-      reply_messages.append(TextSendMessage(text=f"訂單已新增完成, ID:{booking_id}", quick_reply=QuickReply(items=quick_reply_buttons)))
+      reply_messages.append(TextSendMessage(text=f"訂單已新增完成, ID:{booking_id}"))
 
       # clear session data
       session['flow'], session['step'], session['data'] = None, None, {}
