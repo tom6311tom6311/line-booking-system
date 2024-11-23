@@ -9,7 +9,8 @@ from utils.data_access.booking_dao import BookingDAO
 from utils.booking_utils import format_booking_info
 from utils.input_utils import is_valid_date
 from app_utils.line_messaging_utils import create_booking_carousel_message
-from message_handlers import handle_default_messages, handle_create_booking_messages
+from message_handlers.handle_default_messages import handle_default_messages
+from message_handlers.handle_create_booking_messages import handle_create_booking_messages
 
 app = Flask(__name__)
 
