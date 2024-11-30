@@ -57,6 +57,30 @@ def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant
 
   return message
 
+# Function to list down the changes of a booking
+def format_booking_changes(booking_dict: dict):
+  message = "更改項目：\n"
+  if ('customer_name' in booking_dict):
+    message += f"姓名：{booking_dict['customer_name']}\n"
+  if ('phone_number' in booking_dict):
+    message += f"電話：{booking_dict['phone_number']}\n"
+  if ('check_in_date' in booking_dict):
+    message += f"入住日期：{booking_dict['check_in_date'].strftime('%Y/%m/%d')}\n"
+  if ('last_date' in booking_dict):
+    check_out_date = booking_dict['last_date'] + datetime.timedelta(days=1)
+    message += f"退房日期：{check_out_date.strftime('%Y/%m/%d')}\n"
+  if ('total_price' in booking_dict):
+    message += f"總金額：{booking_dict['total_price']}\n"
+  if ('notes' in booking_dict):
+    message += f"備註：{booking_dict['notes']}\n"
+  if ('source' in booking_dict):
+    message += f"來源：{booking_dict['source']}\n"
+  if ('prepayment' in booking_dict):
+    message += f"訂金：{booking_dict['prepayment']}元\n"
+  if ('room_ids' in booking_dict):
+    message += f"預計讓他睡：{''.join(booking_dict['room_ids'])}\n"
+  return message
+
 # Function to determine if a customer name is generic
 def is_generic_name(name):
   for g_name in GENERIC_NAMES:

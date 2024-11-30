@@ -7,6 +7,7 @@ from utils.data_access.data_class.booking_info import BookingInfo
 from utils.data_access.booking_dao import BookingDAO
 from utils.booking_utils import format_booking_info
 from utils.input_utils import is_valid_date, is_valid_phone_number, is_valid_num_nights, is_valid_price
+from app_utils.line_messaging_utils import generate_go_to_previous_step_button
 
 PREVIOUS_STEP = {
   line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_PHONE_NUMBER: line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_CUSTOMER_NAME,
@@ -23,10 +24,7 @@ PREVIOUS_STEP = {
 def handle_create_booking_messages(user_message: str, session: dict, booking_dao: BookingDAO):
   reply_messages = []
   quick_reply_buttons = [
-    QuickReplyButton(action=MessageAction(
-      label=line_config.USER_COMMAND_GO_TO_PREVIOUS_STEP_OF_CURRENT_FLOW,
-      text=line_config.USER_COMMAND_GO_TO_PREVIOUS_STEP_OF_CURRENT_FLOW)
-    )
+    generate_go_to_previous_step_button()
   ]
 
   if user_message == line_config.USER_COMMAND_CANCEL_CURRENT_FLOW:
@@ -90,11 +88,11 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
       session['data']['check_in_date'] = datetime.strptime(user_message, '%Y-%m-%d')
       quick_reply_buttons += [
         QuickReplyButton(action=MessageAction(
-          label=line_config.USER_COMMAND_CREATE_BOOKING__SELECT_NUM_NIGHTS_1,
+          label=line_config.USER_COMMAND_UPDATE_BOOKING__SELECT_NUM_NIGHTS_1,
           text='1')
         ),
         QuickReplyButton(action=MessageAction(
-          label=line_config.USER_COMMAND_CREATE_BOOKING__SELECT_NUM_NIGHTS_2,
+          label=line_config.USER_COMMAND_UPDATE_BOOKING__SELECT_NUM_NIGHTS_2,
           text='2')
         ),
       ]
@@ -105,11 +103,11 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
     if not is_valid_num_nights(user_message):
       quick_reply_buttons += [
         QuickReplyButton(action=MessageAction(
-          label=line_config.USER_COMMAND_CREATE_BOOKING__SELECT_NUM_NIGHTS_1,
+          label=line_config.USER_COMMAND_UPDATE_BOOKING__SELECT_NUM_NIGHTS_1,
           text='1')
         ),
         QuickReplyButton(action=MessageAction(
-          label=line_config.USER_COMMAND_CREATE_BOOKING__SELECT_NUM_NIGHTS_2,
+          label=line_config.USER_COMMAND_UPDATE_BOOKING__SELECT_NUM_NIGHTS_2,
           text='2')
         ),
       ]
@@ -129,7 +127,7 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
       session['step'] = line_config.USER_FLOW_STEP_CREATE_BOOKING__SELECT_ROOMS
 
   elif session['step'] == line_config.USER_FLOW_STEP_CREATE_BOOKING__SELECT_ROOMS:
-    if user_message != line_config.USER_COMMAND_CREATE_BOOKING__SELECT_ROOMS_FINISH:
+    if user_message != line_config.USER_COMMAND_UPDATE_BOOKING__SELECT_ROOMS_FINISH:
       valid_room_ids = booking_dao.get_all_room_ids()
       available_room_ids = booking_dao.get_available_room_ids(session['data']['check_in_date'], session['data']['last_date'])
       available_room_ids = [room_id for room_id in available_room_ids if room_id not in session['data']['room_ids']]
@@ -145,8 +143,8 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
         session['data']['room_ids'].append(user_message)
         quick_reply_buttons.append(
           QuickReplyButton(action=MessageAction(
-            label=line_config.USER_COMMAND_CREATE_BOOKING__SELECT_ROOMS_FINISH,
-            text=line_config.USER_COMMAND_CREATE_BOOKING__SELECT_ROOMS_FINISH)
+            label=line_config.USER_COMMAND_UPDATE_BOOKING__SELECT_ROOMS_FINISH,
+            text=line_config.USER_COMMAND_UPDATE_BOOKING__SELECT_ROOMS_FINISH)
           )
         )
         quick_reply_buttons += [
@@ -231,8 +229,8 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
       session['data']['source'] = user_message
       quick_reply_buttons.append(
         QuickReplyButton(action=MessageAction(
-          label=line_config.USER_COMMAND_CREATE_BOOKING__GET_NOTES_FINISH,
-          text=line_config.USER_COMMAND_CREATE_BOOKING__GET_NOTES_FINISH)
+          label=line_config.USER_COMMAND_UPDATE_BOOKING__GET_NOTES_FINISH,
+          text=line_config.USER_COMMAND_UPDATE_BOOKING__GET_NOTES_FINISH)
         )
       )
       reply_messages.append(TextSendMessage(text="請輸入備註:", quick_reply=QuickReply(items=quick_reply_buttons)))
@@ -242,17 +240,17 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
     if is_previous_step:
       quick_reply_buttons.append(
         QuickReplyButton(action=MessageAction(
-          label=line_config.USER_COMMAND_CREATE_BOOKING__GET_NOTES_FINISH,
-          text=line_config.USER_COMMAND_CREATE_BOOKING__GET_NOTES_FINISH)
+          label=line_config.USER_COMMAND_UPDATE_BOOKING__GET_NOTES_FINISH,
+          text=line_config.USER_COMMAND_UPDATE_BOOKING__GET_NOTES_FINISH)
         )
       )
       reply_messages.append(TextSendMessage(text="請輸入備註:", quick_reply=QuickReply(items=quick_reply_buttons)))
     else:
-      session['data']['notes'] = '' if user_message == line_config.USER_COMMAND_CREATE_BOOKING__GET_NOTES_FINISH else user_message
+      session['data']['notes'] = '' if user_message == line_config.USER_COMMAND_UPDATE_BOOKING__GET_NOTES_FINISH else user_message
       quick_reply_buttons.append(
         QuickReplyButton(action=MessageAction(
-          label=line_config.USER_COMMAND_CREATE_BOOKING__CONFIRM_FINISH,
-          text=line_config.USER_COMMAND_CREATE_BOOKING__CONFIRM_FINISH)
+          label=line_config.USER_COMMAND_UPDATE_BOOKING__CONFIRM_FINISH,
+          text=line_config.USER_COMMAND_UPDATE_BOOKING__CONFIRM_FINISH)
         )
       )
       booking_info = BookingInfo(
@@ -276,11 +274,11 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
       session['step'] = line_config.USER_FLOW_STEP_CREATE_BOOKING__CONFIRM
 
   elif session['step'] == line_config.USER_FLOW_STEP_CREATE_BOOKING__CONFIRM:
-    if user_message != line_config.USER_COMMAND_CREATE_BOOKING__CONFIRM_FINISH:
+    if user_message != line_config.USER_COMMAND_UPDATE_BOOKING__CONFIRM_FINISH:
       quick_reply_buttons.append(
         QuickReplyButton(action=MessageAction(
-          label=line_config.USER_COMMAND_CREATE_BOOKING__CONFIRM_FINISH,
-          text=line_config.USER_COMMAND_CREATE_BOOKING__CONFIRM_FINISH)
+          label=line_config.USER_COMMAND_UPDATE_BOOKING__CONFIRM_FINISH,
+          text=line_config.USER_COMMAND_UPDATE_BOOKING__CONFIRM_FINISH)
         )
       )
       reply_messages.append(TextSendMessage(text=f"是否確認新增訂單？請點擊確認或取消", quick_reply=QuickReply(items=quick_reply_buttons)))

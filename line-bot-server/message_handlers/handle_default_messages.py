@@ -2,8 +2,9 @@ import json
 import datetime
 from linebot.models import TextSendMessage,  QuickReply, QuickReplyButton, MessageAction, DatetimePickerAction
 from app_const import line_config
+from utils.input_utils import extract_booking_id
 from utils.data_access.booking_dao import BookingDAO
-from app_utils.line_messaging_utils import create_booking_carousel_message
+from app_utils.line_messaging_utils import generate_booking_carousel_message, generate_edit_booking_select_attribute_quick_reply_buttons
 
 def handle_default_messages(user_message: str, session: dict, booking_dao: BookingDAO):
   reply_messages = []
@@ -44,7 +45,7 @@ def handle_default_messages(user_message: str, session: dict, booking_dao: Booki
     if not matches:
       reply_messages.append(TextSendMessage(text="找不到任何訂單"))
     else:
-      reply_messages.append(create_booking_carousel_message(matches))
+      reply_messages.append(generate_booking_carousel_message(matches))
 
   elif user_message == line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_TODAY:
     date_today = datetime.date.today()
@@ -52,7 +53,7 @@ def handle_default_messages(user_message: str, session: dict, booking_dao: Booki
     if not matches:
       reply_messages.append(TextSendMessage(text="找不到任何訂單"))
     else:
-      reply_messages.append(create_booking_carousel_message(matches))
+      reply_messages.append(generate_booking_carousel_message(matches))
 
   elif user_message == line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_TOMORROW:
     date_tomorrow = datetime.date.today() + datetime.timedelta(days=1)
@@ -60,7 +61,7 @@ def handle_default_messages(user_message: str, session: dict, booking_dao: Booki
     if not matches:
       reply_messages.append(TextSendMessage(text="找不到任何訂單"))
     else:
-      reply_messages.append(create_booking_carousel_message(matches))
+      reply_messages.append(generate_booking_carousel_message(matches))
 
   elif user_message == line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_THIS_SATURDAY:
     date_today = datetime.date.today()
@@ -70,7 +71,7 @@ def handle_default_messages(user_message: str, session: dict, booking_dao: Booki
     if not matches:
       reply_messages.append(TextSendMessage(text="找不到任何訂單"))
     else:
-      reply_messages.append(create_booking_carousel_message(matches))
+      reply_messages.append(generate_booking_carousel_message(matches))
 
   elif user_message == line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_LAST_SATURDAY:
     date_today = datetime.date.today()
@@ -80,7 +81,7 @@ def handle_default_messages(user_message: str, session: dict, booking_dao: Booki
     if not matches:
       reply_messages.append(TextSendMessage(text="找不到任何訂單"))
     else:
-      reply_messages.append(create_booking_carousel_message(matches))
+      reply_messages.append(generate_booking_carousel_message(matches))
 
   elif user_message == line_config.USER_COMMAND_CREATE_BOOKING:
     quick_reply_buttons = [
@@ -95,6 +96,20 @@ def handle_default_messages(user_message: str, session: dict, booking_dao: Booki
     session['step'] = line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_CUSTOMER_NAME
     session['data'] = {}
 
+  elif booking_id := extract_booking_id(user_message, line_config.USER_COMMAND_EDIT_BOOKING):
+    quick_reply_buttons = [
+      QuickReplyButton(action=MessageAction(
+        label=line_config.USER_COMMAND_EDIT_BOOKING__FINISH,
+        text=line_config.USER_COMMAND_EDIT_BOOKING__FINISH)
+      ),
+    ]
+    quick_reply_buttons += generate_edit_booking_select_attribute_quick_reply_buttons()
+    quick_reply = QuickReply(items=quick_reply_buttons)
+    reply_messages.append(TextSendMessage(text="請選擇要更改的項目:", quick_reply=quick_reply))
+    session['flow'] = line_config.USER_FLOW_EDIT_BOOKING
+    session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__SELECT_ATTRIBUTE
+    session['data'] = { booking_id }
+
   else:
     # Assuming the user provides a keyword
     keyword = user_message
@@ -103,6 +118,6 @@ def handle_default_messages(user_message: str, session: dict, booking_dao: Booki
     if not matches:
       reply_messages.append(TextSendMessage(text="找不到任何訂單"))
     else:
-      reply_messages.append(create_booking_carousel_message(matches))
+      reply_messages.append(generate_booking_carousel_message(matches))
 
   return reply_messages

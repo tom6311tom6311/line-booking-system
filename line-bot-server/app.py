@@ -8,9 +8,10 @@ from app_const import line_config
 from utils.data_access.booking_dao import BookingDAO
 from utils.booking_utils import format_booking_info
 from utils.input_utils import is_valid_date
-from app_utils.line_messaging_utils import create_booking_carousel_message
+from app_utils.line_messaging_utils import generate_booking_carousel_message
 from message_handlers.handle_default_messages import handle_default_messages
 from message_handlers.handle_create_booking_messages import handle_create_booking_messages
+from message_handlers.handle_edit_booking_messages import handle_edit_booking_messages
 
 app = Flask(__name__)
 
@@ -73,12 +74,11 @@ def handle_message(event):
   if not session['flow']:
     reply_messages = handle_default_messages(user_message, session, booking_dao)
 
-  elif user_message == line_config.USER_COMMAND_CANCEL_CURRENT_FLOW:
-    del user_sessions[user_id]
-    reply_messages.append(TextSendMessage(text="已取消"))
-
   elif session['flow'] == line_config.USER_FLOW_CREATE_BOOKING:
     reply_messages = handle_create_booking_messages(user_message, session, booking_dao)
+
+  elif session['flow'] == line_config.USER_FLOW_EDIT_BOOKING:
+    reply_messages = handle_edit_booking_messages(user_message, session, booking_dao)
 
   if (len(reply_messages) > 0):
     line_bot_api.reply_message(
@@ -111,7 +111,7 @@ def handle_message_postback(event):
     if not matches:
       reply_messages.append(TextSendMessage(text="找不到任何訂單"))
     else:
-      reply_messages.append(create_booking_carousel_message(matches))
+      reply_messages.append(generate_booking_carousel_message(matches))
 
   elif command_obj['command'] == line_config.POSTBACK_COMMAND_VIEW_FULL_BOOKING_INFO:
     booking_id = command_obj['booking_id']
@@ -121,7 +121,13 @@ def handle_message_postback(event):
 
   elif command_obj['command'] == line_config.POSTBACK_COMMAND_CREATE_BOOKING__SELECT_CHECK_IN_DATE:
     selected_date = event.postback.params['date']
-    reply_messages = handle_create_booking_messages(selected_date, session, booking_dao)
+    reply_messages.append(TextSendMessage(line_config.USER_COMMAND_UPDATE_BOOKING__SELECT_CHECK_IN_DATE.format(date=selected_date.replace('-', '/'))))
+    reply_messages += handle_create_booking_messages(selected_date, session, booking_dao)
+
+  elif command_obj['command'] == line_config.POSTBACK_COMMAND_EDIT_BOOKING__SELECT_CHECK_IN_DATE:
+    selected_date = event.postback.params['date']
+    reply_messages.append(TextSendMessage(line_config.USER_COMMAND_UPDATE_BOOKING__SELECT_CHECK_IN_DATE.format(date=selected_date.replace('-', '/'))))
+    reply_messages += handle_edit_booking_messages(selected_date, session, booking_dao)
 
   else:
     app.logger.warning(f"Unrecognized postback command: {command_obj['command']}")
