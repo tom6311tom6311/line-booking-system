@@ -108,7 +108,7 @@ def handle_default_messages(user_message: str, session: dict, booking_dao: Booki
     reply_messages.append(TextSendMessage(text="請選擇要更改的項目:", quick_reply=quick_reply))
     session['flow'] = line_config.USER_FLOW_EDIT_BOOKING
     session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__SELECT_ATTRIBUTE
-    session['data'] = { booking_id }
+    session['data'] = { 'booking_id': booking_id }
 
   else:
     # Assuming the user provides a keyword
