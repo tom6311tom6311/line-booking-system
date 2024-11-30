@@ -16,9 +16,9 @@ def generate_booking_carousel_message(matches: typing.Optional[Sequence[BookingI
       title=f"ID: {match.booking_id}",
       text=format_booking_info(match, 'carousel'),
       actions=[
-        PostbackAction(label="檢視", display_text=f"檢視訂單{match.booking_id}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_VIEW_FULL_BOOKING_INFO, 'booking_id': match.booking_id }), inputOption="closeRichMenu"),
-        PostbackAction(label="更改", display_text=f"更改訂單{match.booking_id}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_EDIT_BOOKING, 'booking_id': match.booking_id }), inputOption="closeRichMenu"),
-        PostbackAction(label="取消", display_text=f"取消訂單{match.booking_id}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_CANCEL_BOOKING, 'booking_id': match.booking_id }), inputOption="closeRichMenu")
+        PostbackAction(label="檢視", display_text=f"檢視訂單 {match.booking_id}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_VIEW_FULL_BOOKING_INFO, 'booking_id': match.booking_id }), inputOption="closeRichMenu"),
+        MessageAction(label="更改", text=line_config.USER_COMMAND_EDIT_BOOKING.format(booking_id=match.booking_id), inputOption="closeRichMenu"),
+        PostbackAction(label="取消", display_text=f"取消訂單 {match.booking_id}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_CANCEL_BOOKING, 'booking_id': match.booking_id }), inputOption="closeRichMenu")
       ]
     )
     columns.append(column)
