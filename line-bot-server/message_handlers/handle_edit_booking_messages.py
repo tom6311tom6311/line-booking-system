@@ -4,7 +4,7 @@ from linebot.models import TextSendMessage,  QuickReply, QuickReplyButton, Messa
 from const.booking_const import VALID_BOOKING_SOURCES
 from app_const import line_config
 from utils.data_access.booking_dao import BookingDAO
-from utils.booking_utils import format_booking_changes
+from utils.booking_utils import format_booking_changes, trim_booking_changes
 from utils.input_utils import is_valid_date, is_valid_phone_number, is_valid_num_nights, is_valid_price, format_phone_number
 from app_utils.line_messaging_utils import generate_edit_booking_select_attribute_quick_reply_buttons, generate_go_to_previous_step_button
 
@@ -24,18 +24,25 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
     return reply_messages
 
   if user_message == line_config.USER_COMMAND_EDIT_BOOKING__FINISH:
-    quick_reply_buttons = [
-      QuickReplyButton(action=MessageAction(
-        label='不要儲存',
-        text=line_config.USER_COMMAND_CANCEL_CURRENT_FLOW)
-      ),
-      QuickReplyButton(action=MessageAction(
-        label='儲存變更',
-        text=line_config.USER_COMMAND_CONFIRM)
-      ),
-    ]
-    reply_messages.append(TextSendMessage(text=f"是否儲存變更？\n{format_booking_changes(session['data'])}", quick_reply=QuickReply(items=quick_reply_buttons)))
-    session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__CONFIRM
+    booking_info = booking_dao.get_booking_info(session['data']['booking_id'])
+    session['data'] = trim_booking_changes(session['data'], booking_info)
+    booking_changes_summary = format_booking_changes(session['data'])
+    if not booking_changes_summary:
+      session['flow'], session['step'], session['data'] = None, None, {}
+      reply_messages.append(TextSendMessage(text="已取消"))
+    else:
+      quick_reply_buttons = [
+        QuickReplyButton(action=MessageAction(
+          label='不要儲存',
+          text=line_config.USER_COMMAND_CANCEL_CURRENT_FLOW)
+        ),
+        QuickReplyButton(action=MessageAction(
+          label='儲存變更',
+          text=line_config.USER_COMMAND_CONFIRM)
+        ),
+      ]
+      reply_messages.append(TextSendMessage(text=f"是否儲存變更？\n{booking_changes_summary}", quick_reply=QuickReply(items=quick_reply_buttons)))
+      session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__CONFIRM
     return reply_messages
 
   if user_message == line_config.USER_COMMAND_GO_TO_PREVIOUS_STEP_OF_CURRENT_FLOW:
