@@ -63,7 +63,9 @@ def format_booking_changes(booking_dict: dict):
   if ('customer_name' in booking_dict):
     message += f"姓名：{booking_dict['customer_name']}\n"
   if ('phone_number' in booking_dict):
-    message += f"電話：{booking_dict['phone_number']}\n"
+    if booking_dict['phone_number'].startswith('+886'):
+      phone_number = '0' + booking_dict['phone_number'][4:]
+    message += f"電話：{phone_number}\n"
   if ('check_in_date' in booking_dict):
     message += f"入住日期：{booking_dict['check_in_date'].strftime('%Y/%m/%d')}\n"
   if ('last_date' in booking_dict):

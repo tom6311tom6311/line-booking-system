@@ -30,6 +30,12 @@ def is_valid_phone_number(phone_number: str):
 
   return True
 
+# Convert phone numbers starting with '0' to '+886' if necessary
+def format_phone_number(phone_number: str):
+  if phone_number.startswith('0'):
+    return '+886' + phone_number[1:]
+  return phone_number
+
 def is_valid_num_nights(num_nights: str):
   if num_nights.isdigit():
     # Convert to integer and check range

@@ -6,6 +6,7 @@ from const import db_config
 from const.booking_const import VALID_BOOKING_SOURCES
 from utils.data_access.data_class.booking_info import BookingInfo
 from utils.data_access.booking_dao import BookingDAO
+from utils.input_utils import format_phone_number
 
 # DB Connection details
 DB_HOST = os.getenv('DB_HOST')
@@ -34,12 +35,8 @@ def parse_booking(text):
     # Extract phone_number (starts with + and followed by digits or may start with 0 for Taiwan format)
     phone_match = re.search(r'電話：(\+?\d+)', text)
     if phone_match:
-        phone_number = phone_match.group(1)
-        # Convert phone numbers starting with '0' to '+886' if necessary
-        if phone_number.startswith('0'):
-            booking_data['phone_number'] = '+886' + phone_number[1:]
-        else:
-            booking_data['phone_number'] = phone_number
+      phone_number = phone_match.group(1)
+      booking_data['phone_number'] = format_phone_number(phone_number)
 
     booking_data['room_name_string'] = re.search(r'預計讓他睡：(.+)', text).group(1)  # This will be processed later to extract rooms
     booking_data['check_in_date'] = re.search(r'入住日期：(\d{4}/\d{2}/\d{2})', text).group(1)

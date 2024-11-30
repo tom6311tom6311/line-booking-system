@@ -6,7 +6,7 @@ from app_const import line_config
 from utils.data_access.data_class.booking_info import BookingInfo
 from utils.data_access.booking_dao import BookingDAO
 from utils.booking_utils import format_booking_info
-from utils.input_utils import is_valid_date, is_valid_phone_number, is_valid_num_nights, is_valid_price
+from utils.input_utils import is_valid_date, is_valid_phone_number, is_valid_num_nights, is_valid_price, format_phone_number
 from app_utils.line_messaging_utils import generate_go_to_previous_step_button
 
 PREVIOUS_STEP = {
@@ -63,7 +63,7 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
     if is_previous_step or not is_valid_phone_number(user_message):
       reply_messages.append(TextSendMessage(text=f"{'' if is_previous_step else '輸入格式有誤，'}請重新輸入顧客電話:", quick_reply=QuickReply(items=quick_reply_buttons)))
     else:
-      session['data']['phone_number'] = user_message
+      session['data']['phone_number'] = format_phone_number(user_message)
       quick_reply_buttons.append(
         QuickReplyButton(action=DatetimePickerAction(
           label="選擇入住日期",
