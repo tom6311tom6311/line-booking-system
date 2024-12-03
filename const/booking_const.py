@@ -7,4 +7,4 @@ PREPAYMENT_STATUS_MAP = {
 }
 GENERIC_NAMES = ['先生', '小姐', '無名氏']
 VALID_BOOKING_SOURCES = ['自洽', 'Booking_com', 'FB', 'Agoda', '台灣旅宿', 'Airbnb']
-INVALID_PHONE_NUMBER_POSTFIX = '000000'
+GENERIC_PHONE_NUMBER_POSTFIX = '000000'

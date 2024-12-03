@@ -1,6 +1,6 @@
 import datetime
 import typing
-from const.booking_const import GENERIC_NAMES, BOOKING_STATUS_MARK, PREPAYMENT_STATUS_MAP
+from const.booking_const import GENERIC_NAMES, BOOKING_STATUS_MARK, PREPAYMENT_STATUS_MAP, GENERIC_PHONE_NUMBER_POSTFIX
 from utils.data_access.data_class.booking_info import BookingInfo
 
 # Function to format the booking info as per the required format
@@ -116,3 +116,7 @@ def is_generic_name(name):
     if g_name in name:
       return True
   return False
+
+# Function to determine if a phone number is generic
+def is_generic_phone_number(phone_number):
+  return phone_number.endswith(GENERIC_PHONE_NUMBER_POSTFIX)

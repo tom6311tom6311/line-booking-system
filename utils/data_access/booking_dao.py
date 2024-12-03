@@ -2,8 +2,7 @@ import psycopg2
 import psycopg2.pool
 from typing import Optional
 from datetime import datetime, timedelta
-from const.booking_const import INVALID_PHONE_NUMBER_POSTFIX
-from utils.booking_utils import is_generic_name
+from utils.booking_utils import is_generic_name, is_generic_phone_number
 from .data_class.booking_info import BookingInfo
 from .data_class.customer import Customer
 
@@ -391,7 +390,7 @@ class BookingDAO:
     try:
       cursor = connection.cursor()
       existing_customer = None
-      if not customer.phone_number.endswith(INVALID_PHONE_NUMBER_POSTFIX):
+      if not is_generic_phone_number(customer.phone_number):
         # Check if the customer exists based on phone number
         cursor.execute("SELECT customer_id, name, phone_number FROM Customers WHERE phone_number=%s", (customer.phone_number,))
         existing_customer = cursor.fetchone()
@@ -403,10 +402,10 @@ class BookingDAO:
       if existing_customer:
         customer_id, existing_name, existing_phone_number = existing_customer
         # Compare names and phone numbers and update if necessary
-        if is_generic_name(existing_name) and not is_generic_name(customer.name):
+        if not is_generic_name(customer.name) and customer.name != existing_name:
           self.logger.info(f"Updating customer name from {existing_name} to {customer.name}")
           cursor.execute("UPDATE Customers SET name=%s WHERE customer_id=%s", (customer.name, customer_id))
-        if existing_phone_number.endswith(INVALID_PHONE_NUMBER_POSTFIX) and not customer.phone_number.endswith(INVALID_PHONE_NUMBER_POSTFIX):
+        if not is_generic_phone_number(customer.phone_number) and customer.phone_number != existing_phone_number:
           self.logger.info(f"Updating customer phone number from {existing_phone_number} to {customer.phone_number}")
           cursor.execute("UPDATE Customers SET phone_number=%s WHERE customer_id=%s", (customer.phone_number, customer_id))
       else:
