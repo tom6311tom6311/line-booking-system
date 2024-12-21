@@ -2,7 +2,7 @@ import json
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, PostbackEvent, TextMessage, TextSendMessage
+from linebot.models import MessageEvent, PostbackEvent, TextMessage, TextSendMessage, QuickReply, QuickReplyButton, MessageAction, DatetimePickerAction
 from const import db_config
 from app_const import line_config
 from utils.data_access.booking_dao import BookingDAO
@@ -103,7 +103,51 @@ def handle_message_postback(event):
 
   session = user_sessions[user_id]
   reply_messages = []
-  if command_obj['command'] == line_config.POSTBACK_COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE:
+  if command_obj['command'] == line_config.POSTBACK_COMMAND_LOOKUP_BOOKING:
+    quick_reply_buttons = [
+      QuickReplyButton(action=DatetimePickerAction(
+        label="以入住日查詢",
+        data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE }),
+        mode="date")
+      ),
+      QuickReplyButton(action=MessageAction(
+        label=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_TODAY,
+        text=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_TODAY)
+      ),
+      QuickReplyButton(action=MessageAction(
+        label=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_OUT_TODAY,
+        text=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_OUT_TODAY)
+      ),
+      QuickReplyButton(action=MessageAction(
+        label=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_TOMORROW,
+        text=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_TOMORROW)
+      ),
+      QuickReplyButton(action=MessageAction(
+        label=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_THIS_SATURDAY,
+        text=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_THIS_SATURDAY)
+      ),
+      QuickReplyButton(action=MessageAction(
+        label=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_LAST_SATURDAY,
+        text=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_LAST_SATURDAY)
+      ),
+    ]
+    quick_reply = QuickReply(items=quick_reply_buttons)
+    reply_messages.append(TextSendMessage(text="請提供關鍵字:\n(ID、電話末3碼、姓名)", quick_reply=quick_reply))
+
+  elif command_obj['command'] == line_config.POSTBACK_COMMAND_CREATE_BOOKING:
+    quick_reply_buttons = [
+      QuickReplyButton(action=MessageAction(
+        label=line_config.USER_COMMAND_CANCEL_CURRENT_FLOW,
+        text=line_config.USER_COMMAND_CANCEL_CURRENT_FLOW)
+      ),
+    ]
+    quick_reply = QuickReply(items=quick_reply_buttons)
+    reply_messages.append(TextSendMessage(text="請輸入顧客姓名:", quick_reply=quick_reply))
+    session['flow'] = line_config.USER_FLOW_CREATE_BOOKING
+    session['step'] = line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_CUSTOMER_NAME
+    session['data'] = {}
+
+  elif command_obj['command'] == line_config.POSTBACK_COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE:
     selected_date = event.postback.params['date']
     reply_messages.append(TextSendMessage(line_config.USER_COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE.format(date=selected_date.replace('-', '/'))))
 
