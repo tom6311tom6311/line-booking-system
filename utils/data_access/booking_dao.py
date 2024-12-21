@@ -222,7 +222,12 @@ class BookingDAO:
         OR c.phone_number LIKE %s
         OR c.name LIKE %s
       GROUP BY b.booking_id, c.name, c.phone_number
-      ORDER BY b.booking_id DESC
+      ORDER BY
+        CASE
+          WHEN b.status = 'canceled' THEN 1
+          ELSE 0
+        END,
+        b.booking_id DESC
       LIMIT %s;
       """
 
@@ -283,7 +288,12 @@ class BookingDAO:
       JOIN Rooms r ON rb.room_id = r.room_id
       WHERE b.{date_field} = %s
       GROUP BY b.booking_id, c.name, c.phone_number
-      ORDER BY b.booking_id;
+      ORDER BY
+        CASE
+          WHEN b.status = 'canceled' THEN 1
+          ELSE 0
+        END,
+        b.booking_id;
       """
 
       cursor.execute(query.format(date_field=date_field), (date,))

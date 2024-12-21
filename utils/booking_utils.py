@@ -26,6 +26,7 @@ def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant
   message = ""
   if variant == 'carousel':
     message = (
+    f"{status_mark}\n" if status_mark else ''
     f"姓名：{booking_info.customer_name}\n"
     f"電話：{phone_number}\n"
     f"入住：{booking_info.check_in_date.strftime('%Y/%m/%d')}\n"
