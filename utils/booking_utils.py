@@ -30,6 +30,7 @@ def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant
       f"電話：{phone_number}\n"
       f"入住：{booking_info.check_in_date.strftime('%Y/%m/%d')}\n"
       f"晚數：{nights}\n"
+      f"房間：{booking_info.room_ids}\n"
       f"總金額：{total_price}\n"
     )
   elif variant == 'calendar':
