@@ -14,14 +14,18 @@ def generate_booking_carousel_message(matches: typing.Optional[Sequence[BookingI
   # Iterate over each match and create a carousel column
   for match in matches:
     status_mark = BOOKING_STATUS_MARK[match.status] if match.status in BOOKING_STATUS_MARK else ''
+    actions=[
+      PostbackAction(label="檢視", display_text=f"檢視訂單 {match.booking_id}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_VIEW_FULL_BOOKING_INFO, 'booking_id': match.booking_id }), inputOption="closeRichMenu"),
+      MessageAction(label="更改", text=line_config.USER_COMMAND_EDIT_BOOKING.format(booking_id=match.booking_id), inputOption="closeRichMenu")
+    ]
+    if match.status != 'canceled':
+      actions.append(PostbackAction(label="取消", display_text=f"取消訂單 {match.booking_id}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_CANCEL_BOOKING, 'booking_id': match.booking_id }), inputOption="closeRichMenu"))
+    else:
+      actions.append(PostbackAction(label="復原", display_text=f"復原訂單 {match.booking_id}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_RESTORE_BOOKING, 'booking_id': match.booking_id }), inputOption="closeRichMenu"))
     column = CarouselColumn(
       title=f"{status_mark}ID: {match.booking_id}",
       text=format_booking_info(match, 'carousel'),
-      actions=[
-        PostbackAction(label="檢視", display_text=f"檢視訂單 {match.booking_id}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_VIEW_FULL_BOOKING_INFO, 'booking_id': match.booking_id }), inputOption="closeRichMenu"),
-        MessageAction(label="更改", text=line_config.USER_COMMAND_EDIT_BOOKING.format(booking_id=match.booking_id), inputOption="closeRichMenu"),
-        PostbackAction(label="取消", display_text=f"取消訂單 {match.booking_id}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_CANCEL_BOOKING, 'booking_id': match.booking_id }), inputOption="closeRichMenu")
-      ]
+      actions=actions
     )
     columns.append(column)
 

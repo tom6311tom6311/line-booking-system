@@ -184,6 +184,66 @@ class BookingDAO:
       self.release_connection(connection)
     return booking_id
 
+  def cancel_booking(self, booking_id):
+    connection = self.get_connection()
+    if not connection:
+      return False
+
+    success = False
+    try:
+      cursor = connection.cursor()
+      query = """
+      UPDATE Bookings
+      SET status = 'canceled'::booking_statuses
+      WHERE booking_id = %s
+      RETURNING booking_id;
+      """
+      cursor.execute(query, (booking_id,))
+      result = cursor.fetchone()
+
+      if result:
+        success = True
+      else:
+        self.logger.warning(f"Trying to cancel booking with ID {booking_id} but not found.")
+
+    except Exception as e:
+      self.logger.error(f"Error canceling booking {booking_id}: {e}")
+    finally:
+      self.release_connection(connection)
+    return success
+
+  def restore_booking(self, booking_id):
+    connection = self.get_connection()
+    if not connection:
+      return False
+
+    success = False
+    try:
+      cursor = connection.cursor()
+      query = """
+      UPDATE Bookings
+      SET status =
+        CASE
+          WHEN prepayment_status = 'paid' THEN 'prepaid'::booking_statuses
+          ELSE 'new'::booking_statuses
+        END
+      WHERE booking_id = %s
+      RETURNING booking_id;
+      """
+      cursor.execute(query, (booking_id,))
+      result = cursor.fetchone()
+
+      if result:
+        success = True
+      else:
+        self.logger.warning(f"Trying to restore booking with ID {booking_id} but not found.")
+
+    except Exception as e:
+      self.logger.error(f"Error restoring booking {booking_id}: {e}")
+    finally:
+      self.release_connection(connection)
+    return success
+
   def get_next_booking_id(self):
     connection = self.get_connection()
     if not connection:
