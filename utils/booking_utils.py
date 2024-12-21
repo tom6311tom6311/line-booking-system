@@ -8,8 +8,9 @@ def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant
   if not booking_info:
     return None
 
-  if booking_info.phone_number.startswith('+886'):
-    booking_info.phone_number = '0' + booking_info.phone_number[4:]
+  phone_number = booking_info.phone_number
+  if phone_number.startswith('+886'):
+    phone_number = '0' + phone_number[4:]
   total_price = int(booking_info.total_price)
   prepayment = int(booking_info.prepayment)
 
@@ -26,7 +27,7 @@ def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant
   if variant == 'carousel':
     message = (
     f"姓名：{booking_info.customer_name}\n"
-    f"電話：{booking_info.phone_number}\n"
+    f"電話：{phone_number}\n"
     f"入住：{booking_info.check_in_date.strftime('%Y/%m/%d')}\n"
     f"晚數：{nights}\n"
     f"總金額：{total_price}\n"
@@ -34,7 +35,7 @@ def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant
   elif variant == 'calendar':
     message = (
       f"ＩＤ：{booking_info.booking_id}\n"
-      f"電話：{booking_info.phone_number}\n"
+      f"電話：{phone_number}\n"
       f"訂金：{prepayment}元/{booking_info.prepayment_status}\n"
       f"來源：{booking_info.source}\n"
       f"備註：{booking_info.notes}\n"
@@ -44,7 +45,7 @@ def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant
       f"[訂單]{status_mark}\n"
       f"ＩＤ：{booking_info.booking_id if booking_info.booking_id > 0 else ''}\n"
       f"姓名：{booking_info.customer_name}\n"
-      f"電話：{booking_info.phone_number}\n"
+      f"電話：{phone_number}\n"
       f"入住日期：{booking_info.check_in_date.strftime('%Y/%m/%d')}\n"
       f"退房日期：{check_out_date.strftime('%Y/%m/%d')}\n"
       f"晚數：{nights}\n"

@@ -5,7 +5,7 @@ from typing import List
 from datetime import datetime
 from const import db_config
 from notion_client import Client
-from utils.booking_utils import format_booking_info
+from utils.input_utils import format_phone_number
 from utils.data_access.booking_dao import BookingDAO
 from utils.data_access.data_class.booking_info import BookingInfo
 
@@ -90,7 +90,7 @@ def load_booking_info_from_notion_entry(notion_entry: dict):
     properties = notion_entry['properties']
     booking_id = int(properties['ID']['title'][0]['text']['content'])
     customer_name = properties['姓名']['rich_text'][0]['text']['content']
-    phone_number = properties['電話']['phone_number']
+    phone_number = format_phone_number(properties['電話']['phone_number'])
     check_in_date = properties['日期(不含退房日)']['date']['start']
     last_date = properties['日期(不含退房日)']['date']['end']
     room_ids = ''.join([s['name'] for s in properties['房間']['multi_select']])

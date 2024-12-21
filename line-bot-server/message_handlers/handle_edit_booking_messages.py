@@ -256,8 +256,6 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
         booking_info.prepayment = session['data']['prepayment']
       if ('room_ids' in session['data']):
         booking_info.room_ids = ''.join(session['data']['room_ids'])
-      if ('phone_number' in session['data']):
-        booking_info.phone_number = session['data']['phone_number']
       booking_id = booking_dao.upsert_booking(booking_info)
       reply_messages.append(TextSendMessage(text=f"訂單ID{booking_id}已更改完成"))
 
