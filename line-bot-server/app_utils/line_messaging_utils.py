@@ -2,6 +2,7 @@ import typing
 import json
 from collections.abc import Sequence
 from linebot.models import CarouselColumn, CarouselTemplate, TemplateSendMessage, PostbackAction, QuickReplyButton, MessageAction, DatetimePickerAction
+from const.booking_const import BOOKING_STATUS_MARK
 from app_const import line_config
 from utils.data_access.data_class.booking_info import BookingInfo
 from utils.booking_utils import format_booking_info
@@ -12,8 +13,9 @@ def generate_booking_carousel_message(matches: typing.Optional[Sequence[BookingI
 
   # Iterate over each match and create a carousel column
   for match in matches:
+    status_mark = BOOKING_STATUS_MARK[match.status] if match.status in BOOKING_STATUS_MARK else ''
     column = CarouselColumn(
-      title=f"ID: {match.booking_id}",
+      title=f"{status_mark}ID: {match.booking_id}",
       text=format_booking_info(match, 'carousel'),
       actions=[
         PostbackAction(label="檢視", display_text=f"檢視訂單 {match.booking_id}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_VIEW_FULL_BOOKING_INFO, 'booking_id': match.booking_id }), inputOption="closeRichMenu"),
