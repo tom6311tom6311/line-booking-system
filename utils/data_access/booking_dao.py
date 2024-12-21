@@ -3,6 +3,7 @@ import psycopg2.pool
 from typing import Optional
 from datetime import datetime, timedelta
 from utils.booking_utils import is_generic_name, is_generic_phone_number
+from utils.line_notification_service import LineNotificationService
 from .data_class.booking_info import BookingInfo
 from .data_class.customer import Customer
 
@@ -10,9 +11,10 @@ from .data_class.customer import Customer
 class BookingDAO:
   _instance = None
 
-  def __init__(self, db_config, logger):
+  def __init__(self, db_config, logger, enable_notification):
     self.db_config = db_config
     self.logger = logger
+    self.enable_notification = enable_notification
     try:
       # Create a connection pool with min and max connections
       self.connection_pool = psycopg2.pool.SimpleConnectionPool(
@@ -29,9 +31,9 @@ class BookingDAO:
       self.logger.error(f"Error while creating the connection pool: {error}")
 
   @classmethod
-  def get_instance(cls, db_config=None, logger=None):
+  def get_instance(cls, db_config=None, logger=None, enable_notification=True):
     if cls._instance is None:
-      cls._instance = BookingDAO(db_config, logger)
+      cls._instance = BookingDAO(db_config, logger, enable_notification)
     return cls._instance
 
   def get_connection(self):
@@ -178,6 +180,24 @@ class BookingDAO:
           room_id
         ))
       cursor.close()
+
+      if (self.enable_notification):
+        if existing_booking_info:
+          if (
+            booking_info.customer_name != existing_booking_info.customer_name or
+            booking_info.phone_number != existing_booking_info.phone_number or
+            booking_info.check_in_date != existing_booking_info.check_in_date or
+            booking_info.last_date != existing_booking_info.last_date or
+            booking_info.total_price != existing_booking_info.total_price or
+            booking_info.source != existing_booking_info.source or
+            booking_info.notes != existing_booking_info.notes
+          ):
+            LineNotificationService(self.logger).notify_booking_updated(booking_info)
+          if booking_info.prepayment_status == 'paid' and existing_booking_info.prepayment_status == 'unpaid':
+            LineNotificationService(self.logger).notify_booking_prepaid(booking_info)
+        else:
+          LineNotificationService(self.logger).notify_booking_created(booking_info)
+
     except Exception as e:
       self.logger.error(f"Error upsert booking {booking_id}: {e}")
     finally:
@@ -187,6 +207,11 @@ class BookingDAO:
   def cancel_booking(self, booking_id):
     connection = self.get_connection()
     if not connection:
+      return False
+
+    existing_booking_info = self.get_booking_info(booking_id)
+    if not existing_booking_info:
+      self.logger.warning(f"Trying to cancel booking with ID {booking_id} but not found.")
       return False
 
     success = False
@@ -203,6 +228,8 @@ class BookingDAO:
 
       if result:
         success = True
+        if (self.enable_notification):
+          LineNotificationService(self.logger).notify_booking_canceled(existing_booking_info)
       else:
         self.logger.warning(f"Trying to cancel booking with ID {booking_id} but not found.")
 
@@ -215,6 +242,11 @@ class BookingDAO:
   def restore_booking(self, booking_id):
     connection = self.get_connection()
     if not connection:
+      return False
+
+    existing_booking_info = self.get_booking_info(booking_id)
+    if not existing_booking_info:
+      self.logger.warning(f"Trying to restore booking with ID {booking_id} but not found.")
       return False
 
     success = False
@@ -235,6 +267,8 @@ class BookingDAO:
 
       if result:
         success = True
+        if (self.enable_notification):
+          LineNotificationService(self.logger).notify_booking_created(existing_booking_info)
       else:
         self.logger.warning(f"Trying to restore booking with ID {booking_id} but not found.")
 

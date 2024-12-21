@@ -4,7 +4,7 @@ from const.booking_const import GENERIC_NAMES, BOOKING_STATUS_MARK, PREPAYMENT_S
 from utils.data_access.data_class.booking_info import BookingInfo
 
 # Function to format the booking info as per the required format
-def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant='normal'):
+def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant='normal', custom_status_mark=''):
   if not booking_info:
     return None
 
@@ -14,7 +14,9 @@ def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant
   total_price = int(booking_info.total_price)
   prepayment = int(booking_info.prepayment)
 
-  status_mark = BOOKING_STATUS_MARK[booking_info.status] if booking_info.status in BOOKING_STATUS_MARK else ''
+  status_mark = custom_status_mark
+  if not status_mark:
+    status_mark = BOOKING_STATUS_MARK[booking_info.status] if booking_info.status in BOOKING_STATUS_MARK else ''
 
   # Calculate the number of nights
   nights = (booking_info.last_date - booking_info.check_in_date).days + 1

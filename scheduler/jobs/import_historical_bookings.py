@@ -94,7 +94,7 @@ def extract_room_ids(available_room_ids, room_name_string):
   return room_ids
 
 def import_historical_bookings():
-  booking_dao = BookingDAO.get_instance(db_config, logging)
+  booking_dao = BookingDAO.get_instance(db_config, logging, enable_notification=False)
   all_room_ids = booking_dao.get_all_room_ids()
 
   if not all_room_ids:

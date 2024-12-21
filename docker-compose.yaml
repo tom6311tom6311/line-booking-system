@@ -15,6 +15,7 @@ services:
       DB_NAME: ${DB_NAME}
       LINE_CHANNEL_ACCESS_TOKEN: ${LINE_CHANNEL_ACCESS_TOKEN}
       LINE_CHANNEL_SECRET: ${LINE_CHANNEL_SECRET}
+      LINE_NOTIFICATION_GROUP_ID: ${LINE_NOTIFICATION_GROUP_ID}
     volumes:
       - ./utils:/app/utils
       - ./const:/app/const
@@ -53,6 +54,7 @@ services:
       NOTION_TOKEN: ${NOTION_TOKEN}
       NOTION_DATABASE_ID: ${NOTION_DATABASE_ID}
       NOTION_SYNC_MIN_TIME: ${NOTION_SYNC_MIN_TIME}
+      LINE_NOTIFICATION_GROUP_ID: ${LINE_NOTIFICATION_GROUP_ID}
     volumes:
       - ./utils:/app/utils
       - ./const:/app/const
