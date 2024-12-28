@@ -61,6 +61,13 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
       reply_messages.append(TextSendMessage(text="請輸入顧客電話:", quick_reply=QuickReply(items=quick_reply_buttons)))
       session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_PHONE_NUMBER
     elif user_message == line_config.USER_COMMAND_EDIT_BOOKING__EDIT_DATES:
+      quick_reply_buttons.append(
+        QuickReplyButton(action=DatetimePickerAction(
+          label="選擇入住日期",
+          data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_EDIT_BOOKING__SELECT_CHECK_IN_DATE }),
+          mode="date")
+        )
+      )
       reply_messages.append(TextSendMessage(text="請輸入入住日期:", quick_reply=QuickReply(items=quick_reply_buttons)))
       session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_CHECK_IN_DATE
     elif user_message == line_config.USER_COMMAND_EDIT_BOOKING__EDIT_ROOMS:

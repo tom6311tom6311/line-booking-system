@@ -37,7 +37,7 @@ def generate_booking_carousel_message(matches: typing.Optional[Sequence[BookingI
   return TemplateSendMessage(alt_text="Booking Info List", template=carousel_template)
 
 def generate_edit_booking_select_attribute_quick_reply_buttons():
-  quick_reply_buttons = [
+  return [
     QuickReplyButton(action=MessageAction(label=command, text=command)) for command in [
       line_config.USER_COMMAND_EDIT_BOOKING__EDIT_CUSTOMER_NAME,
       line_config.USER_COMMAND_EDIT_BOOKING__EDIT_PHONE_NUMBER,
@@ -49,13 +49,6 @@ def generate_edit_booking_select_attribute_quick_reply_buttons():
       line_config.USER_COMMAND_EDIT_BOOKING__EDIT_NOTES,
     ]
   ]
-  # override edit-date button with date picker action
-  quick_reply_buttons[2] = QuickReplyButton(action=DatetimePickerAction(
-    label=line_config.USER_COMMAND_EDIT_BOOKING__EDIT_DATES,
-    data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_EDIT_BOOKING__SELECT_CHECK_IN_DATE }),
-    mode="date")
-  )
-  return quick_reply_buttons
 
 
 def generate_go_to_previous_step_button():
