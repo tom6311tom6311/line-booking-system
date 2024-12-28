@@ -269,8 +269,14 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
         )
       ]
       reply_messages.append(TextSendMessage(text="輸入格式有誤，請重新選擇訂金付款狀態:", quick_reply=QuickReply(items=quick_reply_buttons)))
-    else:
-      session['data']['prepayment_status'] = 'unpaid' if user_message == line_config.USER_COMMAND_EDIT_BOOKING__SET_PREPAYMENT_STATUS_UNPAID else 'paid'
+    elif user_message == line_config.USER_COMMAND_EDIT_BOOKING__SET_PREPAYMENT_STATUS_UNPAID:
+      session['data']['prepayment_status'] = 'unpaid'
+      session['data']['prepayment_note'] = ''
+      quick_reply_buttons += generate_edit_booking_select_attribute_quick_reply_buttons()
+      reply_messages.append(TextSendMessage(text="請選擇要更改的項目:", quick_reply=QuickReply(items=quick_reply_buttons)))
+      session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__SELECT_ATTRIBUTE
+    else: # paid
+      session['data']['prepayment_status'] = 'paid'
       quick_reply_buttons.append(
         QuickReplyButton(action=MessageAction(
           label=line_config.USER_COMMAND_EDIT_BOOKING__EDIT_PREPAYMENT_NOTE_FINISH,
