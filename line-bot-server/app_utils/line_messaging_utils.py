@@ -15,8 +15,8 @@ def generate_booking_carousel_message(matches: typing.Optional[Sequence[BookingI
   for match in matches:
     status_mark = BOOKING_STATUS_MARK[match.status] if match.status in BOOKING_STATUS_MARK else ''
     actions=[
-      PostbackAction(label="檢視", display_text=f"檢視訂單 {match.booking_id}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_VIEW_FULL_BOOKING_INFO, 'booking_id': match.booking_id }), inputOption="closeRichMenu"),
-      MessageAction(label="更改", text=line_config.USER_COMMAND_EDIT_BOOKING.format(booking_id=match.booking_id), inputOption="closeRichMenu")
+      MessageAction(label="更改", text=line_config.USER_COMMAND_EDIT_BOOKING.format(booking_id=match.booking_id), inputOption="closeRichMenu"),
+      PostbackAction(label="已付訂金", display_text=f"訂單 {match.booking_id} 已付訂金", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_PREPAID_BOOKING, 'booking_id': match.booking_id }), inputOption="closeRichMenu")
     ]
 
     if match.status != 'canceled':
@@ -24,12 +24,10 @@ def generate_booking_carousel_message(matches: typing.Optional[Sequence[BookingI
     else:
       actions.append(PostbackAction(label="復原", display_text=f"復原訂單 {match.booking_id}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_RESTORE_BOOKING, 'booking_id': match.booking_id }), inputOption="closeRichMenu"))
 
-    if match.prepayment_status == 'unpaid':
-      actions.append(PostbackAction(label="已付訂金", display_text=f"訂單 {match.booking_id} 已付訂金", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_PREPAID_BOOKING, 'booking_id': match.booking_id }), inputOption="closeRichMenu"))
-
     column = CarouselColumn(
-      title=f"{status_mark}ID: {match.booking_id}",
+      title=f"{status_mark}{match.customer_name}，{match.room_ids}，{int(match.total_price)}",
       text=format_booking_info(match, 'carousel'),
+      default_action=PostbackAction(label="檢視", display_text=f"檢視訂單 {match.booking_id}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_VIEW_FULL_BOOKING_INFO, 'booking_id': match.booking_id })),
       actions=actions
     )
     columns.append(column)
