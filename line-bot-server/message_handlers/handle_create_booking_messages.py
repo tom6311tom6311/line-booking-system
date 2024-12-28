@@ -5,7 +5,7 @@ from const.booking_const import VALID_BOOKING_SOURCES
 from app_const import line_config
 from utils.data_access.data_class.booking_info import BookingInfo
 from utils.data_access.booking_dao import BookingDAO
-from utils.booking_utils import format_booking_info
+from utils.booking_utils import format_booking_info, get_prepayment_estimation
 from utils.input_utils import is_valid_date, is_valid_phone_number, is_valid_num_nights, is_valid_price, format_phone_number
 from app_utils.line_messaging_utils import generate_go_to_previous_step_button
 
@@ -185,7 +185,7 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
       reply_messages.append(TextSendMessage(text=f"{'' if is_previous_step else '輸入格式有誤，'}請重新輸入總金額(0~100000):", quick_reply=QuickReply(items=quick_reply_buttons)))
     else:
       session['data']['total_price'] = int(user_message)
-      estimated_prepayment = int(session['data']['total_price'] * 0.3 // 100 * 100)
+      estimated_prepayment = get_prepayment_estimation(session['data']['total_price'])
       quick_reply_buttons.append(
         QuickReplyButton(action=MessageAction(
           label=str(estimated_prepayment),
@@ -197,7 +197,7 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
 
   elif session['step'] == line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_PREPAYMENT:
     if is_previous_step or not is_valid_price(user_message):
-      estimated_prepayment = int(session['data']['total_price'] * 0.3 // 100 * 100)
+      estimated_prepayment = get_prepayment_estimation(session['data']['total_price'])
       quick_reply_buttons.append(
         QuickReplyButton(action=MessageAction(
           label=str(estimated_prepayment),

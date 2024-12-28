@@ -130,3 +130,6 @@ def is_generic_name(name):
 # Function to determine if a phone number is generic
 def is_generic_phone_number(phone_number):
   return phone_number.endswith(GENERIC_PHONE_NUMBER_POSTFIX)
+
+def get_prepayment_estimation(total_price):
+  return int(int(total_price) * 0.3 // 100 * 100)

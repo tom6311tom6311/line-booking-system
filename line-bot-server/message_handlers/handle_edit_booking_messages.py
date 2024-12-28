@@ -4,7 +4,7 @@ from linebot.models import TextSendMessage,  QuickReply, QuickReplyButton, Messa
 from const.booking_const import VALID_BOOKING_SOURCES
 from app_const import line_config
 from utils.data_access.booking_dao import BookingDAO
-from utils.booking_utils import format_booking_changes, trim_booking_changes
+from utils.booking_utils import format_booking_changes, trim_booking_changes, get_prepayment_estimation
 from utils.input_utils import is_valid_date, is_valid_phone_number, is_valid_num_nights, is_valid_price, format_phone_number
 from app_utils.line_messaging_utils import generate_edit_booking_select_attribute_quick_reply_buttons, generate_go_to_previous_step_button
 
@@ -87,7 +87,7 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
       session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_TOTAL_PRICE
     elif user_message == line_config.USER_COMMAND_EDIT_BOOKING__EDIT_PREPAYMENT:
       total_price = session['data']['total_price'] if 'total_price' in session['data'] else booking_info.total_price
-      estimated_prepayment = int(total_price * 0.3 // 100 * 100)
+      estimated_prepayment = get_prepayment_estimation(total_price)
       quick_reply_buttons.append(
         QuickReplyButton(action=MessageAction(
           label=str(estimated_prepayment),
@@ -231,7 +231,7 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
     if not is_valid_price(user_message):
       booking_info = booking_dao.get_booking_info(session['data']['booking_id'])
       total_price = session['data']['total_price'] if 'total_price' in session['data'] else booking_info.total_price
-      estimated_prepayment = int(total_price * 0.3 // 100 * 100)
+      estimated_prepayment = get_prepayment_estimation(total_price)
       quick_reply_buttons.append(
         QuickReplyButton(action=MessageAction(
           label=str(estimated_prepayment),
