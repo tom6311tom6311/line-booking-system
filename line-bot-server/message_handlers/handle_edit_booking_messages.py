@@ -53,6 +53,7 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
 
   if session['step'] == line_config.USER_FLOW_STEP_EDIT_BOOKING__SELECT_ATTRIBUTE:
     quick_reply_buttons.append(generate_go_to_previous_step_button())
+    booking_info = booking_dao.get_booking_info(session['data']['booking_id'])
     if user_message == line_config.USER_COMMAND_EDIT_BOOKING__EDIT_CUSTOMER_NAME:
       reply_messages.append(TextSendMessage(text="請輸入顧客姓名:", quick_reply=QuickReply(items=quick_reply_buttons)))
       session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_CUSTOMER_NAME
@@ -71,10 +72,29 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
       reply_messages.append(TextSendMessage(text="請選擇入住房間:", quick_reply=QuickReply(items=quick_reply_buttons)))
       session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_ROOMS
     elif user_message == line_config.USER_COMMAND_EDIT_BOOKING__EDIT_TOTAL_PRICE:
+      estimated_total_price = booking_dao.get_total_price_estimation(
+        session['data']['room_ids'] if 'room_ids' in session['data'] else list(booking_info.room_ids),
+        session['data']['check_in_date'] if 'check_in_date' in session['data'] else booking_info.check_in_date,
+        session['data']['last_date'] if 'last_date' in session['data'] else booking_info.last_date,
+      )
+      quick_reply_buttons.append(
+        QuickReplyButton(action=MessageAction(
+          label=str(estimated_total_price),
+          text=str(estimated_total_price))
+        )
+      )
       reply_messages.append(TextSendMessage(text="請輸入總金額:", quick_reply=QuickReply(items=quick_reply_buttons)))
       session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_TOTAL_PRICE
     elif user_message == line_config.USER_COMMAND_EDIT_BOOKING__EDIT_PREPAYMENT:
-      reply_messages.append(TextSendMessage(text="請輸入訂金:", quick_reply=QuickReply(items=quick_reply_buttons)))
+      total_price = session['data']['total_price'] if 'total_price' in session['data'] else booking_info.total_price
+      estimated_prepayment = int(total_price * 0.3 // 100 * 100)
+      quick_reply_buttons.append(
+        QuickReplyButton(action=MessageAction(
+          label=str(estimated_prepayment),
+          text=str(estimated_prepayment))
+        )
+      )
+      reply_messages.append(TextSendMessage(text="請輸入訂金金額:", quick_reply=QuickReply(items=quick_reply_buttons)))
       session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_PREPAYMENT
     elif user_message == line_config.USER_COMMAND_EDIT_BOOKING__EDIT_SOURCE:
       quick_reply_buttons += [
@@ -188,6 +208,18 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
   elif session['step'] == line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_TOTAL_PRICE:
     if not is_valid_price(user_message):
       quick_reply_buttons = [generate_go_to_previous_step_button()]
+      booking_info = booking_dao.get_booking_info(session['data']['booking_id'])
+      estimated_total_price = booking_dao.get_total_price_estimation(
+        session['data']['room_ids'] if 'room_ids' in session['data'] else list(booking_info.room_ids),
+        session['data']['check_in_date'] if 'check_in_date' in session['data'] else booking_info.check_in_date,
+        session['data']['last_date'] if 'last_date' in session['data'] else booking_info.last_date,
+      )
+      quick_reply_buttons.append(
+        QuickReplyButton(action=MessageAction(
+          label=str(estimated_total_price),
+          text=str(estimated_total_price))
+        )
+      )
       reply_messages.append(TextSendMessage(text="輸入格式有誤，請重新輸入總金額(0~100000):", quick_reply=QuickReply(items=quick_reply_buttons)))
     else:
       session['data']['total_price'] = int(user_message)
@@ -195,14 +227,72 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
       reply_messages.append(TextSendMessage(text="請選擇要更改的項目:", quick_reply=QuickReply(items=quick_reply_buttons)))
       session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__SELECT_ATTRIBUTE
   elif session['step'] == line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_PREPAYMENT:
+    quick_reply_buttons = [generate_go_to_previous_step_button()]
     if not is_valid_price(user_message):
-      quick_reply_buttons = [generate_go_to_previous_step_button()]
-      reply_messages.append(TextSendMessage(text="輸入格式有誤，請重新輸入訂金(0~100000):", quick_reply=QuickReply(items=quick_reply_buttons)))
+      booking_info = booking_dao.get_booking_info(session['data']['booking_id'])
+      total_price = session['data']['total_price'] if 'total_price' in session['data'] else booking_info.total_price
+      estimated_prepayment = int(total_price * 0.3 // 100 * 100)
+      quick_reply_buttons.append(
+        QuickReplyButton(action=MessageAction(
+          label=str(estimated_prepayment),
+          text=str(estimated_prepayment))
+        )
+      )
+      reply_messages.append(TextSendMessage(text="輸入格式有誤，請重新輸入訂金金額(0~100000):", quick_reply=QuickReply(items=quick_reply_buttons)))
     else:
       session['data']['prepayment'] = int(user_message)
-      quick_reply_buttons += generate_edit_booking_select_attribute_quick_reply_buttons()
-      reply_messages.append(TextSendMessage(text="請選擇要更改的項目:", quick_reply=QuickReply(items=quick_reply_buttons)))
-      session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__SELECT_ATTRIBUTE
+      quick_reply_buttons += [
+        QuickReplyButton(action=MessageAction(
+          label=line_config.USER_COMMAND_EDIT_BOOKING__SET_PREPAYMENT_STATUS_UNPAID,
+          text=line_config.USER_COMMAND_EDIT_BOOKING__SET_PREPAYMENT_STATUS_UNPAID)
+        ),
+        QuickReplyButton(action=MessageAction(
+          label=line_config.USER_COMMAND_EDIT_BOOKING__SET_PREPAYMENT_STATUS_PAID,
+          text=line_config.USER_COMMAND_EDIT_BOOKING__SET_PREPAYMENT_STATUS_PAID)
+        )
+      ]
+      reply_messages.append(TextSendMessage(text="請選擇訂金付款狀態:", quick_reply=QuickReply(items=quick_reply_buttons)))
+      session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_PREPAYMENT_STATUS
+
+  elif session['step'] == line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_PREPAYMENT_STATUS:
+    quick_reply_buttons = [generate_go_to_previous_step_button()]
+    booking_info = booking_dao.get_booking_info(session['data']['booking_id'])
+    if user_message not in [line_config.USER_COMMAND_EDIT_BOOKING__SET_PREPAYMENT_STATUS_UNPAID, line_config.USER_COMMAND_EDIT_BOOKING__SET_PREPAYMENT_STATUS_PAID]:
+      quick_reply_buttons += [
+        QuickReplyButton(action=MessageAction(
+          label=line_config.USER_COMMAND_EDIT_BOOKING__SET_PREPAYMENT_STATUS_UNPAID,
+          text=line_config.USER_COMMAND_EDIT_BOOKING__SET_PREPAYMENT_STATUS_UNPAID)
+        ),
+        QuickReplyButton(action=MessageAction(
+          label=line_config.USER_COMMAND_EDIT_BOOKING__SET_PREPAYMENT_STATUS_PAID,
+          text=line_config.USER_COMMAND_EDIT_BOOKING__SET_PREPAYMENT_STATUS_PAID)
+        )
+      ]
+      reply_messages.append(TextSendMessage(text="輸入格式有誤，請重新選擇訂金付款狀態:", quick_reply=QuickReply(items=quick_reply_buttons)))
+    else:
+      session['data']['prepayment_status'] = 'unpaid' if user_message == line_config.USER_COMMAND_EDIT_BOOKING__SET_PREPAYMENT_STATUS_UNPAID else 'paid'
+      quick_reply_buttons.append(
+        QuickReplyButton(action=MessageAction(
+          label=line_config.USER_COMMAND_EDIT_BOOKING__EDIT_PREPAYMENT_NOTE_FINISH,
+          text=line_config.USER_COMMAND_EDIT_BOOKING__EDIT_PREPAYMENT_NOTE_FINISH)
+        )
+      )
+      prepayment_note = session['data']['prepayment_note'] if 'prepayment_note' in session['data'] else booking_info.prepayment_note
+      if (prepayment_note):
+        quick_reply_buttons.append(
+          QuickReplyButton(action=MessageAction(
+            label=f"{prepayment_note}(原)",
+            text=prepayment_note)
+          )
+        )
+      reply_messages.append(TextSendMessage(text="請輸入匯款摘要", quick_reply=QuickReply(items=quick_reply_buttons)))
+      session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_PREPAYMENT_NOTE
+
+  elif session['step'] == line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_PREPAYMENT_NOTE:
+    session['data']['prepayment_note'] = '' if user_message == line_config.USER_COMMAND_EDIT_BOOKING__EDIT_PREPAYMENT_NOTE_FINISH else user_message
+    quick_reply_buttons += generate_edit_booking_select_attribute_quick_reply_buttons()
+    reply_messages.append(TextSendMessage(text="請選擇要更改的項目:", quick_reply=QuickReply(items=quick_reply_buttons)))
+    session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__SELECT_ATTRIBUTE
 
   elif session['step'] == line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_SOURCE:
     if user_message not in VALID_BOOKING_SOURCES:
@@ -254,6 +344,10 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
         booking_info.source = session['data']['source']
       if ('prepayment' in session['data']):
         booking_info.prepayment = session['data']['prepayment']
+      if ('prepayment_status' in session['data']):
+        booking_info.prepayment_status = session['data']['prepayment_status']
+      if ('prepayment_note' in session['data']):
+        booking_info.prepayment_note = session['data']['prepayment_note']
       if ('room_ids' in session['data']):
         booking_info.room_ids = ''.join(session['data']['room_ids'])
       booking_id = booking_dao.upsert_booking(booking_info)

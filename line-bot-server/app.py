@@ -14,6 +14,7 @@ from message_handlers.handle_create_booking_messages import handle_create_bookin
 from message_handlers.handle_edit_booking_messages import handle_edit_booking_messages
 from message_handlers.handle_cancel_booking_messages import handle_cancel_booking_messages
 from message_handlers.handle_restore_booking_messages import handle_restore_booking_messages
+from message_handlers.handle_prepaid_booking_messages import handle_prepaid_booking_messages
 
 app = Flask(__name__)
 
@@ -87,6 +88,9 @@ def handle_message(event):
 
   elif session['flow'] == line_config.USER_FLOW_RESTORE_BOOKING:
     reply_messages = handle_restore_booking_messages(user_message, session, booking_dao)
+
+  elif session['flow'] == line_config.USER_FLOW_PREPAID_BOOKING:
+    reply_messages = handle_prepaid_booking_messages(user_message, session, booking_dao)
 
   if (len(reply_messages) > 0):
     line_bot_api.reply_message(
@@ -204,6 +208,26 @@ def handle_message_postback(event):
     reply_messages.append(TextSendMessage(text="是否真的要復原此訂單？", quick_reply=quick_reply))
     session['flow'] = line_config.USER_FLOW_RESTORE_BOOKING
     session['step'] = line_config.USER_FLOW_STEP_RESTORE_BOOKING__CONFIRM
+    session['data'] = { 'booking_id': booking_id }
+
+  elif command_obj['command'] == line_config.POSTBACK_COMMAND_PREPAID_BOOKING:
+    booking_id = command_obj['booking_id']
+    booking_info = booking_dao.get_booking_info(int(booking_id))
+    prepayment = booking_info.prepayment
+    quick_reply_buttons = [
+      QuickReplyButton(action=MessageAction(
+        label=line_config.USER_COMMAND_CANCEL_CURRENT_FLOW,
+        text=line_config.USER_COMMAND_CANCEL_CURRENT_FLOW)
+      ),
+      QuickReplyButton(action=MessageAction(
+        label=prepayment,
+        text=prepayment)
+      )
+    ]
+    quick_reply = QuickReply(items=quick_reply_buttons)
+    reply_messages.append(TextSendMessage(text="請輸入已付訂金金額：", quick_reply=quick_reply))
+    session['flow'] = line_config.USER_FLOW_PREPAID_BOOKING
+    session['step'] = line_config.USER_FLOW_STEP_PREPAID_BOOKING__GET_PREPAYMENT_AMOUNT
     session['data'] = { 'booking_id': booking_id }
 
   elif command_obj['command'] == line_config.POSTBACK_COMMAND_CREATE_BOOKING__SELECT_CHECK_IN_DATE:

@@ -80,6 +80,10 @@ def trim_booking_changes(booking_dict: dict, booking_info: BookingInfo):
     del booking_dict['source']
   if ('prepayment' in booking_dict and booking_dict['prepayment'] == booking_info.prepayment):
     del booking_dict['prepayment']
+  if ('prepayment_status' in booking_dict and booking_dict['prepayment_status'] == booking_info.prepayment_status):
+    del booking_dict['prepayment_status']
+  if ('prepayment_note' in booking_dict and booking_dict['prepayment_note'] == booking_info.prepayment_note):
+    del booking_dict['prepayment_note']
   if ('room_ids' in booking_dict and ''.join(booking_dict['room_ids']) == booking_info.customer_name):
     del booking_dict['room_ids']
 
@@ -107,6 +111,10 @@ def format_booking_changes(booking_dict: dict):
     message += f"來源：{booking_dict['source']}\n"
   if ('prepayment' in booking_dict):
     message += f"訂金：{booking_dict['prepayment']}元\n"
+  if ('prepayment_status' in booking_dict):
+    message += f"訂金狀態：{'未付' if booking_dict['prepayment_status'] == 'unpaid' else '已付'}\n"
+  if ('prepayment_note' in booking_dict):
+    message += f"訂金匯款摘要：{booking_dict['prepayment_note']}\n"
   if ('room_ids' in booking_dict):
     message += f"預計讓他睡：{''.join(booking_dict['room_ids'])}\n"
 

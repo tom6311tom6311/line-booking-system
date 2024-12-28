@@ -193,8 +193,6 @@ class BookingDAO:
             booking_info.notes != existing_booking_info.notes
           ):
             LineNotificationService(self.logger).notify_booking_updated(booking_info)
-          if booking_info.prepayment_status == 'paid' and existing_booking_info.prepayment_status == 'unpaid':
-            LineNotificationService(self.logger).notify_booking_prepaid(booking_info)
         else:
           LineNotificationService(self.logger).notify_booking_created(booking_info)
 
@@ -275,6 +273,42 @@ class BookingDAO:
 
     except Exception as e:
       self.logger.error(f"Error restoring booking {booking_id}: {e}")
+    finally:
+      self.release_connection(connection)
+    return success
+
+  def update_booking_prepaid(self, booking_id, prepayment, prepayment_note):
+    connection = self.get_connection()
+    if not connection:
+      return False
+
+    existing_booking_info = self.get_booking_info(booking_id)
+    if not existing_booking_info:
+      self.logger.warning(f"Trying to update the prepayment of booking with ID {booking_id} but not found.")
+      return False
+
+    success = False
+    try:
+      cursor = connection.cursor()
+      query = """
+      UPDATE Bookings
+      SET prepayment = %s, prepayment_note = %s, prepayment_status = 'paid'::prepayment_statuses
+      WHERE booking_id = %s
+      RETURNING booking_id;
+      """
+      cursor.execute(query, (prepayment, prepayment_note, booking_id))
+      result = cursor.fetchone()
+
+      if result:
+        success = True
+        booking_info = self.get_booking_info(booking_id)
+        if (self.enable_notification):
+          LineNotificationService(self.logger).notify_booking_prepaid(booking_info)
+      else:
+        self.logger.warning(f"Trying to update the prepayment of booking with ID {booking_id} but not found.")
+
+    except Exception as e:
+      self.logger.error(f"Error updating the prepayment of booking {booking_id}: {e}")
     finally:
       self.release_connection(connection)
     return success
