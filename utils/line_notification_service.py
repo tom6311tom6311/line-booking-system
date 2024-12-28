@@ -32,6 +32,17 @@ class LineNotificationService:
     except Exception as e:
       self.logger.info(f"Failed to send booking updated notification to group {self.recipient_id}. booking_id: {booking_info.booking_id}. error: {e}")
 
+  def notify_booking_restored(self, booking_info: BookingInfo):
+    try:
+      message = format_booking_info(booking_info, custom_status_mark='[復原]')
+      self.line_bot_api.push_message(
+        self.recipient_id,
+        TextSendMessage(text=message)
+      )
+      self.logger.info(f"Booking restored notification sent to group {self.recipient_id}. booking_id: {booking_info.booking_id}")
+    except Exception as e:
+      self.logger.info(f"Failed to send booking restored notification to group {self.recipient_id}. booking_id: {booking_info.booking_id}. error: {e}")
+
   def notify_booking_canceled(self, booking_info: BookingInfo):
     try:
       message = f"{booking_info.check_in_date.strftime('%m/%d')} ID{booking_info.booking_id} {booking_info.customer_name} 取消"

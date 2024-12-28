@@ -267,8 +267,9 @@ class BookingDAO:
 
       if result:
         success = True
+        booking_info = self.get_booking_info(booking_id)
         if (self.enable_notification):
-          LineNotificationService(self.logger).notify_booking_created(existing_booking_info)
+          LineNotificationService(self.logger).notify_booking_restored(booking_info)
       else:
         self.logger.warning(f"Trying to restore booking with ID {booking_id} but not found.")
 
