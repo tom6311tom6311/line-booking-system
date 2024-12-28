@@ -213,7 +213,7 @@ def handle_message_postback(event):
   elif command_obj['command'] == line_config.POSTBACK_COMMAND_PREPAID_BOOKING:
     booking_id = command_obj['booking_id']
     booking_info = booking_dao.get_booking_info(int(booking_id))
-    prepayment = booking_info.prepayment
+    prepayment = str(int(booking_info.prepayment))
     quick_reply_buttons = [
       QuickReplyButton(action=MessageAction(
         label=line_config.USER_COMMAND_CANCEL_CURRENT_FLOW,

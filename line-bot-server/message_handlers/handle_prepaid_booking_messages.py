@@ -34,7 +34,7 @@ def handle_prepaid_booking_messages(user_message: str, session: dict, booking_da
   if session['step'] == line_config.USER_FLOW_STEP_PREPAID_BOOKING__GET_PREPAYMENT_AMOUNT:
     if is_previous_step or not is_valid_price(user_message):
       booking_info = booking_dao.get_booking_info(session['data']['booking_id'])
-      prepayment = booking_info.prepayment
+      prepayment = str(int(booking_info.prepayment))
       quick_reply_buttons = [
         QuickReplyButton(action=MessageAction(
           label=line_config.USER_COMMAND_CANCEL_CURRENT_FLOW,
