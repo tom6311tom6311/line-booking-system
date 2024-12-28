@@ -255,9 +255,9 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
       session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_PREPAYMENT_STATUS
 
   elif session['step'] == line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_PREPAYMENT_STATUS:
-    quick_reply_buttons = [generate_go_to_previous_step_button()]
     booking_info = booking_dao.get_booking_info(session['data']['booking_id'])
     if user_message not in [line_config.USER_COMMAND_EDIT_BOOKING__SET_PREPAYMENT_STATUS_UNPAID, line_config.USER_COMMAND_EDIT_BOOKING__SET_PREPAYMENT_STATUS_PAID]:
+      quick_reply_buttons = [generate_go_to_previous_step_button()]
       quick_reply_buttons += [
         QuickReplyButton(action=MessageAction(
           label=line_config.USER_COMMAND_EDIT_BOOKING__SET_PREPAYMENT_STATUS_UNPAID,
@@ -276,6 +276,7 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
       reply_messages.append(TextSendMessage(text="請選擇要更改的項目:", quick_reply=QuickReply(items=quick_reply_buttons)))
       session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__SELECT_ATTRIBUTE
     else: # paid
+      quick_reply_buttons = [generate_go_to_previous_step_button()]
       session['data']['prepayment_status'] = 'paid'
       quick_reply_buttons.append(
         QuickReplyButton(action=MessageAction(
