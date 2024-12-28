@@ -56,7 +56,7 @@ class LineNotificationService:
 
   def notify_booking_prepaid(self, booking_info: BookingInfo):
     try:
-      message = f"{booking_info.check_in_date.strftime('%m/%d')} ID{booking_info.booking_id} {booking_info.customer_name} 已付訂金{booking_info.prepayment}元 摘要{booking_info.prepayment_note}"
+      message = f"{booking_info.check_in_date.strftime('%m/%d')} ID{booking_info.booking_id} {booking_info.customer_name} 已付訂金{int(booking_info.prepayment)}元 摘要\"{booking_info.prepayment_note}\""
       self.line_bot_api.push_message(
         self.recipient_id,
         TextSendMessage(text=message)
