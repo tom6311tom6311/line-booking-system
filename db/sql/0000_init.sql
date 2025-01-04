@@ -4,6 +4,7 @@ CREATE TYPE room_statuses AS ENUM ('available', 'closed');
 CREATE TYPE booking_sources AS ENUM ('自洽', 'Booking_com', 'FB', 'Agoda', '台灣旅宿', 'Airbnb');
 CREATE TYPE booking_statuses AS ENUM ('new', 'prepaid', 'canceled');
 CREATE TYPE prepayment_statuses AS ENUM ('unpaid', 'paid', 'refunded', 'hanging');
+CREATE TYPE closure_statuses AS ENUM ('valid', 'deleted');
 CREATE TYPE sync_types AS ENUM ('sql_to_google_calendar', 'sql_with_notion');
 
 
@@ -53,6 +54,17 @@ CREATE TABLE Bookings (
     modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create Closures table
+CREATE TABLE Closures (
+    closure_id SERIAL PRIMARY KEY,
+    status closure_statuses,
+    start_date DATE NOT NULL,
+    last_date DATE NOT NULL,
+    reason TEXT,
+    created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create RoomBooking junction table for many-to-many relationship between Bookings and Rooms
 CREATE TABLE RoomBookings (
     booking_id INT REFERENCES Bookings(booking_id) ON DELETE CASCADE,
@@ -62,13 +74,11 @@ CREATE TABLE RoomBookings (
     modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create RoomClosure table
+-- Create RoomClosures table
 CREATE TABLE RoomClosures (
-    room_closure_id SERIAL PRIMARY KEY,
+    closure_id INT REFERENCES Closures(closure_id) ON DELETE CASCADE,
     room_id VARCHAR(100) REFERENCES Rooms(room_id) ON DELETE CASCADE,
-    start_date DATE NOT NULL,
-    last_date DATE NOT NULL,
-    reason TEXT,
+    PRIMARY KEY (closure_id, room_id),
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -107,6 +117,12 @@ EXECUTE FUNCTION update_timestamp();
 -- Apply the trigger to the Bookings table
 CREATE TRIGGER trigger_update_bookings
 BEFORE UPDATE ON Bookings
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
+
+-- Apply the trigger to the Closures table
+CREATE TRIGGER trigger_update_closures
+BEFORE UPDATE ON Closures
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
 

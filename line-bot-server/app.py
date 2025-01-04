@@ -15,6 +15,7 @@ from message_handlers.handle_edit_booking_messages import handle_edit_booking_me
 from message_handlers.handle_cancel_booking_messages import handle_cancel_booking_messages
 from message_handlers.handle_restore_booking_messages import handle_restore_booking_messages
 from message_handlers.handle_prepaid_booking_messages import handle_prepaid_booking_messages
+from message_handlers.handle_create_closure_messages import handle_create_closure_messages
 
 app = Flask(__name__)
 
@@ -91,6 +92,9 @@ def handle_message(event):
 
   elif session['flow'] == line_config.USER_FLOW_PREPAID_BOOKING:
     reply_messages = handle_prepaid_booking_messages(user_message, session, booking_dao)
+
+  elif session['flow'] == line_config.USER_FLOW_CREATE_CLOSURE:
+    reply_messages = handle_create_closure_messages(user_message, session, booking_dao)
 
   if (len(reply_messages) > 0):
     line_bot_api.reply_message(
@@ -230,6 +234,24 @@ def handle_message_postback(event):
     session['step'] = line_config.USER_FLOW_STEP_PREPAID_BOOKING__GET_PREPAYMENT_AMOUNT
     session['data'] = { 'booking_id': booking_id }
 
+  elif command_obj['command'] == line_config.POSTBACK_COMMAND_CREATE_CLOSURE:
+    quick_reply_buttons = [
+      QuickReplyButton(action=MessageAction(
+        label=line_config.USER_COMMAND_CANCEL_CURRENT_FLOW,
+        text=line_config.USER_COMMAND_CANCEL_CURRENT_FLOW)
+      ),
+      QuickReplyButton(action=DatetimePickerAction(
+        label="選擇日期",
+        data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_CREATE_CLOSURE__SELECT_START_DATE }),
+        mode="date")
+      ),
+    ]
+    quick_reply = QuickReply(items=quick_reply_buttons)
+    reply_messages.append(TextSendMessage(text="請輸入關房日期:", quick_reply=quick_reply))
+    session['flow'] = line_config.USER_FLOW_CREATE_CLOSURE
+    session['step'] = line_config.USER_FLOW_STEP_CREATE_CLOSURE__GET_START_DATE
+    session['data'] = {}
+
   elif command_obj['command'] == line_config.POSTBACK_COMMAND_CREATE_BOOKING__SELECT_CHECK_IN_DATE:
     selected_date = event.postback.params['date']
     reply_messages.append(TextSendMessage(line_config.USER_COMMAND_UPDATE_BOOKING__SELECT_CHECK_IN_DATE.format(date=selected_date.replace('-', '/'))))
@@ -239,6 +261,11 @@ def handle_message_postback(event):
     selected_date = event.postback.params['date']
     reply_messages.append(TextSendMessage(line_config.USER_COMMAND_UPDATE_BOOKING__SELECT_CHECK_IN_DATE.format(date=selected_date.replace('-', '/'))))
     reply_messages += handle_edit_booking_messages(selected_date, session, booking_dao)
+
+  elif command_obj['command'] == line_config.POSTBACK_COMMAND_CREATE_CLOSURE__SELECT_START_DATE:
+    selected_date = event.postback.params['date']
+    reply_messages.append(TextSendMessage(line_config.USER_COMMAND_CREATE_CLOSURE__SELECT_START_DATE.format(date=selected_date.replace('-', '/'))))
+    reply_messages += handle_create_closure_messages(selected_date, session, booking_dao)
 
   else:
     app.logger.warning(f"Unrecognized postback command: {command_obj['command']}")

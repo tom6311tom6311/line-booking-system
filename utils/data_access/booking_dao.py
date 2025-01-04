@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from utils.booking_utils import is_generic_name, is_generic_phone_number
 from utils.line_notification_service import LineNotificationService
 from .data_class.booking_info import BookingInfo
+from .data_class.closure_info import ClosureInfo
 from .data_class.customer import Customer
 
 
@@ -515,6 +516,119 @@ class BookingDAO:
 
     finally:
       self.release_connection(connection)
+
+  ##########################################
+  ### Closure data access functions  ###
+  ##########################################
+
+  # Function to query closure info by closure_id
+  def get_closure_info(self, closure_id) -> Optional[ClosureInfo]:
+    connection = self.get_connection()
+    if not connection:
+      return None
+
+    closure_info = None
+    try:
+      cursor = connection.cursor()
+      query = """
+      SELECT c.closure_id, c.start_date, c.last_date, c.reason,
+        STRING_AGG(r.room_id, '' ORDER BY r.created) AS room_ids, c.created, c.modified
+      FROM Closures c
+      JOIN RoomClosures rc ON c.closure_id = rc.closure_id
+      JOIN Rooms r ON rc.room_id = r.room_id
+      WHERE c.closure_id = %s
+        AND c.status = 'valid'::closure_statuses
+      GROUP BY c.closure_id;
+      """
+      cursor.execute(query, (closure_id,))
+      row = cursor.fetchone()
+      cursor.close()
+
+      if (row):
+        closure_info = ClosureInfo(
+          closure_id==row[0],
+          start_date=row[1],
+          last_date=row[2],
+          reason=row[3],
+          room_ids=row[4],
+          created=row[5],
+          modified=row[6]
+        )
+    except Exception as e:
+      self.logger.error(f"Error querying closure info: {e}")
+    finally:
+      self.release_connection(connection)
+    return closure_info
+
+  def insert_closure(self, closure_info: ClosureInfo) -> Optional[int]:
+    connection = self.get_connection()
+    if not connection:
+      return None
+
+    closure_id = None
+    try:
+      cursor = connection.cursor()
+
+      # Insert into Closures table
+      insert_query = """
+      INSERT INTO Closures (status, start_date, last_date, reason)
+      VALUES ('valid'::closure_statuses, %s, %s, %s)
+      RETURNING closure_id;
+      """
+      cursor.execute(insert_query, (
+        closure_info.start_date,
+        closure_info.last_date,
+        closure_info.reason
+      ))
+      closure_id = cursor.fetchone()[0]
+
+      # Insert room-closure relationships into RoomClosures table
+      for room_id in closure_info.room_ids:
+        insert_room_closures_query = """
+        INSERT INTO RoomClosures (closure_id, room_id)
+        VALUES (%s, %s);
+        """
+        cursor.execute(insert_room_closures_query, (closure_id, room_id))
+
+      cursor.close()
+
+    except Exception as e:
+      self.logger.error(f"Error inserting closure: {e}")
+    finally:
+      self.release_connection(connection)
+
+    return closure_id
+
+  def delete_closure(self, closure_id: int) -> bool:
+    connection = self.get_connection()
+    if not connection:
+      return False
+
+    try:
+      cursor = connection.cursor()
+
+      # Delete room-closure relationships
+      delete_room_closures_query = """
+      DELETE FROM RoomClosures
+      WHERE closure_id = %s
+      """
+      cursor.execute(delete_room_closures_query, (closure_id,))
+
+      # Delete the closure
+      delete_closure_query = """
+      UPDATE Closures
+      SET status = 'deleted'::closure_statuses
+      WHERE closure_id = %s
+      """
+      cursor.execute(delete_closure_query, (closure_id,))
+      cursor.close()
+
+    except Exception as e:
+      self.logger.error(f"Error deleting closure {closure_id}: {e}")
+      return False
+    finally:
+      self.release_connection(connection)
+    return True
 
   ##########################################
   ###   Customer data access functions   ###
