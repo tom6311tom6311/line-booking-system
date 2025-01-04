@@ -72,7 +72,7 @@ class BookingDAO:
       query = """
       SELECT b.booking_id, b.status, c.name, c.phone_number, b.check_in_date, b.last_date,
         b.total_price, b.notes, b.source, b.prepayment, b.prepayment_note, b.prepayment_status,
-        STRING_AGG(r.room_id, '') AS room_ids, b.created, b.modified
+        STRING_AGG(r.room_id, '' ORDER BY r.created) AS room_ids, b.created, b.modified
       FROM Bookings b
       JOIN Customers c ON b.customer_id = c.customer_id
       JOIN RoomBookings rb ON b.booking_id = rb.booking_id
@@ -342,7 +342,7 @@ class BookingDAO:
       query = """
       SELECT b.booking_id, b.status, c.name, c.phone_number, b.check_in_date, b.last_date, 
         b.total_price, b.notes, b.source, b.prepayment, b.prepayment_note, b.prepayment_status,
-        STRING_AGG(r.room_id, '') AS room_ids, b.created, b.modified
+        STRING_AGG(r.room_id, '' ORDER BY r.created) AS room_ids, b.created, b.modified
       FROM Bookings b
       JOIN Customers c ON b.customer_id = c.customer_id
       JOIN RoomBookings rb ON b.booking_id = rb.booking_id
@@ -410,7 +410,7 @@ class BookingDAO:
       query = """
       SELECT b.booking_id, b.status, c.name, c.phone_number, b.check_in_date, b.last_date,
         b.total_price, b.notes, b.source, b.prepayment, b.prepayment_note, b.prepayment_status,
-        STRING_AGG(r.room_id, '') AS room_ids, b.created, b.modified
+        STRING_AGG(r.room_id, '' ORDER BY r.created) AS room_ids, b.created, b.modified
       FROM Bookings b
       JOIN Customers c ON b.customer_id = c.customer_id
       JOIN RoomBookings rb ON b.booking_id = rb.booking_id
@@ -471,7 +471,7 @@ class BookingDAO:
       query = """
       SELECT b.booking_id, b.status, c.name, c.phone_number, b.check_in_date, b.last_date,
         b.total_price, b.notes, b.source, b.prepayment, b.prepayment_note, b.prepayment_status,
-        STRING_AGG(r.room_id, '') AS room_ids, b.created, b.modified
+        STRING_AGG(r.room_id, '' ORDER BY r.created) AS room_ids, b.created, b.modified
       FROM Bookings b
       JOIN Customers c ON b.customer_id = c.customer_id
       JOIN RoomBookings rb ON b.booking_id = rb.booking_id
