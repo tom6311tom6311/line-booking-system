@@ -398,13 +398,19 @@ class BookingDAO:
     finally:
         self.release_connection(connection)
 
-  def search_booking_by_date(self, date, is_check_in = True) -> Optional[list[BookingInfo]]:
+  def search_booking_by_date(self, date, mode=None) -> Optional[list[BookingInfo]]:
     connection = self.get_connection()
     if not connection:
       return None
 
+    matches = []
     try:
-      date_field = 'check_in_date' if is_check_in else 'last_date'
+      date_query = "%s BETWEEN b.check_in_date AND b.last_date"
+      if mode == 'check_in_date':
+        date_query = "b.check_in_date = %s"
+      elif mode == 'last_date':
+        date_query = "b.last_date = %s"
+
       cursor = connection.cursor()
 
       # SQL query to search for bookings by check-in date
@@ -416,7 +422,7 @@ class BookingDAO:
       JOIN Customers c ON b.customer_id = c.customer_id
       JOIN RoomBookings rb ON b.booking_id = rb.booking_id
       JOIN Rooms r ON rb.room_id = r.room_id
-      WHERE b.{date_field} = %s
+      WHERE {date_query}
       GROUP BY b.booking_id, c.name, c.phone_number
       ORDER BY
         CASE
@@ -426,11 +432,10 @@ class BookingDAO:
         b.booking_id;
       """
 
-      cursor.execute(query.format(date_field=date_field), (date,))
+      cursor.execute(query.format(date_query=date_query), (date,))
       rows = cursor.fetchall()
       cursor.close()
 
-      matches = []
       for row in rows:
         booking_info = BookingInfo(
           booking_id=row[0],
@@ -451,20 +456,21 @@ class BookingDAO:
         )
         matches.append(booking_info)
 
-      return matches
-
     except Exception as e:
       self.logger.error(f"Error searching bookings by check-in date: {e}")
-      return None
+      matches = None
 
     finally:
       self.release_connection(connection)
+
+    return matches
 
   def get_latest_bookings(self, last_sync_time) -> Optional[list[BookingInfo]]:
     connection = self.get_connection()
     if not connection:
       return None
 
+    matches = []
     try:
       cursor = connection.cursor()
 
@@ -479,15 +485,13 @@ class BookingDAO:
       JOIN Rooms r ON rb.room_id = r.room_id
       WHERE b.created >= %s OR b.modified >= %s
       GROUP BY b.booking_id, c.name, c.phone_number
-      ORDER BY b.created DESC
-      LIMIT 1;
+      ORDER BY b.created DESC;
       """
 
       cursor.execute(query, (last_sync_time, last_sync_time))
       rows = cursor.fetchall()
       cursor.close()
 
-      matches = []
       for row in rows:
         booking_info = BookingInfo(
           booking_id=row[0],
@@ -508,14 +512,14 @@ class BookingDAO:
         )
         matches.append(booking_info)
 
-      return matches
-
     except Exception as e:
       self.logger.error(f"Error fetching latest bookings: {e}")
-      return None
+      matches = None
 
     finally:
       self.release_connection(connection)
+
+    return matches
 
   ##########################################
   ### Closure data access functions  ###
@@ -629,6 +633,98 @@ class BookingDAO:
     finally:
       self.release_connection(connection)
     return True
+
+  def search_closure_by_date(self, date) -> Optional[list[ClosureInfo]]:
+    connection = self.get_connection()
+    if not connection:
+      return None
+
+    matches = []
+    try:
+      cursor = connection.cursor()
+
+      # SQL query to find closures containing the target date
+      query = """
+      SELECT c.closure_id, c.start_date, c.last_date, c.reason,
+        STRING_AGG(r.room_id, '' ORDER BY r.created) AS room_ids, c.created, c.modified
+      FROM Closures c
+      JOIN RoomClosures rc ON c.closure_id = rc.closure_id
+      JOIN Rooms r ON rc.room_id = r.room_id
+      WHERE %s BETWEEN c.start_date AND c.last_date
+        AND c.status = 'valid'::closure_statuses
+      GROUP BY c.closure_id;
+      """
+
+      cursor.execute(query, (date,))
+      rows = cursor.fetchall()
+      cursor.close()
+
+      for row in rows:
+        closure_info = ClosureInfo(
+          closure_id=row[0],
+          start_date=row[1],
+          last_date=row[2],
+          reason=row[3],
+          room_ids=row[4],
+          created=row[5],
+          modified=row[6]
+        )
+        matches.append(closure_info)
+
+    except Exception as e:
+      self.logger.error(f"Error searching bookings by check-in date: {e}")
+      matches = None
+
+    finally:
+      self.release_connection(connection)
+
+    return matches
+
+  def get_latest_closures(self, last_sync_time) -> Optional[list[ClosureInfo]]:
+    connection = self.get_connection()
+    if not connection:
+      return None
+
+    matches = []
+    try:
+      cursor = connection.cursor()
+
+      # SQL query to get bookings created or modified after the last sync time
+      query = """
+      SELECT c.closure_id, c.start_date, c.last_date, c.reason,
+        STRING_AGG(r.room_id, '' ORDER BY r.created) AS room_ids, c.created, c.modified
+      FROM Closures c
+      JOIN RoomClosures rc ON c.closure_id = rc.closure_id
+      JOIN Rooms r ON rc.room_id = r.room_id
+      WHERE c.created >= %s OR c.modified >= %s
+      GROUP BY c.closure_id
+      ORDER BY c.created DESC;
+      """
+
+      cursor.execute(query, (last_sync_time, last_sync_time))
+      rows = cursor.fetchall()
+      cursor.close()
+
+      for row in rows:
+        closure_info = ClosureInfo(
+          closure_id=row[0],
+          start_date=row[1],
+          last_date=row[2],
+          reason=row[3],
+          room_ids=row[4],
+          created=row[5],
+          modified=row[6]
+        )
+        matches.append(closure_info)
+
+    except Exception as e:
+      self.logger.error(f"Error fetching latest bookings: {e}")
+      matches = None
+
+    finally:
+      self.release_connection(connection)
+
+    return matches
 
   ##########################################
   ###   Customer data access functions   ###

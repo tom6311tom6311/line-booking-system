@@ -11,29 +11,29 @@ def handle_default_messages(user_message: str, session: dict, booking_dao: Booki
   if user_message == line_config.USER_COMMAND_SEARCH_BOOKING_BY_KEYWORD:
     quick_reply_buttons = [
       QuickReplyButton(action=DatetimePickerAction(
-        label="以入住日查詢",
-        data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE }),
+        label="以日期查詢",
+        data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_SEARCH_BOOKING_BY_DATE }),
         mode="date")
       ),
       QuickReplyButton(action=MessageAction(
-        label=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_TODAY,
-        text=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_TODAY)
+        label=line_config.USER_COMMAND_SEARCH_BOOKING_TODAY,
+        text=line_config.USER_COMMAND_SEARCH_BOOKING_TODAY)
       ),
       QuickReplyButton(action=MessageAction(
         label=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_OUT_TODAY,
         text=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_OUT_TODAY)
       ),
       QuickReplyButton(action=MessageAction(
-        label=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_TOMORROW,
-        text=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_TOMORROW)
+        label=line_config.USER_COMMAND_SEARCH_BOOKING_TOMORROW,
+        text=line_config.USER_COMMAND_SEARCH_BOOKING_TOMORROW)
       ),
       QuickReplyButton(action=MessageAction(
-        label=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_THIS_SATURDAY,
-        text=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_THIS_SATURDAY)
+        label=line_config.USER_COMMAND_SEARCH_BOOKING_THIS_SATURDAY,
+        text=line_config.USER_COMMAND_SEARCH_BOOKING_THIS_SATURDAY)
       ),
       QuickReplyButton(action=MessageAction(
-        label=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_LAST_SATURDAY,
-        text=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_LAST_SATURDAY)
+        label=line_config.USER_COMMAND_SEARCH_BOOKING_LAST_SATURDAY,
+        text=line_config.USER_COMMAND_SEARCH_BOOKING_LAST_SATURDAY)
       ),
     ]
     quick_reply = QuickReply(items=quick_reply_buttons)
@@ -41,13 +41,13 @@ def handle_default_messages(user_message: str, session: dict, booking_dao: Booki
 
   elif user_message == line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_OUT_TODAY:
     date_yesterday = datetime.date.today() + datetime.timedelta(days=-1)
-    matches = booking_dao.search_booking_by_date(date_yesterday.strftime('%Y-%m-%d'), is_check_in=False)
+    matches = booking_dao.search_booking_by_date(date_yesterday.strftime('%Y-%m-%d'), mode='last_date')
     if not matches:
       reply_messages.append(TextSendMessage(text="找不到任何訂單"))
     else:
       reply_messages.append(generate_booking_carousel_message(matches))
 
-  elif user_message == line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_TODAY:
+  elif user_message == line_config.USER_COMMAND_SEARCH_BOOKING_TODAY:
     date_today = datetime.date.today()
     matches = booking_dao.search_booking_by_date(date_today.strftime('%Y-%m-%d'))
     if not matches:
@@ -55,7 +55,7 @@ def handle_default_messages(user_message: str, session: dict, booking_dao: Booki
     else:
       reply_messages.append(generate_booking_carousel_message(matches))
 
-  elif user_message == line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_TOMORROW:
+  elif user_message == line_config.USER_COMMAND_SEARCH_BOOKING_TOMORROW:
     date_tomorrow = datetime.date.today() + datetime.timedelta(days=1)
     matches = booking_dao.search_booking_by_date(date_tomorrow.strftime('%Y-%m-%d'))
     if not matches:
@@ -63,7 +63,7 @@ def handle_default_messages(user_message: str, session: dict, booking_dao: Booki
     else:
       reply_messages.append(generate_booking_carousel_message(matches))
 
-  elif user_message == line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_THIS_SATURDAY:
+  elif user_message == line_config.USER_COMMAND_SEARCH_BOOKING_THIS_SATURDAY:
     date_today = datetime.date.today()
     delta_days_to_this_saturday = 5 - date_today.weekday()
     date_this_saturday = date_today + datetime.timedelta(days=delta_days_to_this_saturday)
@@ -73,7 +73,7 @@ def handle_default_messages(user_message: str, session: dict, booking_dao: Booki
     else:
       reply_messages.append(generate_booking_carousel_message(matches))
 
-  elif user_message == line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_LAST_SATURDAY:
+  elif user_message == line_config.USER_COMMAND_SEARCH_BOOKING_LAST_SATURDAY:
     date_today = datetime.date.today()
     delta_days_to_last_saturday = -2 - date_today.weekday()
     date_last_saturday = date_today + datetime.timedelta(days=delta_days_to_last_saturday)

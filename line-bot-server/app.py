@@ -122,29 +122,29 @@ def handle_message_postback(event):
   if command_obj['command'] == line_config.POSTBACK_COMMAND_LOOKUP_BOOKING:
     quick_reply_buttons = [
       QuickReplyButton(action=DatetimePickerAction(
-        label="以入住日查詢",
-        data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE }),
+        label="以日期查詢",
+        data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_SEARCH_BOOKING_BY_DATE }),
         mode="date")
       ),
       QuickReplyButton(action=MessageAction(
-        label=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_TODAY,
-        text=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_TODAY)
+        label=line_config.USER_COMMAND_SEARCH_BOOKING_TODAY,
+        text=line_config.USER_COMMAND_SEARCH_BOOKING_TODAY)
       ),
       QuickReplyButton(action=MessageAction(
         label=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_OUT_TODAY,
         text=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_OUT_TODAY)
       ),
       QuickReplyButton(action=MessageAction(
-        label=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_TOMORROW,
-        text=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_TOMORROW)
+        label=line_config.USER_COMMAND_SEARCH_BOOKING_TOMORROW,
+        text=line_config.USER_COMMAND_SEARCH_BOOKING_TOMORROW)
       ),
       QuickReplyButton(action=MessageAction(
-        label=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_THIS_SATURDAY,
-        text=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_THIS_SATURDAY)
+        label=line_config.USER_COMMAND_SEARCH_BOOKING_THIS_SATURDAY,
+        text=line_config.USER_COMMAND_SEARCH_BOOKING_THIS_SATURDAY)
       ),
       QuickReplyButton(action=MessageAction(
-        label=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_LAST_SATURDAY,
-        text=line_config.USER_COMMAND_SEARCH_BOOKING_CHECK_IN_LAST_SATURDAY)
+        label=line_config.USER_COMMAND_SEARCH_BOOKING_LAST_SATURDAY,
+        text=line_config.USER_COMMAND_SEARCH_BOOKING_LAST_SATURDAY)
       ),
     ]
     quick_reply = QuickReply(items=quick_reply_buttons)
@@ -163,9 +163,9 @@ def handle_message_postback(event):
     session['step'] = line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_CUSTOMER_NAME
     session['data'] = {}
 
-  elif command_obj['command'] == line_config.POSTBACK_COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE:
+  elif command_obj['command'] == line_config.POSTBACK_COMMAND_SEARCH_BOOKING_BY_DATE:
     selected_date = event.postback.params['date']
-    reply_messages.append(TextSendMessage(line_config.USER_COMMAND_SEARCH_BOOKING_BY_CHECK_IN_DATE.format(date=selected_date.replace('-', '/'))))
+    reply_messages.append(TextSendMessage(line_config.USER_COMMAND_SEARCH_BOOKING_BY_DATE.format(date=selected_date.replace('-', '/'))))
 
     matches = booking_dao.search_booking_by_date(selected_date)
     if not matches:
