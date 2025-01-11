@@ -5,7 +5,9 @@ from linebot.models import CarouselColumn, CarouselTemplate, TemplateSendMessage
 from const.booking_const import BOOKING_STATUS_MARK
 from app_const import line_config
 from utils.data_access.data_class.booking_info import BookingInfo
+from utils.data_access.data_class.closure_info import ClosureInfo
 from utils.booking_utils import format_booking_info
+from utils.closure_utils import format_closure_info
 
 
 def generate_booking_carousel_message(matches: typing.Optional[Sequence[BookingInfo]]=None):
@@ -35,6 +37,25 @@ def generate_booking_carousel_message(matches: typing.Optional[Sequence[BookingI
   # Create the CarouselTemplate and send it as a message
   carousel_template = CarouselTemplate(columns=columns)
   return TemplateSendMessage(alt_text="Booking Info List", template=carousel_template)
+
+def generate_closure_carousel_message(matches: typing.Optional[Sequence[ClosureInfo]]=None):
+  columns = []
+
+  # Iterate over each match and create a carousel column
+  for match in matches:
+    actions=[
+      PostbackAction(label="取消", display_text=f"取消關房 {match.start_date}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_CANCEL_CLOSURE, 'closure_id': match.closure_id }), inputOption="closeRichMenu"),
+    ]
+
+    column = CarouselColumn(
+      text=format_closure_info(match),
+      actions=actions
+    )
+    columns.append(column)
+
+  # Create the CarouselTemplate and send it as a message
+  carousel_template = CarouselTemplate(columns=columns)
+  return TemplateSendMessage(alt_text="Closure Info List", template=carousel_template)
 
 def generate_edit_booking_select_attribute_quick_reply_buttons():
   return [

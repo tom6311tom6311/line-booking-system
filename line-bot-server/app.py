@@ -7,8 +7,9 @@ from const import db_config
 from app_const import line_config
 from utils.data_access.booking_dao import BookingDAO
 from utils.booking_utils import format_booking_info
+from utils.closure_utils import format_closure_info
 from utils.input_utils import is_valid_date
-from app_utils.line_messaging_utils import generate_booking_carousel_message
+from app_utils.line_messaging_utils import generate_booking_carousel_message, generate_closure_carousel_message
 from message_handlers.handle_default_messages import handle_default_messages
 from message_handlers.handle_create_booking_messages import handle_create_booking_messages
 from message_handlers.handle_edit_booking_messages import handle_edit_booking_messages
@@ -16,6 +17,7 @@ from message_handlers.handle_cancel_booking_messages import handle_cancel_bookin
 from message_handlers.handle_restore_booking_messages import handle_restore_booking_messages
 from message_handlers.handle_prepaid_booking_messages import handle_prepaid_booking_messages
 from message_handlers.handle_create_closure_messages import handle_create_closure_messages
+from message_handlers.handle_cancel_closure_messages import handle_cancel_closure_messages
 
 app = Flask(__name__)
 
@@ -47,6 +49,18 @@ def search_bookings(keyword):
     reply_message = "找不到任何訂單"
   else:
     reply_message = '\n\n'.join([format_booking_info(match, 'carousel') for match in matches])
+  return reply_message
+
+@app.route('/query/closures/<date>')
+def search_closures(date):
+  matches = None
+  if is_valid_date(date):
+    matches = booking_dao.search_closure_by_date(date)
+
+  if not matches:
+    reply_message = "找不到任何關房資料"
+  else:
+    reply_message = '\n\n'.join([format_closure_info(match) for match in matches])
   return reply_message
 
 # In-memory session store for LINE messaging API
@@ -95,6 +109,9 @@ def handle_message(event):
 
   elif session['flow'] == line_config.USER_FLOW_CREATE_CLOSURE:
     reply_messages = handle_create_closure_messages(user_message, session, booking_dao)
+
+  elif session['flow'] == line_config.USER_FLOW_CANCEL_CLOSURE:
+    reply_messages = handle_cancel_closure_messages(user_message, session, booking_dao)
 
   if (len(reply_messages) > 0):
     line_bot_api.reply_message(
@@ -167,11 +184,16 @@ def handle_message_postback(event):
     selected_date = event.postback.params['date']
     reply_messages.append(TextSendMessage(line_config.USER_COMMAND_SEARCH_BOOKING_BY_DATE.format(date=selected_date.replace('-', '/'))))
 
-    matches = booking_dao.search_booking_by_date(selected_date)
-    if not matches:
+    matched_bookings = booking_dao.search_booking_by_date(selected_date)
+    if matched_bookings:
+      reply_messages.append(generate_booking_carousel_message(matched_bookings))
+
+    matched_closures = booking_dao.search_closure_by_date(selected_date)
+    if matched_closures:
+      reply_messages.append(generate_closure_carousel_message(matched_closures))
+
+    if not matched_bookings and not matched_closures:
       reply_messages.append(TextSendMessage(text="找不到任何訂單"))
-    else:
-      reply_messages.append(generate_booking_carousel_message(matches))
 
   elif command_obj['command'] == line_config.POSTBACK_COMMAND_VIEW_FULL_BOOKING_INFO:
     booking_id = command_obj['booking_id']
@@ -251,6 +273,24 @@ def handle_message_postback(event):
     session['flow'] = line_config.USER_FLOW_CREATE_CLOSURE
     session['step'] = line_config.USER_FLOW_STEP_CREATE_CLOSURE__GET_START_DATE
     session['data'] = {}
+
+  elif command_obj['command'] == line_config.POSTBACK_COMMAND_CANCEL_CLOSURE:
+    closure_id = command_obj['closure_id']
+    quick_reply_buttons = [
+      QuickReplyButton(action=MessageAction(
+        label=line_config.USER_COMMAND_CANCEL_CLOSURE__CANCEL,
+        text=line_config.USER_COMMAND_CANCEL_CLOSURE__CANCEL)
+      ),
+      QuickReplyButton(action=MessageAction(
+        label=line_config.USER_COMMAND_CANCEL_CLOSURE__CONFIRM,
+        text=line_config.USER_COMMAND_CANCEL_CLOSURE__CONFIRM)
+      ),
+    ]
+    quick_reply = QuickReply(items=quick_reply_buttons)
+    reply_messages.append(TextSendMessage(text="是否真的要取消關房？", quick_reply=quick_reply))
+    session['flow'] = line_config.USER_FLOW_CANCEL_CLOSURE
+    session['step'] = line_config.USER_FLOW_STEP_CANCEL_CLOSURE__CONFIRM
+    session['data'] = { 'closure_id': closure_id }
 
   elif command_obj['command'] == line_config.POSTBACK_COMMAND_CREATE_BOOKING__SELECT_CHECK_IN_DATE:
     selected_date = event.postback.params['date']
