@@ -8,10 +8,12 @@ from notion_client import Client
 from utils.input_utils import format_phone_number
 from utils.data_access.booking_dao import BookingDAO
 from utils.data_access.data_class.booking_info import BookingInfo
+from utils.data_access.data_class.closure_info import ClosureInfo
 
 NOTION_TOKEN=os.getenv('NOTION_TOKEN')
 NOTION_DATABASE_ID=os.getenv('NOTION_DATABASE_ID')
 NOTION_SYNC_MIN_TIME = datetime.strptime(os.getenv('NOTION_SYNC_MIN_TIME'), '%Y-%m-%d')
+NOTION_ID_CLOSURE = '關房'
 notion = Client(auth=NOTION_TOKEN)
 local_tz = pytz.timezone('Asia/Taipei')
 utc_tz = pytz.timezone('UTC')
@@ -22,6 +24,8 @@ def sync_bookings_with_notion():
   latest_sync_time = booking_dao.get_latest_sync_time(sync_type="sql_with_notion")
   if latest_sync_time < NOTION_SYNC_MIN_TIME:
     latest_sync_time = NOTION_SYNC_MIN_TIME
+
+  logging.info(f"Syncing bookings after {latest_sync_time}...")
   latest_bookings_in_db = booking_dao.get_latest_bookings(latest_sync_time)
   latest_bookings_from_notion = get_latest_bookings_from_notion(latest_sync_time)
 
@@ -58,14 +62,63 @@ def sync_bookings_with_notion():
   synced_booking_ids = [booking_info.booking_id for booking_info in latest_bookings_in_db + latest_bookings_from_notion]
   booking_dao.log_sync_record("sql_with_notion", synced_booking_ids, success)
 
+  logging.info(f"Syncing closures after {latest_sync_time}...")
+  latest_closures_in_db = booking_dao.get_latest_closures(latest_sync_time)
+  latest_closures_from_notion = get_latest_closures_from_notion(latest_sync_time)
+
+  # Dictionary to track decisions for conflicting closures
+  conflicts_resolved = {}
+
+  # Find conflicts
+  for db_closure in latest_closures_in_db:
+    for notion_closure in latest_closures_from_notion:
+      if (
+        set(db_closure.room_ids).intersection(set(notion_closure.room_ids)) and
+        db_closure.start_date <= notion_closure.last_date and
+        notion_closure.start_date <= db_closure.last_date
+      ):
+        # Conflict detected; keep the more recently modified record
+        if db_closure.modified >= notion_closure.modified:
+          conflicts_resolved[notion_closure] = "delete_from_notion"
+        else:
+          conflicts_resolved[db_closure] = "delete_from_db"
+
+  # Delete outdated records
+  for closure, action in conflicts_resolved.items():
+    if action == "delete_from_notion":
+      delete_closure_from_notion(closure)
+    elif action == "delete_from_db":
+      booking_dao.delete_closure(closure.closure_id)
+
+  # Sync non-conflicting closures
+  # Add closures from Notion to the database
+  for notion_closure in latest_closures_from_notion:
+    if notion_closure not in conflicts_resolved:
+      booking_dao.insert_closure(notion_closure)
+
+  # Add closures from the database to Notion
+  for db_closure in latest_closures_in_db:
+    if db_closure not in conflicts_resolved:
+      write_closure_to_notion(db_closure)
+
+  logging.info("Closure synchronization completed.")
+
 def get_latest_bookings_from_notion(latest_sync_time: datetime) -> List[BookingInfo]:
   try:
     latest_sync_time_normalized = latest_sync_time.replace(tzinfo=local_tz).astimezone(utc_tz).isoformat()
     response = notion.databases.query(
       database_id=NOTION_DATABASE_ID,
       filter={
-        "timestamp": "last_edited_time",
-        "last_edited_time": {"after": latest_sync_time_normalized}
+        "and": [
+          {
+            "timestamp": "last_edited_time",
+            "last_edited_time": { "after": latest_sync_time_normalized }
+          },
+          {
+            "property": "ID",
+            "title": { "does_not_equal": NOTION_ID_CLOSURE }
+          }
+        ]
       }
     )
 
@@ -84,6 +137,72 @@ def get_latest_bookings_from_notion(latest_sync_time: datetime) -> List[BookingI
   except Exception as e:
     logging.error(f"Error loading latest bookings from Notion: {e}")
     return []
+
+def get_latest_closures_from_notion(latest_sync_time: datetime) -> List[ClosureInfo]:
+  try:
+    latest_sync_time_normalized = latest_sync_time.replace(tzinfo=local_tz).astimezone(utc_tz).isoformat()
+    response = notion.databases.query(
+      database_id=NOTION_DATABASE_ID,
+      filter={
+        "and": [
+          {
+            "timestamp": "last_edited_time",
+            "last_edited_time": { "after": latest_sync_time_normalized }
+          },
+          {
+            "property": "ID",
+            "title": { "equals": NOTION_ID_CLOSURE }
+          }
+        ]
+      }
+    )
+
+    latest_closures = []
+    if not response['results']:
+      return latest_closures
+
+    for entry in response['results']:
+      closure_info_from_notion = load_closure_info_from_notion_entry(entry)
+      if not closure_info_from_notion:
+        continue
+      latest_closures.append(closure_info_from_notion)
+
+    return latest_closures
+
+  except Exception as e:
+    logging.error(f"Error loading latest closures from Notion: {e}")
+    return []
+
+def delete_closure_from_notion(closure: ClosureInfo):
+  try:
+    response = notion.pages.update(
+      page_id=closure.notion_page_id,
+      archived=True
+    )
+    logging.info(f"Deleted closure from Notion: {closure.notion_page_id}")
+  except Exception as e:
+    logging.error(f"Error deleting closure from Notion: {e}")
+
+def write_closure_to_notion(closure: ClosureInfo):
+  try:
+    notion.pages.create(
+      parent={"database_id": NOTION_DATABASE_ID},
+      properties={
+        "ID": { "title": [{ "text": {"content": NOTION_ID_CLOSURE} }] },
+        "日期(不含退房日)": {
+          "date": {
+            "start": closure.start_date.strftime('%Y-%m-%d'),
+            "end": closure.last_date.strftime('%Y-%m-%d')
+          }
+        },
+        "房間": { "multi_select": [({ "name": room_id }) for room_id in closure.room_ids] },
+        "備註": { "rich_text": [{ "text": { "content": closure.reason or '' } }] }
+      }
+    )
+    logging.info(f"Closure written to Notion: {closure}")
+  except Exception as e:
+      logging.error(f"Error writing closure to Notion: {e}")
+
 
 def load_booking_info_from_notion_entry(notion_entry: dict):
   try:
@@ -127,6 +246,33 @@ def load_booking_info_from_notion_entry(notion_entry: dict):
     logging.error(f"Corrupted data detected. Skip loading {notion_entry}")
     return None
 
+
+def load_closure_info_from_notion_entry(notion_entry: dict):
+  try:
+    properties = notion_entry['properties']
+    start_date = properties['日期(不含退房日)']['date']['start']
+    last_date = properties['日期(不含退房日)']['date']['end']
+    reason = properties['備註']['rich_text'][0]['text']['content'] if properties['備註']['rich_text'] else ''
+    room_ids = ''.join([s['name'] for s in properties['房間']['multi_select']])
+
+    # Convert Notion dates to datetime for comparison
+    created = datetime.fromisoformat(notion_entry['created_time'].replace("Z", "+00:00")).astimezone(local_tz).replace(tzinfo=None)
+    modified = datetime.fromisoformat(notion_entry['last_edited_time'].replace("Z", "+00:00")).astimezone(local_tz).replace(tzinfo=None)
+    notion_page_id = notion_entry['id']
+
+    return ClosureInfo(
+      closure_id=-1,
+      start_date=start_date,
+      last_date=last_date,
+      reason=reason,
+      room_ids=room_ids,
+      created=created,
+      modified=modified,
+      notion_page_id=notion_page_id
+    )
+  except Exception as e:
+    logging.error(f"Corrupted data detected. Skip loading {notion_entry}")
+    return None
 
 # Util function to write bookings to Notion
 def write_bookings_to_notion(bookings: List[BookingInfo]):

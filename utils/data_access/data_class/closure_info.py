@@ -10,3 +10,4 @@ class ClosureInfo:
   room_ids: str
   created: datetime = None
   modified: datetime = None
+  notion_page_id: str = None

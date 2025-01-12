@@ -44,7 +44,7 @@ def generate_closure_carousel_message(matches: typing.Optional[Sequence[ClosureI
   # Iterate over each match and create a carousel column
   for match in matches:
     actions=[
-      PostbackAction(label="取消", display_text=f"取消關房 {match.start_date}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_CANCEL_CLOSURE, 'closure_id': match.closure_id }), inputOption="closeRichMenu"),
+      PostbackAction(label="取消關房", display_text=f"取消關房 {match.start_date}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_CANCEL_CLOSURE, 'closure_id': match.closure_id }), inputOption="closeRichMenu"),
     ]
 
     column = CarouselColumn(
