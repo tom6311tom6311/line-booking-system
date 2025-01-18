@@ -28,7 +28,7 @@ def export_historical_bookings():
     lines = []
     for booking_info in all_booking_infos:
       lines.append(format_booking_info(booking_info))
-      lines.append('\n\n')
+      lines.append('\n')
 
     # Write to the file
     with open(SORTED_BOOKINGS_FILE_PATH, 'w', encoding='utf-8') as f:

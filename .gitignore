@@ -3,3 +3,5 @@
 scheduler/data/*
 **/google_service_account_cred-*.json
 **/__pycache__
+backup/*
+!backup/.gitkeep
