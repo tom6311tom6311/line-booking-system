@@ -1,6 +1,6 @@
 import os
 import logging
-from datetime import datetime
+from datetime import date
 from const import db_config
 from utils.data_access.booking_dao import BookingDAO
 from utils.booking_utils import format_booking_info
@@ -22,7 +22,7 @@ def export_historical_bookings():
     booking_dao = BookingDAO.get_instance(db_config, logging, enable_notification=False)
 
     # Fetch all bookings
-    all_booking_infos = booking_dao.get_latest_bookings(datetime.date(1970, 1, 1))
+    all_booking_infos = booking_dao.get_latest_bookings(date(1970, 1, 1))
 
     # Prepare content for writing to the file
     lines = []
