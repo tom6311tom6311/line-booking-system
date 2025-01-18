@@ -105,7 +105,7 @@ def sync_bookings_with_notion():
 
 def get_latest_bookings_from_notion(latest_sync_time: datetime) -> List[BookingInfo]:
   try:
-    latest_sync_time_utc = local_tz.localize(latest_sync_time).astimezone(utc_tz).strftime('%Y-%m-%dT%H:%M:%S')
+    latest_sync_time_utc = local_tz.localize(latest_sync_time).astimezone(utc_tz).isoformat()
     response = notion.databases.query(
       database_id=NOTION_DATABASE_ID,
       filter={
@@ -140,7 +140,7 @@ def get_latest_bookings_from_notion(latest_sync_time: datetime) -> List[BookingI
 
 def get_latest_closures_from_notion(latest_sync_time: datetime) -> List[ClosureInfo]:
   try:
-    latest_sync_time_utc = local_tz.localize(latest_sync_time).astimezone(utc_tz).strftime('%Y-%m-%dT%H:%M:%S')
+    latest_sync_time_utc = local_tz.localize(latest_sync_time).astimezone(utc_tz).isoformat()
     response = notion.databases.query(
       database_id=NOTION_DATABASE_ID,
       filter={
