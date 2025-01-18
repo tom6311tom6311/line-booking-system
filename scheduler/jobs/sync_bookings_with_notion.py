@@ -12,7 +12,7 @@ from utils.data_access.data_class.closure_info import ClosureInfo
 
 NOTION_TOKEN=os.getenv('NOTION_TOKEN')
 NOTION_DATABASE_ID=os.getenv('NOTION_DATABASE_ID')
-NOTION_SYNC_MIN_TIME = datetime.strptime(os.getenv('NOTION_SYNC_MIN_TIME'), '%Y-%m-%d')
+NOTION_SYNC_MIN_TIME = datetime.strptime(os.getenv('NOTION_SYNC_MIN_TIME'), '%Y-%m-%dT%H:%M:%S')
 NOTION_ID_CLOSURE = '關房'
 notion = Client(auth=NOTION_TOKEN)
 local_tz = pytz.timezone('Asia/Taipei')

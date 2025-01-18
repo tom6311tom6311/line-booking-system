@@ -12,7 +12,7 @@ from utils.data_access.data_class.booking_info import BookingInfo
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 GOOGLE_SERVICE_ACCOUNT_CRED_FILE=os.getenv('GOOGLE_SERVICE_ACCOUNT_CRED_FILE')
 GOOGLE_CALENDAR_ID = os.getenv('GOOGLE_CALENDAR_ID')
-GOOGLE_CALENDAR_SYNC_MIN_TIME = datetime.strptime(os.getenv('GOOGLE_CALENDAR_SYNC_MIN_TIME'), '%Y-%m-%d')
+GOOGLE_CALENDAR_SYNC_MIN_TIME = datetime.strptime(os.getenv('GOOGLE_CALENDAR_SYNC_MIN_TIME'), '%Y-%m-%dT%H:%M:%S')
 
 # Task to load latest bookings and sync to Google Calendar
 def sync_bookings_to_google_calendar():
