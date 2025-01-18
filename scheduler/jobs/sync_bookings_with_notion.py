@@ -2,7 +2,7 @@ import os
 import logging
 import pytz
 from typing import List
-from datetime import datetime
+from datetime import datetime, timedelta
 from const import db_config
 from notion_client import Client
 from utils.input_utils import format_phone_number
@@ -31,6 +31,10 @@ def sync_bookings_with_notion():
 
   logging.info(f"Latest bookings in db (before conflict detection): {[booking_info.booking_id for booking_info in latest_bookings_in_db]}")
   logging.info(f"Latest bookings from notion (before conflict detection): {[booking_info.booking_id for booking_info in latest_bookings_from_notion]}")
+
+  # remove bookings that are exactly equal
+  latest_bookings_in_db = [booking_info for booking_info in latest_bookings_in_db if booking_info not in latest_bookings_from_notion]
+  latest_bookings_from_notion = [booking_info for booking_info in latest_bookings_from_notion if booking_info not in latest_bookings_in_db]
 
   # find conflicted bookings and keep only the more recent one
   latest_booking_ids_in_db = [booking_info.booking_id for booking_info in latest_bookings_in_db]
@@ -65,6 +69,10 @@ def sync_bookings_with_notion():
   logging.info(f"Syncing closures after {latest_sync_time}...")
   latest_closures_in_db = booking_dao.get_latest_closures(latest_sync_time)
   latest_closures_from_notion = get_latest_closures_from_notion(latest_sync_time)
+
+  # remove closures that are exactly equal
+  latest_closures_in_db = [closure_info for closure_info in latest_closures_in_db if closure_info not in latest_closures_from_notion]
+  latest_closures_from_notion = [closure_info for closure_info in latest_closures_from_notion if closure_info not in latest_closures_in_db]
 
   # Dictionary to track decisions for conflicting closures
   conflicts_resolved = {}
@@ -105,7 +113,9 @@ def sync_bookings_with_notion():
 
 def get_latest_bookings_from_notion(latest_sync_time: datetime) -> List[BookingInfo]:
   try:
-    latest_sync_time_utc = local_tz.localize(latest_sync_time).astimezone(utc_tz).isoformat()
+    # since notion timestamp only accurate to minute, minus the latest_sync_time by 1 min to prevent
+    # the edge case where there is any notion update on the same minute of latest_sync_time
+    latest_sync_time_utc = local_tz.localize(latest_sync_time - timedelta(minutes=1)).astimezone(utc_tz).isoformat()
     response = notion.databases.query(
       database_id=NOTION_DATABASE_ID,
       filter={

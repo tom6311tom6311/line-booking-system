@@ -18,3 +18,25 @@ class BookingInfo:
   room_ids: str
   created: datetime = None
   modified: datetime = None
+
+  def __hash__(self):
+    return self.booking_id
+
+  def __eq__(self, other):
+    if not isinstance(other, BookingInfo):
+      return NotImplemented
+    return (
+      self.booking_id == other.booking_id and
+      self.status == other.status and
+      self.customer_name == other.customer_name and
+      self.phone_number == other.phone_number and
+      self.check_in_date == other.check_in_date and
+      self.last_date == other.last_date and
+      self.total_price == other.total_price and
+      self.notes == other.notes and
+      self.source == other.source and
+      self.prepayment == other.prepayment and
+      self.prepayment_note == other.prepayment_note and
+      self.prepayment_status == other.prepayment_status and
+      self.room_ids == other.room_ids
+    )
