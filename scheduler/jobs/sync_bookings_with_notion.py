@@ -105,14 +105,14 @@ def sync_bookings_with_notion():
 
 def get_latest_bookings_from_notion(latest_sync_time: datetime) -> List[BookingInfo]:
   try:
-    latest_sync_time_normalized = latest_sync_time.replace(tzinfo=local_tz).astimezone(utc_tz).isoformat()
+    latest_sync_time_utc = local_tz.localize(latest_sync_time).astimezone(utc_tz).strftime('%Y-%m-%dT%H:%M:%S')
     response = notion.databases.query(
       database_id=NOTION_DATABASE_ID,
       filter={
         "and": [
           {
             "timestamp": "last_edited_time",
-            "last_edited_time": { "after": latest_sync_time_normalized }
+            "last_edited_time": { "after": latest_sync_time_utc }
           },
           {
             "property": "ID",
@@ -140,14 +140,14 @@ def get_latest_bookings_from_notion(latest_sync_time: datetime) -> List[BookingI
 
 def get_latest_closures_from_notion(latest_sync_time: datetime) -> List[ClosureInfo]:
   try:
-    latest_sync_time_normalized = latest_sync_time.replace(tzinfo=local_tz).astimezone(utc_tz).isoformat()
+    latest_sync_time_utc = local_tz.localize(latest_sync_time).astimezone(utc_tz).strftime('%Y-%m-%dT%H:%M:%S')
     response = notion.databases.query(
       database_id=NOTION_DATABASE_ID,
       filter={
         "and": [
           {
             "timestamp": "last_edited_time",
-            "last_edited_time": { "after": latest_sync_time_normalized }
+            "last_edited_time": { "after": latest_sync_time_utc }
           },
           {
             "property": "ID",
@@ -222,8 +222,8 @@ def load_booking_info_from_notion_entry(notion_entry: dict):
     status = 'canceled' if properties['取消']['checkbox'] else ('prepaid' if prepayment_status == 'paid' else 'new')
 
     # Convert Notion dates to datetime for comparison
-    created = datetime.fromisoformat(notion_entry['created_time'].replace("Z", "+00:00")).astimezone(local_tz).replace(tzinfo=None)
-    modified = datetime.fromisoformat(notion_entry['last_edited_time'].replace("Z", "+00:00")).astimezone(local_tz).replace(tzinfo=None)
+    created = datetime.strptime(notion_entry['created_time'], '%Y-%m-%dT%H:%M:%S.%fZ').replace(tzinfo=utc_tz).astimezone(local_tz)
+    modified = datetime.strptime(notion_entry['last_edited_time'], '%Y-%m-%dT%H:%M:%S.%fZ').replace(tzinfo=utc_tz).astimezone(local_tz)
 
     return BookingInfo(
       booking_id=booking_id,
