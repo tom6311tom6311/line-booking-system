@@ -4,7 +4,7 @@ import subprocess
 from datetime import datetime
 from const import db_config
 
-BACKUP_DIR = './data/mysql_backups'
+BACKUP_DIR = './backup/mysql_backups'
 MAX_BACKUPS = 15
 
 def backup_mysql():

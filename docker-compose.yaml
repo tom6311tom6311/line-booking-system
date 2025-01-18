@@ -58,6 +58,7 @@ services:
     volumes:
       - ./utils:/app/utils
       - ./const:/app/const
+      - ./backup:/app/backup
 
 volumes:
   db_data:

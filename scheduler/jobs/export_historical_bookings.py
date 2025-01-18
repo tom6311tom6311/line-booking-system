@@ -11,7 +11,7 @@ DB_USER = os.getenv('DB_USER')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
 DB_NAME = os.getenv('DB_NAME')
 
-SORTED_BOOKINGS_FILE_PATH = './data/sorted_bookings_exported.txt'
+SORTED_BOOKINGS_FILE_PATH = './backup/sorted_bookings_exported.txt'
 
 
 def export_historical_bookings():
