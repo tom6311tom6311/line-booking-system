@@ -6,7 +6,7 @@ from jobs.import_historical_bookings import import_historical_bookings
 from jobs.sync_bookings_to_google_calendar import sync_bookings_to_google_calendar
 from jobs.sync_bookings_with_notion import sync_bookings_with_notion
 from jobs.export_historical_bookings import export_historical_bookings
-from jobs.backup_mysql import backup_mysql
+from jobs.backup_sql import backup_sql
 
 JOBS_CONFIG_PATH = 'jobs_config.yaml'
 
@@ -25,7 +25,7 @@ JOB_FUNCTIONS = {
   'sync_bookings_to_google_calendar': sync_bookings_to_google_calendar,
   'sync_bookings_with_notion': sync_bookings_with_notion,
   'export_historical_bookings': export_historical_bookings,
-  'backup_mysql': backup_mysql,
+  'backup_sql': backup_sql,
 }
 
 # Scheduler setup

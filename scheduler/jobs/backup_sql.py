@@ -4,10 +4,10 @@ import subprocess
 from datetime import datetime
 from const import db_config
 
-BACKUP_DIR = './backup/mysql_backups'
+BACKUP_DIR = './backup/sql_backups'
 MAX_BACKUPS = 15
 
-def backup_mysql():
+def backup_sql():
   """
   Perform a MySQL backup and manage file rotation.
   """
@@ -21,14 +21,20 @@ def backup_mysql():
 
     # Perform the database backup using mysqldump
     command = [
-      "mysqldump",
+      "pg_dump",
       "-h", db_config.DB_HOST,
-      "-u", db_config.DB_USER,
-      f"-p{db_config.DB_PASSWORD}",
+      "-U", db_config.DB_USER,
+      "-F", "c",  # Custom format for compressed backup
+      "-f", backup_file,
       db_config.DB_NAME,
     ]
+
+    # Set the password environment variable for pg_dump
+    env = os.environ.copy()
+    env["PGPASSWORD"] = db_config.DB_PASSWORD
+
     with open(backup_file, "w") as f:
-      subprocess.run(command, stdout=f, check=True)
+      subprocess.run(command, env=env, check=True)
     logging.info(f"Backup successful: {backup_file}")
 
     # Handle file rotation

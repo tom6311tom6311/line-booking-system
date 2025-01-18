@@ -18,8 +18,8 @@ jobs:
     job_function: "export_historical_bookings"
     type: "cron"
     cron: "0 2 * * *" # Everyday at 02:00.
-  backup_mysql:
+  backup_sql:
     enabled: "False"
-    job_function: "backup_mysql"
+    job_function: "backup_sql"
     type: "cron"
     cron: "0 3 * * *" # Everyday at 03:00.
