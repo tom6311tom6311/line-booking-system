@@ -125,6 +125,9 @@ class BookingDAO:
     try:
       cursor = connection.cursor()
       if existing_booking_info:
+        if booking_info == existing_booking_info:
+          cursor.close()
+          return existing_booking_info.booking_id
         booking_id = existing_booking_info.booking_id
         update_booking_query = """
         UPDATE Bookings
@@ -185,25 +188,14 @@ class BookingDAO:
       if (self.enable_notification):
         if existing_booking_info:
           if (
-            existing_booking_info.status != 'canceled' and
-            booking_info.status == 'canceled'
+            existing_booking_info.status != booking_info.status
           ):
-            LineNotificationService(self.logger).notify_booking_canceled(booking_info)
-          elif (
-            booking_info.customer_name != existing_booking_info.customer_name or
-            booking_info.phone_number != existing_booking_info.phone_number or
-            booking_info.check_in_date != existing_booking_info.check_in_date or
-            booking_info.last_date != existing_booking_info.last_date or
-            booking_info.total_price != existing_booking_info.total_price or
-            booking_info.source != existing_booking_info.source or
-            booking_info.notes != existing_booking_info.notes
-          ):
+            if (booking_info.status == 'canceled'):
+              LineNotificationService(self.logger).notify_booking_canceled(booking_info)
+            elif (booking_info.status != 'canceled'):
+              LineNotificationService(self.logger).notify_booking_restored(booking_info)
+          elif (existing_booking_info != booking_info):
             LineNotificationService(self.logger).notify_booking_updated(booking_info)
-          elif (
-            existing_booking_info.status == 'canceled' and
-            booking_info.status != 'canceled'
-          ):
-            LineNotificationService(self.logger).notify_booking_restored(booking_info)
         else:
           LineNotificationService(self.logger).notify_booking_created(booking_info)
 
