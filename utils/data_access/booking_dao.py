@@ -485,7 +485,7 @@ class BookingDAO:
       JOIN Rooms r ON rb.room_id = r.room_id
       WHERE b.created >= %s OR b.modified >= %s
       GROUP BY b.booking_id, c.name, c.phone_number
-      ORDER BY b.created DESC;
+      ORDER BY b.created;
       """
 
       cursor.execute(query, (last_sync_time, last_sync_time))
@@ -698,7 +698,7 @@ class BookingDAO:
       JOIN Rooms r ON rc.room_id = r.room_id
       WHERE c.created >= %s OR c.modified >= %s
       GROUP BY c.closure_id
-      ORDER BY c.created DESC;
+      ORDER BY c.created;
       """
 
       cursor.execute(query, (last_sync_time, last_sync_time))

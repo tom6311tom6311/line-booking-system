@@ -5,6 +5,8 @@ from apscheduler.triggers.cron import CronTrigger
 from jobs.import_historical_bookings import import_historical_bookings
 from jobs.sync_bookings_to_google_calendar import sync_bookings_to_google_calendar
 from jobs.sync_bookings_with_notion import sync_bookings_with_notion
+from jobs.export_historical_bookings import export_historical_bookings
+from jobs.backup_mysql import backup_mysql
 
 JOBS_CONFIG_PATH = 'jobs_config.yaml'
 
@@ -21,7 +23,9 @@ def load_config(file_path=JOBS_CONFIG_PATH):
 JOB_FUNCTIONS = {
   'import_historical_bookings': import_historical_bookings,
   'sync_bookings_to_google_calendar': sync_bookings_to_google_calendar,
-  'sync_bookings_with_notion': sync_bookings_with_notion
+  'sync_bookings_with_notion': sync_bookings_with_notion,
+  'export_historical_bookings': export_historical_bookings,
+  'backup_mysql': backup_mysql,
 }
 
 # Scheduler setup

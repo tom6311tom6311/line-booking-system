@@ -13,3 +13,13 @@ jobs:
     job_function: "sync_bookings_with_notion"
     type: "cron"
     cron: "3,18,33,38 * * * *" # At minute 3, 18, 33, and 38.
+  export_historical_bookings:
+    enabled: "False"
+    job_function: "export_historical_bookings"
+    type: "cron"
+    cron: "0 2 * * *" # Everyday at 02:00.
+  backup_mysql:
+    enabled: "False"
+    job_function: "backup_mysql"
+    type: "cron"
+    cron: "0 3 * * *" # Everyday at 03:00.

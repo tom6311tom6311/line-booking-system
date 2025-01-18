@@ -8,12 +8,6 @@ from utils.data_access.data_class.booking_info import BookingInfo
 from utils.data_access.booking_dao import BookingDAO
 from utils.input_utils import format_phone_number
 
-# DB Connection details
-DB_HOST = os.getenv('DB_HOST')
-DB_USER = os.getenv('DB_USER')
-DB_PASSWORD = os.getenv('DB_PASSWORD')
-DB_NAME = os.getenv('DB_NAME')
-
 # Example booking text block
 SORTED_BOOKINGS_FILE_PATH = './data/sorted_bookings.txt'
 
