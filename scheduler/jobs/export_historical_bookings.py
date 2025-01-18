@@ -32,8 +32,8 @@ def export_historical_bookings():
 
     # Write to the file
     with open(SORTED_BOOKINGS_FILE_PATH, 'w', encoding='utf-8') as f:
-        f.writelines('\n'.join(lines))
+      f.writelines('\n'.join(lines))
     logging.info(f"Exported {len(all_booking_infos)} bookings to {SORTED_BOOKINGS_FILE_PATH}")
 
   except Exception as e:
-      logging.error(f"Error exporting historical bookings: {e}")
+    logging.error(f"Error exporting historical bookings: {e}")
