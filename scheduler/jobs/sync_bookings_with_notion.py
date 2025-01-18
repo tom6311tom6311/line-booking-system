@@ -2,7 +2,7 @@ import os
 import logging
 import pytz
 from typing import List
-from datetime import datetime, timedelta
+from datetime import datetime
 from const import db_config
 from notion_client import Client
 from utils.input_utils import format_phone_number
@@ -24,10 +24,6 @@ def sync_bookings_with_notion():
   latest_sync_time = booking_dao.get_latest_sync_time(sync_type="sql_with_notion")
   if latest_sync_time < NOTION_SYNC_MIN_TIME:
     latest_sync_time = NOTION_SYNC_MIN_TIME
-
-  # since notion timestamp only accurate to minute, minus the latest_sync_time by 1 min to prevent
-  # the edge case where there is any notion update on the same minute of latest_sync_time
-  latest_sync_time = latest_sync_time - timedelta(minutes=1)
 
   logging.info(f"Syncing bookings after {latest_sync_time}...")
   latest_bookings_in_db = booking_dao.get_latest_bookings(latest_sync_time)
