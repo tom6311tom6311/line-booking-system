@@ -348,6 +348,8 @@ def write_bookings_to_db(bookings: List[BookingInfo]):
     booking_dao = BookingDAO.get_instance(db_config, logging)
     for booking_info in bookings:
       booking_id = booking_dao.upsert_booking(booking_info)
+      if (not booking_id):
+        raise Exception(f"Error upsert booking {booking_info.booking_id}")
       logging.info(f"Created or updated SQL booking record {booking_id} from Notion")
       if (booking_id != booking_info.booking_id):
         logging.warning(f"Created Booking ID {booking_id} does not match Notion one {booking_info.booking_id}.")
