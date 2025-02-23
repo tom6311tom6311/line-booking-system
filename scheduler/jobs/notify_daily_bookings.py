@@ -16,6 +16,7 @@ def notify_daily_bookings():
 
   if not bookings_all:
     messages.append(TextSendMessage(text="今日無訂單"))
+    logging.info("No bookings today.")
 
   else:
     bookings_check_in = booking_dao.search_booking_by_date(date_today.strftime('%Y-%m-%d'), mode='check_in_date')
@@ -33,13 +34,11 @@ def notify_daily_bookings():
 
     logging.info(f"Notifying daily bookings. Check-ins: {bookings_check_in_ids}, Cont: {bookings_cont_ids}")
 
-    line_bot_api = LineBotApi(os.getenv('LINE_CHANNEL_ACCESS_TOKEN'))
-    recipient_id = os.getenv('LINE_NOTIFICATION_GROUP_ID')
+  line_bot_api = LineBotApi(os.getenv('LINE_CHANNEL_ACCESS_TOKEN'))
+  recipient_id = os.getenv('LINE_NOTIFICATION_GROUP_ID')
 
-    for message in messages:
-      line_bot_api.push_message(
-        recipient_id,
-        message
-      )
-
-    logging.info(f"Daily bookings notified")
+  for message in messages:
+    line_bot_api.push_message(
+      recipient_id,
+      message
+    )
