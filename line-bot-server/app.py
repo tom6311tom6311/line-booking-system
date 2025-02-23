@@ -9,6 +9,7 @@ from utils.data_access.booking_dao import BookingDAO
 from utils.booking_utils import format_booking_info
 from utils.closure_utils import format_closure_info
 from utils.input_utils import is_valid_date
+from utils.datetime_utils import get_latest_months
 from app_utils.line_messaging_utils import generate_booking_carousel_message, generate_closure_carousel_message
 from message_handlers.handle_default_messages import handle_default_messages
 from message_handlers.handle_create_booking_messages import handle_create_booking_messages
@@ -18,6 +19,7 @@ from message_handlers.handle_restore_booking_messages import handle_restore_book
 from message_handlers.handle_prepaid_booking_messages import handle_prepaid_booking_messages
 from message_handlers.handle_create_closure_messages import handle_create_closure_messages
 from message_handlers.handle_cancel_closure_messages import handle_cancel_closure_messages
+from message_handlers.handle_show_monthly_report_messages import handle_show_monthly_report_messages
 
 app = Flask(__name__)
 
@@ -112,6 +114,9 @@ def handle_message(event):
 
   elif session['flow'] == line_config.USER_FLOW_CANCEL_CLOSURE:
     reply_messages = handle_cancel_closure_messages(user_message, session, booking_dao)
+
+  elif session['flow'] == line_config.USER_FLOW_SHOW_MONTHLY_REPORT:
+    reply_messages = handle_show_monthly_report_messages(user_message, session, booking_dao)
 
   if (len(reply_messages) > 0):
     line_bot_api.reply_message(
@@ -306,6 +311,27 @@ def handle_message_postback(event):
     selected_date = event.postback.params['date']
     reply_messages.append(TextSendMessage(line_config.USER_COMMAND_CREATE_CLOSURE__SELECT_START_DATE.format(date=selected_date.replace('-', '/'))))
     reply_messages += handle_create_closure_messages(selected_date, session, booking_dao)
+
+  elif command_obj['command'] == line_config.POSTBACK_COMMAND_SHOW_MONTHLY_REPORT:
+    quick_reply_buttons = [
+      QuickReplyButton(action=MessageAction(
+        label=line_config.USER_COMMAND_CANCEL_CURRENT_FLOW,
+        text=line_config.USER_COMMAND_CANCEL_CURRENT_FLOW)
+      ),
+      *[
+        QuickReplyButton(action=MessageAction(
+          label=year_month,
+          text=year_month)
+        )
+        for year_month in get_latest_months(3, '%Y-%m')
+      ]
+    ]
+
+    quick_reply = QuickReply(items=quick_reply_buttons)
+    reply_messages.append(TextSendMessage(text="請選擇月份:", quick_reply=quick_reply))
+    session['flow'] = line_config.USER_FLOW_SHOW_MONTHLY_REPORT
+    session['step'] = line_config.USER_FLOW_STEP_SHOW_MONTHLY_REPORT__SELECT_MONTH
+    session['data'] = {}
 
   else:
     app.logger.warning(f"Unrecognized postback command: {command_obj['command']}")

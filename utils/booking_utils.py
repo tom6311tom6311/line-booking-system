@@ -4,7 +4,7 @@ from const.booking_const import GENERIC_NAMES, BOOKING_STATUS_MARK, PREPAYMENT_S
 from utils.data_access.data_class.booking_info import BookingInfo
 
 # Function to format the booking info as per the required format
-def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant='normal', custom_status_mark=''):
+def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant='normal', custom_status_mark='', custom_postfix=''):
   if not booking_info:
     return None
 
@@ -40,6 +40,18 @@ def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant
       f"訂金：{prepayment}元/{prepayment_status}\n"
       f"來源：{booking_info.source}\n"
       f"備註：{booking_info.notes}\n"
+    )
+  elif variant == 'report':
+    message = (
+      f"[訂單]\n"
+      f"ＩＤ：{booking_info.booking_id if booking_info.booking_id > 0 else ''}\n"
+      f"姓名：{booking_info.customer_name}\n"
+      f"入住日期：{booking_info.check_in_date.strftime('%Y/%m/%d')}\n"
+      f"晚數：{nights}\n"
+      f"總金額：{total_price}\n"
+      f"來源：{booking_info.source}\n"
+      f"房間：{booking_info.room_ids}\n"
+      f"{custom_postfix}"
     )
   else:
     message = (
@@ -133,3 +145,40 @@ def is_generic_phone_number(phone_number):
 
 def get_prepayment_estimation(total_price):
   return int(int(total_price) * 0.3 // 100 * 100)
+
+def generate_report(year_month: str, bookings: list[BookingInfo]):
+  message = (
+    f"##### {year_month}月報表  #####\n"
+    f"------------------------------\n\n"
+  )
+
+  total_amount_for_booking_com = 0
+  total_amount_for_staff = 0
+  total_amount_left = 0
+  for booking_info in bookings:
+    amount_for_booking_com = int(booking_info.total_price * .12) if booking_info.source == 'Booking_com' else 0
+    amount_for_staff = int((booking_info.total_price - amount_for_booking_com) * .2)
+    amount_left = booking_info.total_price - amount_for_booking_com - amount_for_staff * 2
+
+    total_amount_for_booking_com += amount_for_booking_com
+    total_amount_for_staff += amount_for_staff
+    total_amount_left += amount_left
+
+    financial_result_text = (
+      f"Booking_com佣金：{amount_for_booking_com}\n"
+      f"給姑姑：{amount_for_staff}\n"
+      f"給雅雯：{amount_for_staff}\n"
+      f"結餘：{amount_left}\n"
+    )
+
+    message += format_booking_info(booking_info, 'report', custom_postfix=financial_result_text)
+    message += '\n'
+  message += f"------------------------------\n\n"
+  message += f"[總結]\n"
+
+  message += (
+    f"Booking_com佣金：{total_amount_for_booking_com}\n"
+    f"給姑姑：{total_amount_for_staff}\n"
+    f"給雅雯：{total_amount_for_staff}\n"
+    f"結餘：{total_amount_left}\n"
+  )

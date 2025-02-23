@@ -79,7 +79,7 @@ class BookingDAO:
       JOIN RoomBookings rb ON b.booking_id = rb.booking_id
       JOIN Rooms r ON rb.room_id = r.room_id
       WHERE b.booking_id = %s
-      GROUP BY b.booking_id, c.name, c.phone_number;
+      GROUP BY b.booking_id, c.customer_id;
       """
       cursor.execute(query, (booking_id,))
       row = cursor.fetchone()
@@ -353,7 +353,7 @@ class BookingDAO:
       WHERE b.booking_id::text LIKE %s
         OR c.phone_number LIKE %s
         OR c.name LIKE %s
-      GROUP BY b.booking_id, c.name, c.phone_number
+      GROUP BY b.booking_id, c.customer_id
       ORDER BY
         CASE
           WHEN b.status = 'canceled' THEN 1
@@ -425,7 +425,7 @@ class BookingDAO:
       JOIN RoomBookings rb ON b.booking_id = rb.booking_id
       JOIN Rooms r ON rb.room_id = r.room_id
       WHERE {date_query}
-      GROUP BY b.booking_id, c.name, c.phone_number
+      GROUP BY b.booking_id, c.customer_id
       ORDER BY
         CASE
           WHEN b.status = 'canceled' THEN 1
@@ -467,6 +467,77 @@ class BookingDAO:
 
     return matches
 
+  def get_bookings_by_month(self, year_month: str) -> Optional[list[BookingInfo]]:
+    """
+    Retrieves all bookings with a check-in date in the specified month.
+
+    Args:
+        year_month (str): The target month in 'YYYY-MM' format.
+
+    Returns:
+        List[BookingInfo]: A list of bookings within the given month.
+    """
+    connection = self.get_connection()
+    if not connection:
+      return None
+
+    matches = []
+    try:
+      # Convert YYYY-MM to the first and last day of the month
+      first_day = datetime.strptime(year_month, "%Y-%m").date()
+      last_day = datetime(first_day.year, first_day.month + 1, 1).date() if first_day.month < 12 else datetime(first_day.year + 1, 1, 1).date()
+
+      cursor = connection.cursor()
+
+      # SQL query to retrieve bookings within the given month
+      query = """
+      SELECT b.booking_id, b.status, c.name, c.phone_number, b.check_in_date, b.last_date,
+        b.total_price, b.notes, b.source, b.prepayment, b.prepayment_note, b.prepayment_status,
+        STRING_AGG(r.room_id, '' ORDER BY r.created) AS room_ids, b.created, b.modified
+      FROM Bookings b
+      JOIN Customers c ON b.customer_id = c.customer_id
+      JOIN RoomBookings rb ON b.booking_id = rb.booking_id
+      JOIN Rooms r ON rb.room_id = r.room_id
+      WHERE b.check_in_date >= %s AND b.check_in_date < %s
+        AND b.status != 'canceled'::booking_statuses
+      GROUP BY b.booking_id, c.customer_id
+      ORDER BY
+        b.check_in_date,
+        b.booking_id;
+      """
+      cursor.execute(query, (first_day, last_day))
+      rows = cursor.fetchall()
+      cursor.close()
+
+      for row in rows:
+        booking_info = BookingInfo(
+          booking_id=row[0],
+          status=row[1],
+          customer_name=row[2],
+          phone_number=row[3],
+          check_in_date=row[4],
+          last_date=row[5],
+          total_price=row[6],
+          notes=row[7],
+          source=row[8],
+          prepayment=row[9],
+          prepayment_note=row[10],
+          prepayment_status=row[11],
+          room_ids=row[12],
+          created=row[13],
+          modified=row[14]
+        )
+        matches.append(booking_info)
+
+    except Exception as e:
+      self.logger.error(f"Error getting bookings by month: {e}")
+      matches = None
+
+    finally:
+      self.release_connection(connection)
+
+    return matches
+
   def get_latest_bookings(self, last_sync_time) -> Optional[list[BookingInfo]]:
     connection = self.get_connection()
     if not connection:
@@ -486,7 +557,7 @@ class BookingDAO:
       JOIN RoomBookings rb ON b.booking_id = rb.booking_id
       JOIN Rooms r ON rb.room_id = r.room_id
       WHERE b.created >= %s OR b.modified >= %s
-      GROUP BY b.booking_id, c.name, c.phone_number
+      GROUP BY b.booking_id, c.customer_id
       ORDER BY b.created;
       """
 

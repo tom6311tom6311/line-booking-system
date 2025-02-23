@@ -1,9 +1,9 @@
 import re
 from datetime import datetime
 
-def is_valid_date(date_str):
+def is_valid_date(date_str, format='%Y-%m-%d'):
   try:
-    datetime.strptime(date_str, '%Y-%m-%d')
+    datetime.strptime(date_str, format)
     return True
   except ValueError:
     return False

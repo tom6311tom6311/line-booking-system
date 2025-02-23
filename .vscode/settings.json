@@ -8,6 +8,7 @@
     "mysqldump",
     "Postback",
     "psycopg",
+    "relativedelta",
     "washitsu"
   ],
   "python.analysis.extraPaths": [
