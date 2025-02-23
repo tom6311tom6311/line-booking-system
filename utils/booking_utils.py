@@ -182,3 +182,5 @@ def generate_report(year_month: str, bookings: list[BookingInfo]):
     f"給雅雯：{total_amount_for_staff}\n"
     f"結餘：{total_amount_left}\n"
   )
+
+  return message
