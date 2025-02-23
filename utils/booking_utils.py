@@ -48,9 +48,9 @@ def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant
       f"姓名：{booking_info.customer_name}\n"
       f"入住日期：{booking_info.check_in_date.strftime('%Y/%m/%d')}\n"
       f"晚數：{nights}\n"
-      f"總金額：{total_price}\n"
       f"來源：{booking_info.source}\n"
       f"房間：{booking_info.room_ids}\n"
+      f"總金額：{total_price}\n"
       f"{custom_postfix}"
     )
   else:
@@ -148,18 +148,20 @@ def get_prepayment_estimation(total_price):
 
 def generate_report(year_month: str, bookings: list[BookingInfo]):
   message = (
-    f"##### {year_month}月報表  #####\n"
+    f"##### {year_month}月報表  #####\n\n"
     f"------------------------------\n\n"
   )
 
+  total_revenue = 0
   total_amount_for_booking_com = 0
   total_amount_for_staff = 0
   total_amount_left = 0
   for booking_info in bookings:
     amount_for_booking_com = int(booking_info.total_price * .12) if booking_info.source == 'Booking_com' else 0
     amount_for_staff = int((booking_info.total_price - amount_for_booking_com) * .2)
-    amount_left = booking_info.total_price - amount_for_booking_com - amount_for_staff * 2
+    amount_left = int(booking_info.total_price - amount_for_booking_com - amount_for_staff * 2)
 
+    total_revenue += int(booking_info.total_price)
     total_amount_for_booking_com += amount_for_booking_com
     total_amount_for_staff += amount_for_staff
     total_amount_left += amount_left
@@ -177,10 +179,11 @@ def generate_report(year_month: str, bookings: list[BookingInfo]):
   message += f"[總結]\n"
 
   message += (
+    f"營業額：{total_revenue}\n"
     f"Booking_com佣金：{total_amount_for_booking_com}\n"
     f"給姑姑：{total_amount_for_staff}\n"
     f"給雅雯：{total_amount_for_staff}\n"
-    f"結餘：{total_amount_left}\n"
+    f"結餘：{total_amount_left}"
   )
 
   return message
