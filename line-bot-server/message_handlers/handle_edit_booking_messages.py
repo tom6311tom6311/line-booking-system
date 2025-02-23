@@ -2,11 +2,11 @@ import json
 from datetime import datetime, timedelta
 from linebot.models import TextSendMessage,  QuickReply, QuickReplyButton, MessageAction, DatetimePickerAction
 from const.booking_const import VALID_BOOKING_SOURCES
-from app_const import line_config
+from const import line_config
 from utils.data_access.booking_dao import BookingDAO
 from utils.booking_utils import format_booking_changes, trim_booking_changes, get_prepayment_estimation
 from utils.input_utils import is_valid_date, is_valid_phone_number, is_valid_num_nights, is_valid_price, format_phone_number
-from app_utils.line_messaging_utils import generate_edit_booking_select_attribute_quick_reply_buttons, generate_go_to_previous_step_button
+from utils.line_messaging_utils import generate_edit_booking_select_attribute_quick_reply_buttons, generate_go_to_previous_step_button
 
 def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: BookingDAO):
   reply_messages = []

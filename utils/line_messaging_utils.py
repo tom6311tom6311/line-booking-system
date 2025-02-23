@@ -1,9 +1,9 @@
 import typing
 import json
 from collections.abc import Sequence
-from linebot.models import CarouselColumn, CarouselTemplate, TemplateSendMessage, PostbackAction, QuickReplyButton, MessageAction, DatetimePickerAction
+from linebot.models import CarouselColumn, CarouselTemplate, TemplateSendMessage, PostbackAction, QuickReplyButton, MessageAction
+from const import line_config
 from const.booking_const import BOOKING_STATUS_MARK
-from app_const import line_config
 from utils.data_access.data_class.booking_info import BookingInfo
 from utils.data_access.data_class.closure_info import ClosureInfo
 from utils.booking_utils import format_booking_info

@@ -1,5 +1,5 @@
 from linebot.models import TextSendMessage,  QuickReply, QuickReplyButton, MessageAction
-from app_const import line_config
+from const import line_config
 from utils.data_access.booking_dao import BookingDAO
 from utils.input_utils import is_valid_date
 from utils.datetime_utils import get_latest_months

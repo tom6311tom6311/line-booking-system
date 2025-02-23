@@ -1,12 +1,12 @@
 import json
 from datetime import datetime, timedelta
 from linebot.models import TextSendMessage,  QuickReply, QuickReplyButton, MessageAction, DatetimePickerAction
-from app_const import line_config
+from const import line_config
 from utils.data_access.data_class.closure_info import ClosureInfo
 from utils.data_access.booking_dao import BookingDAO
 from utils.closure_utils import format_closure_info
 from utils.input_utils import is_valid_date, is_valid_num_nights
-from app_utils.line_messaging_utils import generate_go_to_previous_step_button
+from utils.line_messaging_utils import generate_go_to_previous_step_button
 
 PREVIOUS_STEP = {
   line_config.USER_FLOW_STEP_CREATE_CLOSURE__GET_NUM_NIGHTS: line_config.USER_FLOW_STEP_CREATE_CLOSURE__GET_START_DATE,

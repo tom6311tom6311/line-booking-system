@@ -1,5 +1,5 @@
 from linebot.models import TextSendMessage,  QuickReply, QuickReplyButton, MessageAction
-from app_const import line_config
+from const import line_config
 from utils.data_access.booking_dao import BookingDAO
 
 def handle_cancel_closure_messages(user_message: str, session: dict, booking_dao: BookingDAO):

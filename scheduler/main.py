@@ -6,6 +6,7 @@ from jobs.import_historical_bookings import import_historical_bookings
 from jobs.sync_bookings_to_google_calendar import sync_bookings_to_google_calendar
 from jobs.sync_bookings_with_notion import sync_bookings_with_notion
 from jobs.export_historical_bookings import export_historical_bookings
+from jobs.notify_daily_bookings import notify_daily_bookings
 from jobs.backup_sql import backup_sql
 
 JOBS_CONFIG_PATH = 'jobs_config.yaml'
@@ -25,6 +26,7 @@ JOB_FUNCTIONS = {
   'sync_bookings_to_google_calendar': sync_bookings_to_google_calendar,
   'sync_bookings_with_notion': sync_bookings_with_notion,
   'export_historical_bookings': export_historical_bookings,
+  'notify_daily_bookings': notify_daily_bookings,
   'backup_sql': backup_sql,
 }
 

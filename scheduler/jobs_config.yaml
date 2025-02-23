@@ -23,3 +23,8 @@ jobs:
     job_function: "backup_sql"
     type: "cron"
     cron: "0 3 * * *" # Everyday at 03:00.
+  notify_daily_bookings:
+    enabled: "False"
+    job_function: "notify_daily_bookings"
+    type: "cron"
+    cron: "0 8 * * *" # Everyday at 08:00.

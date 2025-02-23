@@ -3,14 +3,13 @@ from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, PostbackEvent, TextMessage, TextSendMessage, QuickReply, QuickReplyButton, MessageAction, DatetimePickerAction
-from const import db_config
-from app_const import line_config
+from const import db_config, line_config
 from utils.data_access.booking_dao import BookingDAO
 from utils.booking_utils import format_booking_info
 from utils.closure_utils import format_closure_info
 from utils.input_utils import is_valid_date
 from utils.datetime_utils import get_latest_months
-from app_utils.line_messaging_utils import generate_booking_carousel_message, generate_closure_carousel_message
+from utils.line_messaging_utils import generate_booking_carousel_message, generate_closure_carousel_message
 from message_handlers.handle_default_messages import handle_default_messages
 from message_handlers.handle_create_booking_messages import handle_create_booking_messages
 from message_handlers.handle_edit_booking_messages import handle_edit_booking_messages

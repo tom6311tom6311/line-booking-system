@@ -1,8 +1,8 @@
 from linebot.models import TextSendMessage,  QuickReply, QuickReplyButton, MessageAction
-from app_const import line_config
+from const import line_config
 from utils.data_access.booking_dao import BookingDAO
 from utils.input_utils import is_valid_price
-from app_utils.line_messaging_utils import generate_go_to_previous_step_button
+from utils.line_messaging_utils import generate_go_to_previous_step_button
 
 PREVIOUS_STEP = {
   line_config.USER_FLOW_STEP_PREPAID_BOOKING__GET_PREPAYMENT_NOTE: line_config.USER_FLOW_STEP_PREPAID_BOOKING__GET_PREPAYMENT_AMOUNT,

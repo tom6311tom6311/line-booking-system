@@ -1,10 +1,10 @@
 import json
 import datetime
 from linebot.models import TextSendMessage,  QuickReply, QuickReplyButton, MessageAction, DatetimePickerAction
-from app_const import line_config
+from const import line_config
 from utils.input_utils import extract_booking_id
 from utils.data_access.booking_dao import BookingDAO
-from app_utils.line_messaging_utils import generate_booking_carousel_message, generate_closure_carousel_message, generate_edit_booking_select_attribute_quick_reply_buttons
+from utils.line_messaging_utils import generate_booking_carousel_message, generate_closure_carousel_message, generate_edit_booking_select_attribute_quick_reply_buttons
 
 def handle_default_messages(user_message: str, session: dict, booking_dao: BookingDAO):
   reply_messages = []

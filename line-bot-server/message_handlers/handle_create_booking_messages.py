@@ -2,12 +2,12 @@ import json
 from datetime import datetime, timedelta
 from linebot.models import TextSendMessage,  QuickReply, QuickReplyButton, MessageAction, DatetimePickerAction
 from const.booking_const import VALID_BOOKING_SOURCES
-from app_const import line_config
+from const import line_config
 from utils.data_access.data_class.booking_info import BookingInfo
 from utils.data_access.booking_dao import BookingDAO
 from utils.booking_utils import format_booking_info, get_prepayment_estimation
 from utils.input_utils import is_valid_date, is_valid_phone_number, is_valid_num_nights, is_valid_price, format_phone_number
-from app_utils.line_messaging_utils import generate_go_to_previous_step_button
+from utils.line_messaging_utils import generate_go_to_previous_step_button
 
 PREVIOUS_STEP = {
   line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_PHONE_NUMBER: line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_CUSTOMER_NAME,
