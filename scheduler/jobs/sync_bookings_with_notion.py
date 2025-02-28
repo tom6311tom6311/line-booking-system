@@ -29,12 +29,16 @@ def sync_bookings_with_notion():
   latest_bookings_in_db = booking_dao.get_latest_bookings(latest_sync_time)
   latest_bookings_from_notion = get_latest_bookings_from_notion(latest_sync_time)
 
-  logging.info(f"Latest bookings in db (before conflict detection): {[booking_info.booking_id for booking_info in latest_bookings_in_db]}")
-  logging.info(f"Latest bookings from notion (before conflict detection): {[booking_info.booking_id for booking_info in latest_bookings_from_notion]}")
+  logging.info(f"Latest bookings in db (before conflict detection): {latest_bookings_in_db}")
+  logging.info(f"Latest bookings from notion (before conflict detection): {latest_bookings_from_notion}")
 
   # remove bookings that are exactly equal
   latest_bookings_in_db = [booking_info for booking_info in latest_bookings_in_db if booking_info not in latest_bookings_from_notion]
   latest_bookings_from_notion = [booking_info for booking_info in latest_bookings_from_notion if booking_info not in latest_bookings_in_db]
+
+  # remove notion bookings that are exactly equal with the corresponding entries in DB
+  # this is required due to the trick of minus latest_sync_time by 1 min
+  latest_bookings_from_notion = list(filter(lambda bi: booking_dao.get_booking_info(bi.booking_id) != bi, latest_bookings_from_notion))
 
   # find conflicted bookings and keep only the more recent one
   latest_booking_ids_in_db = [booking_info.booking_id for booking_info in latest_bookings_in_db]
@@ -52,8 +56,8 @@ def sync_bookings_with_notion():
   latest_bookings_in_db = [booking_info for booking_info in latest_bookings_in_db if booking_info.booking_id not in booking_ids_in_db_to_skip]
   latest_bookings_from_notion = [booking_info for booking_info in latest_bookings_from_notion if booking_info.booking_id not in booking_ids_from_notion_to_skip]
 
-  logging.info(f"Latest bookings in db: {[booking_info.booking_id for booking_info in latest_bookings_in_db]}")
-  logging.info(f"Latest bookings from notion: {[booking_info.booking_id for booking_info in latest_bookings_from_notion]}")
+  logging.info(f"Latest bookings in db: {latest_bookings_in_db}")
+  logging.info(f"Latest bookings from notion: {latest_bookings_from_notion}")
 
   success = True
   try:
