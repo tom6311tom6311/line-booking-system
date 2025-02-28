@@ -81,8 +81,9 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-  # Do not reply group messages
+  # Do not reply free form group messages
   if (event.source.type == 'group'):
+    app.logger.debug(f"Ignoring message from group #{event.source.group_id}")
     return
 
   user_id = event.source.user_id
@@ -130,10 +131,6 @@ def handle_message(event):
 
 @handler.add(PostbackEvent)
 def handle_message_postback(event):
-  # Do not reply group messages
-  if (event.source.type == 'group'):
-    return
-
   user_id = event.source.user_id
   command_obj = None
   try:
@@ -142,6 +139,11 @@ def handle_message_postback(event):
     app.logger.error("Failed to parse postback event data as json")
     return
   app.logger.debug(f"User Id: {user_id}, postback event: {command_obj}")
+
+  # Only reply group messages if the command is in the whitelist
+  if (event.source.type == 'group' and command_obj['command'] not in line_config.BROADCAST_GROUP_POSTBACK_COMMANDS_WHITELIST):
+    app.logger.debug(f"Ignoring postback command from group #{event.source.group_id}")
+    return
 
   # Initialize session if user is new
   if user_id not in user_sessions:
@@ -199,11 +201,11 @@ def handle_message_postback(event):
 
     matched_bookings = booking_dao.search_booking_by_date(selected_date, include_canceled=True)
     if matched_bookings:
-      reply_messages.append(generate_booking_carousel_message(matched_bookings))
+      reply_messages.append(generate_booking_carousel_message(matched_bookings, show_edit_actions=True))
 
     matched_closures = booking_dao.search_closure_by_date(selected_date)
     if matched_closures:
-      reply_messages.append(generate_closure_carousel_message(matched_closures))
+      reply_messages.append(generate_closure_carousel_message(matched_closures, show_edit_actions=True))
 
     if not matched_bookings and not matched_closures:
       reply_messages.append(TextSendMessage(text="找不到任何訂單"))

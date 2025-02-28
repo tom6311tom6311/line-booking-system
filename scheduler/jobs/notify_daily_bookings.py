@@ -5,7 +5,7 @@ from linebot import LineBotApi
 from linebot.models import TextSendMessage
 from const import db_config
 from utils.data_access.booking_dao import BookingDAO
-from utils.line_messaging_utils import generate_booking_carousel_message
+from utils.line_messaging_utils import generate_booking_carousel_message, generate_closure_carousel_message
 
 # Task to load latest bookings and sync to Google Calendar
 def notify_daily_bookings():
@@ -23,6 +23,8 @@ def notify_daily_bookings():
     bookings_check_in_ids = { bi.booking_id for bi in bookings_check_in }
     bookings_cont = [booking_info for booking_info in bookings_all if booking_info.booking_id not in bookings_check_in_ids]
     bookings_cont_ids = { bi.booking_id for bi in bookings_cont }
+    closures = booking_dao.search_closure_by_date(date_today.strftime('%Y-%m-%d'))
+    closure_ids = { ci.closure_id for ci in closures }
 
     if bookings_check_in:
       messages.append(TextSendMessage(text="今日入住："))
@@ -32,7 +34,11 @@ def notify_daily_bookings():
       messages.append(TextSendMessage(text="今日續住："))
       messages.append(generate_booking_carousel_message(bookings_cont))
 
-    logging.info(f"Notifying daily bookings. Check-ins: {bookings_check_in_ids}, Cont: {bookings_cont_ids}")
+    if closures:
+      messages.append(TextSendMessage(text="今日關房："))
+      messages.append(generate_closure_carousel_message(closures))
+
+    logging.info(f"Notifying daily bookings. Check-ins: {bookings_check_in_ids}, Cont: {bookings_cont_ids}, Closures: {closure_ids}")
 
   line_bot_api = LineBotApi(os.getenv('LINE_CHANNEL_ACCESS_TOKEN'))
   recipient_id = os.getenv('LINE_BROADCAST_GROUP_ID')

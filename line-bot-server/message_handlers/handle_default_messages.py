@@ -45,17 +45,17 @@ def handle_default_messages(user_message: str, session: dict, booking_dao: Booki
     if not matched_bookings:
       reply_messages.append(TextSendMessage(text="找不到任何訂單"))
     else:
-      reply_messages.append(generate_booking_carousel_message(matched_bookings))
+      reply_messages.append(generate_booking_carousel_message(matched_bookings, show_edit_actions=True))
 
   elif user_message == line_config.USER_COMMAND_SEARCH_BOOKING_TODAY:
     date_today = datetime.date.today()
     matched_bookings = booking_dao.search_booking_by_date(date_today.strftime('%Y-%m-%d'))
     if matched_bookings:
-      reply_messages.append(generate_booking_carousel_message(matched_bookings))
+      reply_messages.append(generate_booking_carousel_message(matched_bookings, show_edit_actions=True))
 
     matched_closures = booking_dao.search_closure_by_date(date_today.strftime('%Y-%m-%d'))
     if matched_closures:
-      reply_messages.append(generate_closure_carousel_message(matched_closures))
+      reply_messages.append(generate_closure_carousel_message(matched_closures, show_edit_actions=True))
 
     if not matched_bookings and not matched_closures:
       reply_messages.append(TextSendMessage(text="找不到任何訂單"))
@@ -64,11 +64,11 @@ def handle_default_messages(user_message: str, session: dict, booking_dao: Booki
     date_tomorrow = datetime.date.today() + datetime.timedelta(days=1)
     matched_bookings = booking_dao.search_booking_by_date(date_tomorrow.strftime('%Y-%m-%d'))
     if matched_bookings:
-      reply_messages.append(generate_booking_carousel_message(matched_bookings))
+      reply_messages.append(generate_booking_carousel_message(matched_bookings, show_edit_actions=True))
 
     matched_closures = booking_dao.search_closure_by_date(date_tomorrow.strftime('%Y-%m-%d'))
     if matched_closures:
-      reply_messages.append(generate_closure_carousel_message(matched_closures))
+      reply_messages.append(generate_closure_carousel_message(matched_closures, show_edit_actions=True))
 
     if not matched_bookings and not matched_closures:
       reply_messages.append(TextSendMessage(text="找不到任何訂單"))
@@ -79,11 +79,11 @@ def handle_default_messages(user_message: str, session: dict, booking_dao: Booki
     date_this_saturday = date_today + datetime.timedelta(days=delta_days_to_this_saturday)
     matched_bookings = booking_dao.search_booking_by_date(date_this_saturday.strftime('%Y-%m-%d'))
     if matched_bookings:
-      reply_messages.append(generate_booking_carousel_message(matched_bookings))
+      reply_messages.append(generate_booking_carousel_message(matched_bookings, show_edit_actions=True))
 
     matched_closures = booking_dao.search_closure_by_date(date_this_saturday.strftime('%Y-%m-%d'))
     if matched_closures:
-      reply_messages.append(generate_closure_carousel_message(matched_closures))
+      reply_messages.append(generate_closure_carousel_message(matched_closures, show_edit_actions=True))
 
     if not matched_bookings and not matched_closures:
       reply_messages.append(TextSendMessage(text="找不到任何訂單"))
@@ -94,11 +94,11 @@ def handle_default_messages(user_message: str, session: dict, booking_dao: Booki
     date_last_saturday = date_today + datetime.timedelta(days=delta_days_to_last_saturday)
     matched_bookings = booking_dao.search_booking_by_date(date_last_saturday.strftime('%Y-%m-%d'))
     if matched_bookings:
-      reply_messages.append(generate_booking_carousel_message(matched_bookings))
+      reply_messages.append(generate_booking_carousel_message(matched_bookings, show_edit_actions=True))
 
     matched_closures = booking_dao.search_closure_by_date(date_last_saturday.strftime('%Y-%m-%d'))
     if matched_closures:
-      reply_messages.append(generate_closure_carousel_message(matched_closures))
+      reply_messages.append(generate_closure_carousel_message(matched_closures, show_edit_actions=True))
 
     if not matched_bookings and not matched_closures:
       reply_messages.append(TextSendMessage(text="找不到任何訂單"))
@@ -138,6 +138,6 @@ def handle_default_messages(user_message: str, session: dict, booking_dao: Booki
     if not matches:
       reply_messages.append(TextSendMessage(text="找不到任何訂單"))
     else:
-      reply_messages.append(generate_booking_carousel_message(matches))
+      reply_messages.append(generate_booking_carousel_message(matches, show_edit_actions=True))
 
   return reply_messages

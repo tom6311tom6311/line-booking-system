@@ -10,52 +10,55 @@ from utils.booking_utils import format_booking_info
 from utils.closure_utils import format_closure_info
 
 
-def generate_booking_carousel_message(matches: typing.Optional[Sequence[BookingInfo]]=None):
+def generate_booking_carousel_message(bookings: typing.Optional[Sequence[BookingInfo]]=None, show_edit_actions=False):
   columns = []
 
   # Iterate over each match and create a carousel column
-  for match in matches:
-    status_mark = BOOKING_STATUS_MARK[match.status] if match.status in BOOKING_STATUS_MARK else ''
+  for booking_info in bookings:
+    status_mark = BOOKING_STATUS_MARK[booking_info.status] if booking_info.status in BOOKING_STATUS_MARK else ''
     actions=[
-      MessageAction(label="更改", text=line_config.USER_COMMAND_EDIT_BOOKING.format(booking_id=match.booking_id), inputOption="closeRichMenu"),
-      PostbackAction(label="已付訂金", display_text=f"訂單 {match.booking_id} 已付訂金", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_PREPAID_BOOKING, 'booking_id': match.booking_id }), inputOption="closeRichMenu")
+      MessageAction(label="更改", text=line_config.USER_COMMAND_EDIT_BOOKING.format(booking_id=booking_info.booking_id), inputOption="closeRichMenu"),
+      PostbackAction(label="已付訂金", display_text=f"訂單 {booking_info.booking_id} 已付訂金", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_PREPAID_BOOKING, 'booking_id': booking_info.booking_id }), inputOption="closeRichMenu")
+    ] if show_edit_actions else [
+      PostbackAction(label="檢視", display_text=f"檢視訂單 {booking_info.booking_id}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_VIEW_FULL_BOOKING_INFO, 'booking_id': booking_info.booking_id }))
     ]
 
-    if match.status != 'canceled':
-      actions.append(PostbackAction(label="取消", display_text=f"取消訂單 {match.booking_id}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_CANCEL_BOOKING, 'booking_id': match.booking_id }), inputOption="closeRichMenu"))
-    else:
-      actions.append(PostbackAction(label="復原", display_text=f"復原訂單 {match.booking_id}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_RESTORE_BOOKING, 'booking_id': match.booking_id }), inputOption="closeRichMenu"))
+    if show_edit_actions:
+      if booking_info.status != 'canceled':
+        actions.append(PostbackAction(label="取消", display_text=f"取消訂單 {booking_info.booking_id}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_CANCEL_BOOKING, 'booking_id': booking_info.booking_id }), inputOption="closeRichMenu"))
+      else:
+        actions.append(PostbackAction(label="復原", display_text=f"復原訂單 {booking_info.booking_id}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_RESTORE_BOOKING, 'booking_id': booking_info.booking_id }), inputOption="closeRichMenu"))
 
     column = CarouselColumn(
-      title=f"{status_mark}{match.customer_name}，{match.room_ids}，{int(match.total_price)}",
-      text=format_booking_info(match, 'carousel'),
-      default_action=PostbackAction(label="檢視", display_text=f"檢視訂單 {match.booking_id}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_VIEW_FULL_BOOKING_INFO, 'booking_id': match.booking_id })),
+      title=f"{status_mark}{booking_info.customer_name}，{booking_info.room_ids}，{int(booking_info.total_price)}",
+      text=format_booking_info(booking_info, 'carousel'),
+      default_action=PostbackAction(label="檢視", display_text=f"檢視訂單 {booking_info.booking_id}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_VIEW_FULL_BOOKING_INFO, 'booking_id': booking_info.booking_id })),
       actions=actions
     )
     columns.append(column)
 
   # Create the CarouselTemplate and send it as a message
   carousel_template = CarouselTemplate(columns=columns)
-  return TemplateSendMessage(alt_text="Booking Info List", template=carousel_template)
+  return TemplateSendMessage(alt_text="訂單清單", template=carousel_template)
 
-def generate_closure_carousel_message(matches: typing.Optional[Sequence[ClosureInfo]]=None):
+def generate_closure_carousel_message(closures: typing.Optional[Sequence[ClosureInfo]]=None, show_edit_actions=False):
   columns = []
 
   # Iterate over each match and create a carousel column
-  for match in matches:
+  for closure_info in closures:
     actions=[
-      PostbackAction(label="取消關房", display_text=f"取消關房 {match.start_date}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_CANCEL_CLOSURE, 'closure_id': match.closure_id }), inputOption="closeRichMenu"),
-    ]
+      PostbackAction(label="取消關房", display_text=f"取消關房 {closure_info.start_date}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_CANCEL_CLOSURE, 'closure_id': closure_info.closure_id }), inputOption="closeRichMenu"),
+    ] if show_edit_actions else []
 
     column = CarouselColumn(
-      text=format_closure_info(match),
+      text=format_closure_info(closure_info),
       actions=actions
     )
     columns.append(column)
 
   # Create the CarouselTemplate and send it as a message
   carousel_template = CarouselTemplate(columns=columns)
-  return TemplateSendMessage(alt_text="Closure Info List", template=carousel_template)
+  return TemplateSendMessage(alt_text="關房清單", template=carousel_template)
 
 def generate_edit_booking_select_attribute_quick_reply_buttons():
   return [
