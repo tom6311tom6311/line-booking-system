@@ -20,6 +20,8 @@ def sync_bookings_to_google_calendar():
   latest_sync_time = booking_dao.get_latest_sync_time(sync_type="sql_to_google_calendar")
   if latest_sync_time < GOOGLE_CALENDAR_SYNC_MIN_TIME:
     latest_sync_time = GOOGLE_CALENDAR_SYNC_MIN_TIME
+
+  logging.info(f"Syncing bookings to google calendar after {latest_sync_time}...")
   latest_bookings = booking_dao.get_latest_bookings(latest_sync_time)
   if not latest_bookings:
     logging.info("No new bookings to sync.")

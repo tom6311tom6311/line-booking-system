@@ -826,7 +826,7 @@ class BookingDAO:
       if existing_customer:
         customer_id, existing_name, existing_phone_number = existing_customer
         # Compare names and phone numbers and update if necessary
-        if not is_generic_name(customer.name) and customer.name != existing_name:
+        if is_generic_name(existing_name) and customer.name != existing_name:
           self.logger.info(f"Updating customer name from {existing_name} to {customer.name}")
           cursor.execute("UPDATE Customers SET name=%s WHERE customer_id=%s", (customer.name, customer_id))
         if not is_generic_phone_number(customer.phone_number) and customer.phone_number != existing_phone_number:

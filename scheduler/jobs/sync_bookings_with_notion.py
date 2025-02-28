@@ -25,7 +25,7 @@ def sync_bookings_with_notion():
   if latest_sync_time < NOTION_SYNC_MIN_TIME:
     latest_sync_time = NOTION_SYNC_MIN_TIME
 
-  logging.info(f"Syncing bookings after {latest_sync_time}...")
+  logging.info(f"Syncing bookings with notion after {latest_sync_time}...")
   latest_bookings_in_db = booking_dao.get_latest_bookings(latest_sync_time)
   latest_bookings_from_notion = get_latest_bookings_from_notion(latest_sync_time)
 

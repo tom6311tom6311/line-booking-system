@@ -19,6 +19,9 @@ class BookingInfo:
   created: datetime = None
   modified: datetime = None
 
+  def __str__(self):
+    return f"{self.booking_id}, {self.status}, {self.customer_name}, {self.phone_number}, {self.check_in_date}, {self.last_date}, {self.total_price}, {self.notes}, {self.source}, {self.prepayment}, {self.prepayment_note}, {self.prepayment_status}, {self.room_ids}"
+
   def __hash__(self):
     return self.booking_id
 
