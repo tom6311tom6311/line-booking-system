@@ -44,7 +44,7 @@ def sync_bookings_with_notion():
   for booking_id_in_db, booking_info_in_db in zip(latest_booking_ids_in_db, latest_bookings_in_db):
     for booking_id_from_notion, booking_info_from_notion in zip(latest_booking_ids_from_notion, latest_bookings_from_notion):
       if booking_id_in_db == booking_id_from_notion:
-        if booking_info_in_db.modified > booking_info_from_notion.modified:
+        if booking_info_in_db.modified.astimezone(local_tz) > booking_info_from_notion.modified:
           booking_ids_from_notion_to_skip.append(booking_id_from_notion)
         else:
           booking_ids_in_db_to_skip.append(booking_id_in_db)
