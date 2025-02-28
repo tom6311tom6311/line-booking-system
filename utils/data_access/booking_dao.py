@@ -400,7 +400,7 @@ class BookingDAO:
     finally:
         self.release_connection(connection)
 
-  def search_booking_by_date(self, date, mode=None) -> Optional[list[BookingInfo]]:
+  def search_booking_by_date(self, date, mode=None, include_canceled=False) -> Optional[list[BookingInfo]]:
     connection = self.get_connection()
     if not connection:
       return None
@@ -456,6 +456,8 @@ class BookingDAO:
           created=row[13],
           modified=row[14]
         )
+        if (not include_canceled and booking_info.status == 'canceled'):
+          continue
         matches.append(booking_info)
 
     except Exception as e:

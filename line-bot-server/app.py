@@ -197,7 +197,7 @@ def handle_message_postback(event):
     selected_date = event.postback.params['date']
     reply_messages.append(TextSendMessage(line_config.USER_COMMAND_SEARCH_BOOKING_BY_DATE.format(date=selected_date.replace('-', '/'))))
 
-    matched_bookings = booking_dao.search_booking_by_date(selected_date)
+    matched_bookings = booking_dao.search_booking_by_date(selected_date, include_canceled=True)
     if matched_bookings:
       reply_messages.append(generate_booking_carousel_message(matched_bookings))
 
