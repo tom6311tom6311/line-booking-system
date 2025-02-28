@@ -7,7 +7,7 @@ from utils.booking_utils import format_booking_info
 class LineNotificationService:
   def __init__(self, logger):
     self.line_bot_api = LineBotApi(os.getenv('LINE_CHANNEL_ACCESS_TOKEN'))
-    self.recipient_id = os.getenv('LINE_NOTIFICATION_GROUP_ID')
+    self.recipient_id = os.getenv('LINE_BROADCAST_GROUP_ID')
     self.logger = logger
 
   def notify_booking_created(self, booking_info: BookingInfo):

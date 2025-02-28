@@ -35,7 +35,7 @@ def notify_daily_bookings():
     logging.info(f"Notifying daily bookings. Check-ins: {bookings_check_in_ids}, Cont: {bookings_cont_ids}")
 
   line_bot_api = LineBotApi(os.getenv('LINE_CHANNEL_ACCESS_TOKEN'))
-  recipient_id = os.getenv('LINE_NOTIFICATION_GROUP_ID')
+  recipient_id = os.getenv('LINE_BROADCAST_GROUP_ID')
 
   for message in messages:
     line_bot_api.push_message(
