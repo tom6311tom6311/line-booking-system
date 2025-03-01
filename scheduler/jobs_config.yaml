@@ -12,7 +12,7 @@ jobs:
     enabled: "False"
     job_function: "sync_bookings_with_notion"
     type: "cron"
-    cron: "3,18,33,38 * * * *" # At minute 3, 18, 33, and 38.
+    cron: "3,18,33,48 * * * *" # At minute 3, 18, 33, and 38.
   export_historical_bookings:
     enabled: "False"
     job_function: "export_historical_bookings"

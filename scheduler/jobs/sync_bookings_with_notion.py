@@ -18,7 +18,7 @@ notion = Client(auth=NOTION_TOKEN)
 local_tz = pytz.timezone('Asia/Taipei')
 utc_tz = pytz.timezone('UTC')
 
-# Task to sync latest bookings and to/from Notion
+# Task to sync latest bookings to/from Notion
 def sync_bookings_with_notion():
   booking_dao = BookingDAO.get_instance(db_config, logging)
   latest_sync_time = booking_dao.get_latest_sync_time(sync_type="sql_with_notion")
