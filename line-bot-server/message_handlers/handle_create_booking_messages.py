@@ -85,7 +85,7 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
       )
       reply_messages.append(TextSendMessage(text=f"{'' if is_previous_step else '輸入格式有誤，'}請重新選擇入住日期:", quick_reply=QuickReply(items=quick_reply_buttons)))
     else:
-      session['data']['check_in_date'] = datetime.strptime(user_message, '%Y-%m-%d')
+      session['data']['check_in_date'] = datetime.strptime(user_message, '%Y-%m-%d').date()
       quick_reply_buttons += [
         QuickReplyButton(action=MessageAction(
           label=line_config.USER_COMMAND_UPDATE_BOOKING__SELECT_NUM_NIGHTS_1,

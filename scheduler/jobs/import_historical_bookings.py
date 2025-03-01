@@ -35,7 +35,7 @@ def parse_booking(text):
     booking_data['room_name_string'] = re.search(r'預計讓他睡：(.+)', text).group(1)  # This will be processed later to extract rooms
     booking_data['check_in_date'] = re.search(r'入住日期：(\d{4}/\d{2}/\d{2})', text).group(1)
     check_out_date = re.search(r'退房日期：(\d{4}/\d{2}/\d{2})', text).group(1)
-    booking_data['last_date'] = (datetime.strptime(check_out_date, '%Y/%m/%d') - timedelta(days=1)).strftime('%Y/%m/%d')
+    booking_data['last_date'] = (datetime.strptime(check_out_date, '%Y/%m/%d').date() - timedelta(days=1)).strftime('%Y/%m/%d')
     booking_data['total_price'] = float(re.search(r'總金額：(\d+)', text).group(1))
     booking_data['source'] = re.search(r'來源：(.+)', text).group(1).replace('_', '.')
 

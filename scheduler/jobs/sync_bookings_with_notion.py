@@ -224,8 +224,8 @@ def load_booking_info_from_notion_entry(notion_entry: dict):
     booking_id = int(properties['ID']['title'][0]['text']['content'])
     customer_name = properties['姓名']['rich_text'][0]['text']['content']
     phone_number = format_phone_number(properties['電話']['phone_number'])
-    check_in_date = datetime.strptime(properties['日期(不含退房日)']['date']['start'], '%Y-%m-%d')
-    last_date = datetime.strptime(properties['日期(不含退房日)']['date']['end'], '%Y-%m-%d')
+    check_in_date = datetime.strptime(properties['日期(不含退房日)']['date']['start'], '%Y-%m-%d').date()
+    last_date = datetime.strptime(properties['日期(不含退房日)']['date']['end'], '%Y-%m-%d').date()
     room_ids = ''.join([s['name'] for s in properties['房間']['multi_select']])
     total_price = float(properties['總金額']['number'])
     source = properties['來源']['select']['name']
@@ -264,8 +264,8 @@ def load_booking_info_from_notion_entry(notion_entry: dict):
 def load_closure_info_from_notion_entry(notion_entry: dict):
   try:
     properties = notion_entry['properties']
-    start_date = datetime.strptime(properties['日期(不含退房日)']['date']['start'], '%Y-%m-%d')
-    last_date = datetime.strptime(properties['日期(不含退房日)']['date']['end'], '%Y-%m-%d')
+    start_date = datetime.strptime(properties['日期(不含退房日)']['date']['start'], '%Y-%m-%d').date()
+    last_date = datetime.strptime(properties['日期(不含退房日)']['date']['end'], '%Y-%m-%d').date()
     reason = properties['備註']['rich_text'][0]['text']['content'] if properties['備註']['rich_text'] else ''
     room_ids = ''.join([s['name'] for s in properties['房間']['multi_select']])
 

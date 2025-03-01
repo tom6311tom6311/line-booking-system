@@ -3,7 +3,7 @@ from datetime import datetime
 
 def is_valid_date(date_str, format='%Y-%m-%d'):
   try:
-    datetime.strptime(date_str, format)
+    datetime.strptime(date_str, format).date()
     return True
   except ValueError:
     return False
