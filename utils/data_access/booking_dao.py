@@ -192,8 +192,10 @@ class BookingDAO:
           ):
             if (booking_info.status == 'canceled'):
               LineNotificationService(self.logger).notify_booking_canceled(booking_info)
-            elif (booking_info.status != 'canceled'):
+            elif (existing_booking_info.status == 'canceled'):
               LineNotificationService(self.logger).notify_booking_restored(booking_info)
+            elif (booking_info.status == 'prepaid'):
+              LineNotificationService(self.logger).notify_booking_prepaid(booking_info)
           elif (existing_booking_info != booking_info):
             LineNotificationService(self.logger).notify_booking_updated(booking_info)
         else:
