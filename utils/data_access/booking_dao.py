@@ -297,7 +297,7 @@ class BookingDAO:
       cursor = connection.cursor()
       query = """
       UPDATE Bookings
-      SET prepayment = %s, prepayment_note = %s, prepayment_status = 'paid'::prepayment_statuses
+      SET status = 'prepaid'::booking_statuses, prepayment = %s, prepayment_note = %s, prepayment_status = 'paid'::prepayment_statuses
       WHERE booking_id = %s
       RETURNING booking_id;
       """
