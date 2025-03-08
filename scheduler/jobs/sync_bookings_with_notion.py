@@ -73,10 +73,10 @@ def sync_bookings_with_notion():
   # Syncing closures. Currently we only support one-way sync (DB => Notion)
   logging.info(f"Syncing closures after {latest_sync_time}...")
   latest_closures_in_db = booking_dao.get_latest_closures(latest_sync_time)
+  logging.info(f"Latest closures in db: {latest_closures_in_db}")
 
   for closure in latest_closures_in_db:
     write_closure_to_notion(closure)
-
   logging.info("Notion closures syncing completed.")
 
 def get_latest_bookings_from_notion(latest_sync_time: datetime) -> List[BookingInfo]:

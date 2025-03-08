@@ -748,13 +748,6 @@ class BookingDAO:
     try:
       cursor = connection.cursor()
 
-      # Delete room-closure relationships
-      delete_room_closures_query = """
-      DELETE FROM RoomClosures
-      WHERE closure_id = %s
-      """
-      cursor.execute(delete_room_closures_query, (closure_id,))
-
       # Delete the closure
       delete_closure_query = """
       UPDATE Closures
