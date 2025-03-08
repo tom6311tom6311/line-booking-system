@@ -73,7 +73,7 @@ class BookingDAO:
       query = """
       SELECT b.booking_id, b.status, c.name, c.phone_number, b.check_in_date, b.last_date,
         b.total_price, b.notes, b.source, b.prepayment, b.prepayment_note, b.prepayment_status,
-        STRING_AGG(r.room_id, '' ORDER BY r.created) AS room_ids, b.created, b.modified
+        STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids, b.created, b.modified
       FROM Bookings b
       JOIN Customers c ON b.customer_id = c.customer_id
       JOIN RoomBookings rb ON b.booking_id = rb.booking_id
@@ -347,7 +347,7 @@ class BookingDAO:
       query = """
       SELECT b.booking_id, b.status, c.name, c.phone_number, b.check_in_date, b.last_date, 
         b.total_price, b.notes, b.source, b.prepayment, b.prepayment_note, b.prepayment_status,
-        STRING_AGG(r.room_id, '' ORDER BY r.created) AS room_ids, b.created, b.modified
+        STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids, b.created, b.modified
       FROM Bookings b
       JOIN Customers c ON b.customer_id = c.customer_id
       JOIN RoomBookings rb ON b.booking_id = rb.booking_id
@@ -421,7 +421,7 @@ class BookingDAO:
       query = """
       SELECT b.booking_id, b.status, c.name, c.phone_number, b.check_in_date, b.last_date,
         b.total_price, b.notes, b.source, b.prepayment, b.prepayment_note, b.prepayment_status,
-        STRING_AGG(r.room_id, '' ORDER BY r.created) AS room_ids, b.created, b.modified
+        STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids, b.created, b.modified
       FROM Bookings b
       JOIN Customers c ON b.customer_id = c.customer_id
       JOIN RoomBookings rb ON b.booking_id = rb.booking_id
@@ -497,7 +497,7 @@ class BookingDAO:
       query = """
       SELECT b.booking_id, b.status, c.name, c.phone_number, b.check_in_date, b.last_date,
         b.total_price, b.notes, b.source, b.prepayment, b.prepayment_note, b.prepayment_status,
-        STRING_AGG(r.room_id, '' ORDER BY r.created) AS room_ids, b.created, b.modified
+        STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids, b.created, b.modified
       FROM Bookings b
       JOIN Customers c ON b.customer_id = c.customer_id
       JOIN RoomBookings rb ON b.booking_id = rb.booking_id
@@ -555,7 +555,7 @@ class BookingDAO:
       query = """
       SELECT b.booking_id, b.status, c.name, c.phone_number, b.check_in_date, b.last_date,
         b.total_price, b.notes, b.source, b.prepayment, b.prepayment_note, b.prepayment_status,
-        STRING_AGG(r.room_id, '' ORDER BY r.created) AS room_ids, b.created, b.modified
+        STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids, b.created, b.modified
       FROM Bookings b
       JOIN Customers c ON b.customer_id = c.customer_id
       JOIN RoomBookings rb ON b.booking_id = rb.booking_id
@@ -613,7 +613,7 @@ class BookingDAO:
       cursor = connection.cursor()
       query = """
       SELECT c.closure_id, c.start_date, c.last_date, c.reason,
-        STRING_AGG(r.room_id, '' ORDER BY r.created) AS room_ids, c.created, c.modified
+        STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids, c.created, c.modified
       FROM Closures c
       JOIN RoomClosures rc ON c.closure_id = rc.closure_id
       JOIN Rooms r ON rc.room_id = r.room_id
@@ -723,7 +723,7 @@ class BookingDAO:
       # SQL query to find closures containing the target date
       query = """
       SELECT c.closure_id, c.start_date, c.last_date, c.reason,
-        STRING_AGG(r.room_id, '' ORDER BY r.created) AS room_ids, c.created, c.modified
+        STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids, c.created, c.modified
       FROM Closures c
       JOIN RoomClosures rc ON c.closure_id = rc.closure_id
       JOIN Rooms r ON rc.room_id = r.room_id
@@ -769,7 +769,7 @@ class BookingDAO:
       # SQL query to get bookings created or modified after the last sync time
       query = """
       SELECT c.closure_id, c.start_date, c.last_date, c.reason,
-        STRING_AGG(r.room_id, '' ORDER BY r.created) AS room_ids, c.created, c.modified
+        STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids, c.created, c.modified
       FROM Closures c
       JOIN RoomClosures rc ON c.closure_id = rc.closure_id
       JOIN Rooms r ON rc.room_id = r.room_id
@@ -888,7 +888,7 @@ class BookingDAO:
     try:
       cursor = connection.cursor()
 
-      query = "SELECT room_id FROM Rooms;"
+      query = "SELECT room_id FROM Rooms ORDER BY ctid;"
       cursor.execute(query)
       available_room_ids = [row[0] for row in cursor.fetchall()]
       cursor.close()
@@ -922,6 +922,7 @@ class BookingDAO:
           WHERE b.status != 'canceled' -- Ignore canceled bookings
             AND (b.check_in_date <= %s AND b.last_date >= %s)
         )
+      ORDER BY r.ctid;
       """
 
       # Execute query with date range parameters
