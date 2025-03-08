@@ -113,7 +113,7 @@ def sync_bookings_with_notion():
     if db_closure not in conflicts_resolved:
       write_closure_to_notion(db_closure)
 
-  logging.info("Closure synchronization completed.")
+  logging.info("Notion closures syncing completed.")
 
 def get_latest_bookings_from_notion(latest_sync_time: datetime) -> List[BookingInfo]:
   try:
