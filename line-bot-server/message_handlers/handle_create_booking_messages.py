@@ -255,7 +255,7 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
       )
       booking_info = BookingInfo(
         booking_id=booking_dao.get_next_booking_id(),
-        status='new',
+        status=('new' if session['data']['prepayment'] else 'prepaid'),
         customer_name=session['data']['customer_name'],
         phone_number=session['data']['phone_number'],
         check_in_date=session['data']['check_in_date'],
@@ -265,7 +265,7 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
         source=session['data']['source'],
         prepayment=session['data']['prepayment'],
         prepayment_note='',
-        prepayment_status='unpaid',
+        prepayment_status=('unpaid' if session['data']['prepayment'] else 'paid'),
         room_ids=''.join(session['data']['room_ids'])
       )
       booking_info_preview_text = format_booking_info(booking_info, 'normal')
@@ -285,7 +285,7 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
     else:
       booking_info = BookingInfo(
         booking_id=booking_dao.get_next_booking_id(),
-        status='new',
+        status=('new' if session['data']['prepayment'] else 'prepaid'),
         customer_name=session['data']['customer_name'],
         phone_number=session['data']['phone_number'],
         check_in_date=session['data']['check_in_date'],
@@ -295,7 +295,7 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
         source=session['data']['source'],
         prepayment=session['data']['prepayment'],
         prepayment_note='',
-        prepayment_status='unpaid',
+        prepayment_status=('unpaid' if session['data']['prepayment'] else 'paid'),
         room_ids=''.join(session['data']['room_ids'])
       )
       booking_id = booking_dao.upsert_booking(booking_info)
