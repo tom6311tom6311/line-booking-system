@@ -39,7 +39,8 @@ def generate_booking_carousel_message(bookings: typing.Optional[Sequence[Booking
 
   # Create the CarouselTemplate and send it as a message
   carousel_template = CarouselTemplate(columns=columns)
-  return TemplateSendMessage(alt_text="訂單清單", template=carousel_template)
+  preview_text = ', '.join([f"#{b.booking_id}" for b in bookings])
+  return TemplateSendMessage(alt_text=preview_text, template=carousel_template)
 
 def generate_closure_carousel_message(closures: typing.Optional[Sequence[ClosureInfo]]=None, show_edit_actions=False):
   columns = []

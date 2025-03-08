@@ -28,3 +28,8 @@ jobs:
     job_function: "notify_daily_bookings"
     type: "cron"
     cron: "0 8 * * *" # Everyday at 08:00.
+  notify_not_prepaid_bookings:
+    enabled: "False"
+    job_function: "notify_not_prepaid_bookings"
+    type: "cron"
+    cron: "0 13 * * 2" # At 13:00 on Tuesday.
