@@ -35,6 +35,10 @@ def handle_default_messages(user_message: str, session: dict, booking_dao: Booki
         label=line_config.USER_COMMAND_SEARCH_BOOKING_LAST_SATURDAY,
         text=line_config.USER_COMMAND_SEARCH_BOOKING_LAST_SATURDAY)
       ),
+      QuickReplyButton(action=MessageAction(
+        label=line_config.USER_COMMAND_SEARCH_BOOKING_NOT_PREPAID,
+        text=line_config.USER_COMMAND_SEARCH_BOOKING_NOT_PREPAID)
+      ),
     ]
     quick_reply = QuickReply(items=quick_reply_buttons)
     reply_messages.append(TextSendMessage(text="請提供關鍵字:\n(ID、電話末3碼、姓名)", quick_reply=quick_reply))
@@ -102,6 +106,13 @@ def handle_default_messages(user_message: str, session: dict, booking_dao: Booki
 
     if not matched_bookings and not matched_closures:
       reply_messages.append(TextSendMessage(text="找不到任何訂單"))
+
+  elif user_message == line_config.USER_COMMAND_SEARCH_BOOKING_NOT_PREPAID:
+    matched_bookings = booking_dao.search_booking_not_prepaid()
+    if not matched_bookings:
+      reply_messages.append(TextSendMessage(text="找不到任何訂單"))
+    else:
+      reply_messages.append(generate_booking_carousel_message(matched_bookings, show_edit_actions=True))
 
   elif user_message == line_config.USER_COMMAND_CREATE_BOOKING:
     quick_reply_buttons = [

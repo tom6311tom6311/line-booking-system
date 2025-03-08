@@ -259,7 +259,7 @@ class BookingDAO:
       UPDATE Bookings
       SET status =
         CASE
-          WHEN prepayment_status = 'paid' THEN 'prepaid'::booking_statuses
+          WHEN prepayment_status = 'paid'::prepayment_statuses THEN 'prepaid'::booking_statuses
           ELSE 'new'::booking_statuses
         END
       WHERE booking_id = %s
@@ -358,7 +358,7 @@ class BookingDAO:
       GROUP BY b.booking_id, c.customer_id
       ORDER BY
         CASE
-          WHEN b.status = 'canceled' THEN 1
+          WHEN b.status = 'canceled'::booking_statuses THEN 1
           ELSE 0
         END,
         b.booking_id DESC
@@ -430,7 +430,7 @@ class BookingDAO:
       GROUP BY b.booking_id, c.customer_id
       ORDER BY
         CASE
-          WHEN b.status = 'canceled' THEN 1
+          WHEN b.status = 'canceled'::booking_statuses THEN 1
           ELSE 0
         END,
         b.booking_id;
@@ -464,6 +464,64 @@ class BookingDAO:
 
     except Exception as e:
       self.logger.error(f"Error searching bookings by check-in date: {e}")
+      matches = None
+
+    finally:
+      self.release_connection(connection)
+
+    return matches
+
+  def search_booking_not_prepaid(self) -> Optional[list[BookingInfo]]:
+    connection = self.get_connection()
+    if not connection:
+      return None
+
+    matches = []
+    try:
+      cursor = connection.cursor()
+
+      query = """
+      SELECT b.booking_id, b.status, c.name, c.phone_number, b.check_in_date, b.last_date,
+        b.total_price, b.notes, b.source, b.prepayment, b.prepayment_note, b.prepayment_status,
+        STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids, b.created, b.modified
+      FROM Bookings b
+      JOIN Customers c ON b.customer_id = c.customer_id
+      JOIN RoomBookings rb ON b.booking_id = rb.booking_id
+      JOIN Rooms r ON rb.room_id = r.room_id
+      WHERE b.check_in_date >= NOW()
+        AND b.status != 'canceled'::booking_statuses
+        AND b.prepayment > 0 AND b.prepayment_status = 'unpaid'::prepayment_statuses
+      GROUP BY b.booking_id, c.customer_id
+      ORDER BY
+        b.check_in_date, b.booking_id;
+      """
+
+      cursor.execute(query)
+      rows = cursor.fetchall()
+      cursor.close()
+
+      for row in rows:
+        booking_info = BookingInfo(
+          booking_id=row[0],
+          status=row[1],
+          customer_name=row[2],
+          phone_number=row[3],
+          check_in_date=row[4],
+          last_date=row[5],
+          total_price=float(row[6]),
+          notes=row[7] or '',
+          source=row[8],
+          prepayment=float(row[9]),
+          prepayment_note=row[10] or '',
+          prepayment_status=row[11],
+          room_ids=row[12],
+          created=row[13],
+          modified=row[14]
+        )
+        matches.append(booking_info)
+
+    except Exception as e:
+      self.logger.error(f"Error searching bookings not prepaid: {e}")
       matches = None
 
     finally:
@@ -914,12 +972,12 @@ class BookingDAO:
       query = """
       SELECT r.room_id
       FROM Rooms r
-      WHERE r.room_status = 'available' -- Ensure room is not permanently closed
+      WHERE r.room_status = 'available'::room_statuses -- Ensure room is not permanently closed
         AND r.room_id NOT IN (
           SELECT rb.room_id
           FROM RoomBookings rb
           JOIN Bookings b ON rb.booking_id = b.booking_id
-          WHERE b.status != 'canceled' -- Ignore canceled bookings
+          WHERE b.status != 'canceled'::booking_statuses -- Ignore canceled bookings
             AND (b.check_in_date <= %s AND b.last_date >= %s)
         )
       ORDER BY r.ctid;

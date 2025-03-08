@@ -178,6 +178,10 @@ def handle_message_postback(event):
         label=line_config.USER_COMMAND_SEARCH_BOOKING_LAST_SATURDAY,
         text=line_config.USER_COMMAND_SEARCH_BOOKING_LAST_SATURDAY)
       ),
+      QuickReplyButton(action=MessageAction(
+        label=line_config.USER_COMMAND_SEARCH_BOOKING_NOT_PREPAID,
+        text=line_config.USER_COMMAND_SEARCH_BOOKING_NOT_PREPAID)
+      ),
     ]
     quick_reply = QuickReply(items=quick_reply_buttons)
     reply_messages.append(TextSendMessage(text="請提供關鍵字:\n(ID、電話末3碼、姓名)", quick_reply=quick_reply))
