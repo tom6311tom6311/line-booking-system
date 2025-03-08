@@ -148,6 +148,7 @@ def handle_create_closure_messages(user_message: str, session: dict, booking_dao
       )
       closure_info = ClosureInfo(
         closure_id=-1,
+        status='valid',
         start_date=session['data']['start_date'],
         last_date=session['data']['last_date'],
         reason=session['data']['reason'],
@@ -170,6 +171,7 @@ def handle_create_closure_messages(user_message: str, session: dict, booking_dao
     else:
       closure_info = ClosureInfo(
         closure_id=-1,
+        status='valid',
         start_date=session['data']['start_date'],
         last_date=session['data']['last_date'],
         reason=session['data']['reason'],

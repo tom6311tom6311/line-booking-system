@@ -5,6 +5,7 @@ from typing import Dict, Any
 @dataclass
 class ClosureInfo:
   closure_id: int
+  status: str
   start_date: date
   last_date: date
   reason: str
@@ -14,12 +15,13 @@ class ClosureInfo:
   notion_page_id: str = None
 
   def __hash__(self):
-    return hash((self.start_date, self.last_date, self.reason, self.room_ids))
+    return hash((self.status, self.start_date, self.last_date, self.reason, self.room_ids))
 
   def __eq__(self, other):
     if not isinstance(other, ClosureInfo):
       return NotImplemented
     return (
+      self.status == other.status and
       self.start_date == other.start_date and
       self.last_date == other.last_date and
       self.reason == other.reason and

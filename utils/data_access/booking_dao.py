@@ -670,7 +670,7 @@ class BookingDAO:
     try:
       cursor = connection.cursor()
       query = """
-      SELECT c.closure_id, c.start_date, c.last_date, c.reason,
+      SELECT c.closure_id, c.status, c.start_date, c.last_date, c.reason,
         STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids, c.created, c.modified
       FROM Closures c
       JOIN RoomClosures rc ON c.closure_id = rc.closure_id
@@ -686,12 +686,13 @@ class BookingDAO:
       if (row):
         closure_info = ClosureInfo(
           closure_id==row[0],
-          start_date=row[1],
-          last_date=row[2],
-          reason=row[3] or '',
-          room_ids=row[4],
-          created=row[5],
-          modified=row[6]
+          status=row[1],
+          start_date=row[2],
+          last_date=row[3],
+          reason=row[4] or '',
+          room_ids=row[5],
+          created=row[6],
+          modified=row[7]
         )
     except Exception as e:
       self.logger.error(f"Error querying closure info: {e}")
@@ -711,10 +712,11 @@ class BookingDAO:
       # Insert into Closures table
       insert_query = """
       INSERT INTO Closures (status, start_date, last_date, reason)
-      VALUES ('valid'::closure_statuses, %s, %s, %s)
+      VALUES (%s, %s, %s, %s)
       RETURNING closure_id;
       """
       cursor.execute(insert_query, (
+        closure_info.status,
         closure_info.start_date,
         closure_info.last_date,
         closure_info.reason
@@ -780,7 +782,7 @@ class BookingDAO:
 
       # SQL query to find closures containing the target date
       query = """
-      SELECT c.closure_id, c.start_date, c.last_date, c.reason,
+      SELECT c.closure_id, c.status, c.start_date, c.last_date, c.reason,
         STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids, c.created, c.modified
       FROM Closures c
       JOIN RoomClosures rc ON c.closure_id = rc.closure_id
@@ -797,12 +799,13 @@ class BookingDAO:
       for row in rows:
         closure_info = ClosureInfo(
           closure_id=row[0],
-          start_date=row[1],
-          last_date=row[2],
-          reason=row[3] or '',
-          room_ids=row[4],
-          created=row[5],
-          modified=row[6]
+          status=row[1],
+          start_date=row[2],
+          last_date=row[3],
+          reason=row[4] or '',
+          room_ids=row[5],
+          created=row[6],
+          modified=row[7]
         )
         matches.append(closure_info)
 
@@ -826,7 +829,7 @@ class BookingDAO:
 
       # SQL query to get bookings created or modified after the last sync time
       query = """
-      SELECT c.closure_id, c.start_date, c.last_date, c.reason,
+      SELECT c.closure_id, c.status, c.start_date, c.last_date, c.reason,
         STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids, c.created, c.modified
       FROM Closures c
       JOIN RoomClosures rc ON c.closure_id = rc.closure_id
@@ -843,12 +846,13 @@ class BookingDAO:
       for row in rows:
         closure_info = ClosureInfo(
           closure_id=row[0],
-          start_date=row[1],
-          last_date=row[2],
-          reason=row[3] or '',
-          room_ids=row[4],
-          created=row[5],
-          modified=row[6]
+          status=row[1],
+          start_date=row[2],
+          last_date=row[3],
+          reason=row[4] or '',
+          room_ids=row[5],
+          created=row[6],
+          modified=row[7]
         )
         matches.append(closure_info)
 
