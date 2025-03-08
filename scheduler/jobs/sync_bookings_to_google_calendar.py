@@ -161,7 +161,7 @@ def write_closures_to_google_calendar(calendar_service, closures: List[ClosureIn
       ).execute()
 
       for event in events_result.get('items', []):
-        if f"ＣＬＩＤ：{closure_info.booking_id}" in event.get('description', ''):
+        if f"ＣＬＩＤ：{closure_info.closure_id}" in event.get('description', ''):
           existing_events.append(event)
 
       if closure_info.status == 'deleted':

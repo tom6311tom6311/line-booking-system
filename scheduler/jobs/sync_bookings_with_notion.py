@@ -148,7 +148,7 @@ def write_closure_to_notion(closure: ClosureInfo):
       logging.info(f"Closure written to Notion: {closure}")
     elif existing_closure:
       notion.pages.update(
-        page_id=closure.notion_page_id,
+        page_id=existing_closure.notion_page_id,
         archived=True
       )
       logging.info(f"Deleted closure from Notion: {existing_closure.notion_page_id}")
