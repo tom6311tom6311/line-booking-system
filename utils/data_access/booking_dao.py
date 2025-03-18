@@ -110,12 +110,19 @@ class BookingDAO:
     return booking_info
 
   def upsert_booking(self, booking_info: BookingInfo) -> Optional[int]:
+    existing_booking_info = self.get_booking_info(booking_info.booking_id)
+    is_customer_changed = (
+      existing_booking_info and (
+        existing_booking_info.customer_name != booking_info.customer_name or
+        existing_booking_info.phone_number != booking_info.phone_number
+      )
+    )
+
     # upsert customer first
     customer_id = self.upsert_customer(Customer(
       name=booking_info.customer_name,
       phone_number=booking_info.phone_number
     ))
-    existing_booking_info = self.get_booking_info(booking_info.booking_id)
 
     connection = self.get_connection()
     if not connection:
@@ -125,7 +132,7 @@ class BookingDAO:
     try:
       cursor = connection.cursor()
       if existing_booking_info:
-        if booking_info == existing_booking_info:
+        if booking_info == existing_booking_info and not is_customer_changed:
           cursor.close()
           return existing_booking_info.booking_id
         booking_id = existing_booking_info.booking_id
