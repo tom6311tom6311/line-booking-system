@@ -1,7 +1,7 @@
 import os
 import logging
 from typing import List
-from datetime import datetime
+from datetime import datetime, timedelta
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from const import db_config
@@ -64,7 +64,7 @@ def write_bookings_to_google_calendar(calendar_service, bookings: List[BookingIn
           'timeZone': 'Asia/Taipei',
         },
         'end': {
-          'date': (booking_info.last_date).strftime('%Y-%m-%d'),
+          'date': (booking_info.last_date + timedelta(days=1)).strftime('%Y-%m-%d'),
           'timeZone': 'Asia/Taipei',
         },
         'reminders': {
