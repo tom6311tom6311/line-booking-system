@@ -141,7 +141,7 @@ def write_closures_to_google_calendar(calendar_service, closures: List[ClosureIn
           'timeZone': 'Asia/Taipei',
         },
         'end': {
-          'date': (closure_info.last_date).strftime('%Y-%m-%d'),
+          'date': (closure_info.last_date + timedelta(days=1)).strftime('%Y-%m-%d'),
           'timeZone': 'Asia/Taipei',
         },
         'reminders': {
