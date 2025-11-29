@@ -49,7 +49,7 @@ def generate_closure_carousel_message(closures: typing.Optional[Sequence[Closure
   for closure_info in closures:
     actions=[
       PostbackAction(label="取消關房", display_text=f"取消關房 {closure_info.start_date}", data=json.dumps({ 'command': line_config.POSTBACK_COMMAND_CANCEL_CLOSURE, 'closure_id': closure_info.closure_id }), inputOption="closeRichMenu"),
-    ] if show_edit_actions else []
+    ] if show_edit_actions else None
 
     column = CarouselColumn(
       text=format_closure_info(closure_info),
