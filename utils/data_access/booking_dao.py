@@ -495,7 +495,7 @@ class BookingDAO:
       JOIN Customers c ON b.customer_id = c.customer_id
       JOIN RoomBookings rb ON b.booking_id = rb.booking_id
       JOIN Rooms r ON rb.room_id = r.room_id
-      WHERE b.check_in_date >= NOW()
+      WHERE b.check_in_date >= NOW()::date
         AND b.status != 'canceled'::booking_statuses
         AND b.prepayment > 0 AND b.prepayment_status = 'unpaid'::prepayment_statuses
       GROUP BY b.booking_id, c.customer_id
