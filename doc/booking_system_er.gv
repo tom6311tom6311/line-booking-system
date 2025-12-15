@@ -1,0 +1,57 @@
+graph ER {
+    fontname="Helvetica,Arial,sans-serif"
+	node [fontname="Helvetica,Arial,sans-serif"]
+	edge [fontname="Helvetica,Arial,sans-serif"]
+	layout=fdp
+	node [shape=box]; Customer; Room; Booking; RoomClosure;
+	node [shape=ellipse]; {node [label=<<b><u>customer_id</u></b>>] customer_id;}; {node [label=<<b><u>room_name</u></b>>] room_name;}; {node [label=<<b><u>booking_id</u></b>>] booking_id;}; {node [label=<<b><u>room_closure_id</u></b>>] room_closure_id;};
+	node [shape=ellipse]; name; email; phone_number; address; relationship; {node [label="notes"] customer_notes;};
+	node [shape=ellipse]; number; room_type; capacity; holiday_price_per_night; weekday_price_per_night; extra_bed_number; description; {node [label="status"] room_status;};
+	node [shape=ellipse]; check_in_date; {node [label="last_date"] booking_last_date;}; total_price; prepayment; prepayment_note; source; {node [label="status"] booking_status;}; {node [label="notes"] booking_notes;};
+	node [shape=ellipse]; start_date; {node [label="last_date"] room_closure_last_date;}; reason;
+	node [shape=diamond,style=filled,color=lightgrey]; "Makes"; "Reserves"; "Closes";
+
+	Customer -- customer_id;
+	Customer -- name;
+	Customer -- email;
+	Customer -- phone_number;
+	Customer -- address;
+	Customer -- relationship;
+	Customer -- customer_notes;
+	
+	Room -- room_name;
+	Room -- number;
+	Room -- room_type;
+	Room -- capacity;
+	Room -- holiday_price_per_night;
+	Room -- weekday_price_per_night;
+	Room -- extra_bed_number;
+	Room -- description;
+	Room -- room_status;
+	
+	Booking -- booking_id;
+	Booking -- check_in_date;
+	Booking -- booking_last_date;
+	Booking -- total_price;
+	Booking -- prepayment;
+	Booking -- prepayment_note;
+	Booking -- source;
+	Booking -- booking_status;
+	Booking -- booking_notes;
+	
+	RoomClosure -- room_closure_id;
+	RoomClosure -- start_date;
+	RoomClosure -- room_closure_last_date;
+	RoomClosure -- reason;
+	
+	Customer -- "Makes" [label="1"];
+	"Makes" -- Booking [label="N"];
+	
+	Booking -- "Reserves" [label="M"];
+	"Reserves" --  Room [label="N"];
+	
+	RoomClosure -- "Closes" [label="M"];
+	"Closes" --  Room [label="N"];
+	
+	label = "\n\nBooking System ER Diagram";
+}

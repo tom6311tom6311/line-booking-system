@@ -1,0 +1,25 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.17 Chrome/128.0.6613.36 Electron/32.0.1 Safari/537.36" version="24.7.17">
+  <diagram name="Page-1" id="NVKJVkT6g2rI-thMMTc3">
+    <mxGraphModel dx="2726" dy="1926" grid="1" gridSize="100" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2400" pageHeight="800" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="7TvHbQLPi23oeDQto31V-1" value="查詢訂單" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=120;fillColor=#9999FF;strokeColor=none;fontColor=#ffffff;" parent="1" vertex="1">
+          <mxGeometry width="1200" height="800" as="geometry" />
+        </mxCell>
+        <mxCell id="gE4Gj_Kdtjk1J_GtAS-N-6" value="建立訂單" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=120;fillColor=#99CCFF;fontColor=#ffffff;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1200" width="600" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="gE4Gj_Kdtjk1J_GtAS-N-7" value="關房" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=120;fillColor=#FF9999;fontColor=#ffffff;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1800" width="600" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="gE4Gj_Kdtjk1J_GtAS-N-8" value="每月報表" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=120;fillColor=#FF99CC;fontColor=#FFFFFF;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1200" y="400" width="600" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="gE4Gj_Kdtjk1J_GtAS-N-11" value="房型照片" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=120;fillColor=#6d8764;fontColor=#ffffff;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1800" y="400" width="600" height="400" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
