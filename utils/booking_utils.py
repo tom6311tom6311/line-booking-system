@@ -159,7 +159,7 @@ def generate_report(year_month: str, bookings: list[BookingInfo]):
   for booking_info in bookings:
     amount_for_booking_com = int(booking_info.total_price * .12) if booking_info.source == 'Booking_com' else 0
     amount_for_staff = int((booking_info.total_price - amount_for_booking_com) * .2)
-    amount_left = int(booking_info.total_price - amount_for_booking_com - amount_for_staff * 2)
+    amount_left = int(booking_info.total_price - amount_for_booking_com - amount_for_staff)
 
     total_revenue += int(booking_info.total_price)
     total_amount_for_booking_com += amount_for_booking_com
@@ -168,7 +168,6 @@ def generate_report(year_month: str, bookings: list[BookingInfo]):
 
     financial_result_text = (
       f"Booking_com佣金：{amount_for_booking_com}\n"
-      f"給姑姑：{amount_for_staff}\n"
       f"給雅雯：{amount_for_staff}\n"
       f"結餘：{amount_left}\n"
     )
@@ -181,7 +180,6 @@ def generate_report(year_month: str, bookings: list[BookingInfo]):
   message += (
     f"營業額：{total_revenue}\n"
     f"Booking_com佣金：{total_amount_for_booking_com}\n"
-    f"給姑姑：{total_amount_for_staff}\n"
     f"給雅雯：{total_amount_for_staff}\n"
     f"結餘：{total_amount_left}"
   )
