@@ -1,11 +1,13 @@
 import json
 from datetime import datetime, timedelta
-from linebot.models import TextSendMessage,  QuickReply, QuickReplyButton, MessageAction, DatetimePickerAction
+from urllib.parse import quote
+from linebot.models import TextSendMessage,  QuickReply, QuickReplyButton, MessageAction, DatetimePickerAction, URIAction
 from const.booking_const import VALID_BOOKING_SOURCES
-from const import line_config
+from const import line_config, property_config
+from const.notification_templates import ASK_FOR_PREPAYMENT
 from utils.data_access.data_class.booking_info import BookingInfo
 from utils.data_access.booking_dao import BookingDAO
-from utils.booking_utils import format_booking_info, get_prepayment_estimation
+from utils.booking_utils import format_booking_info, get_prepayment_estimation, get_booking_room_brief
 from utils.input_utils import is_valid_date, is_valid_phone_number, is_valid_num_nights, is_valid_price, format_phone_number
 from utils.line_messaging_utils import generate_go_to_previous_step_button
 
@@ -300,6 +302,23 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
       )
       booking_id = booking_dao.upsert_booking(booking_info)
       reply_messages.append(TextSendMessage(text=f"訂單已新增完成, ID:{booking_id}"))
+      if booking_info.prepayment > 0 and booking_info.prepayment_status == 'unpaid':
+        room_type_summary = booking_dao.get_booking_room_type_summary(booking_info.booking_id)
+        room_brief = get_booking_room_brief(room_type_summary)
+        sms_body = ASK_FOR_PREPAYMENT.format(
+          property_name=property_config.PROPERTY_NAME,
+          check_in_date=booking_info.check_in_date.strftime('%m/%d'),
+          nights=session['data']['num_nights'],
+          room_brief=room_brief,
+          total_price=booking_info.total_price,
+          prepayment=booking_info.prepayment,
+          bank_account_info=property_config.BANK_ACCOUNT_INFO
+        ).strip()
+        sms_url = f"sms:{booking_info.phone_number}?body={quote(sms_body)}"
+
+        reply_messages.append(TextSendMessage(text="簡訊內容："))
+        reply_messages.append(TextSendMessage(text=sms_body))
+        reply_messages.append(TextSendMessage(text=f"發送簡訊：\n\n{sms_url}"))
 
       # clear session data
       session['flow'], session['step'], session['data'] = None, None, {}

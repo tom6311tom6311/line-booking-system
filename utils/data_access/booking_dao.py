@@ -325,6 +325,35 @@ class BookingDAO:
       self.release_connection(connection)
     return success
 
+  # Function to get the number of rooms group by types
+  def get_booking_room_type_summary(self, booking_id) -> dict[str, int]:
+    connection = self.get_connection()
+    if not connection:
+      return {}
+
+    summary = {}
+    try:
+      cursor = connection.cursor()
+      query = """
+      SELECT r.room_type, COUNT(*) as count
+      FROM Bookings b
+      JOIN RoomBookings rb ON b.booking_id = rb.booking_id
+      JOIN Rooms r ON rb.room_id = r.room_id
+      WHERE b.booking_id = %s
+      GROUP BY r.room_type
+      """
+      cursor.execute(query, (booking_id,))
+      rows = cursor.fetchall()
+      cursor.close()
+
+      for row in rows:
+        summary[row[0]] = row[1]
+    except Exception as e:
+      self.logger.error(f"Error getting booking room type summary: {e}")
+    finally:
+      self.release_connection(connection)
+    return summary
+
   def get_next_booking_id(self):
     connection = self.get_connection()
     if not connection:

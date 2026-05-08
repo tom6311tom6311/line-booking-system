@@ -1,6 +1,6 @@
 import datetime
 import typing
-from const.booking_const import GENERIC_NAMES, BOOKING_STATUS_MARK, PREPAYMENT_STATUS_MAP, GENERIC_PHONE_NUMBER_POSTFIX
+from const.booking_const import GENERIC_NAMES, BOOKING_STATUS_MARK, PREPAYMENT_STATUS_MAP, GENERIC_PHONE_NUMBER_POSTFIX, ROOM_TYPES
 from utils.data_access.data_class.booking_info import BookingInfo
 
 # Function to format the booking info as per the required format
@@ -185,3 +185,11 @@ def generate_report(year_month: str, bookings: list[BookingInfo]):
   )
 
   return message
+
+def get_booking_room_brief(room_type_summary: dict[str, int]={}):
+  """Returns a brief of rooms grouped by types"""
+  brief_parts = []
+  for room_type, room_type_name, unit in ROOM_TYPES:
+    if room_type in room_type_summary:
+      brief_parts.append(f"{room_type_name}{room_type_summary[room_type]}{unit}")
+  return '、'.join(brief_parts)

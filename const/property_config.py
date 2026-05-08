@@ -1,0 +1,4 @@
+import os
+
+PROPERTY_NAME = os.getenv('PROPERTY_NAME')
+BANK_ACCOUNT_INFO = os.getenv('BANK_ACCOUNT_INFO')
