@@ -86,10 +86,17 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
       )
       quick_reply_buttons.append(
         QuickReplyButton(action=MessageAction(
-          label=str(estimated_total_price),
-          text=str(estimated_total_price))
+          label=str(booking_info.total_price),
+          text=str(booking_info.total_price))
         )
       )
+      if estimated_total_price != booking_info.total_price:
+        quick_reply_buttons.append(
+          QuickReplyButton(action=MessageAction(
+            label=str(estimated_total_price),
+            text=str(estimated_total_price))
+          )
+        )
       reply_messages.append(TextSendMessage(text="請輸入總金額:", quick_reply=QuickReply(items=quick_reply_buttons)))
       session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_TOTAL_PRICE
     elif user_message == line_config.USER_COMMAND_EDIT_BOOKING__EDIT_PREPAYMENT:
@@ -97,10 +104,17 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
       estimated_prepayment = get_prepayment_estimation(total_price)
       quick_reply_buttons.append(
         QuickReplyButton(action=MessageAction(
-          label=str(estimated_prepayment),
-          text=str(estimated_prepayment))
+          label=str(booking_info.prepayment),
+          text=str(booking_info.prepayment))
         )
       )
+      if estimated_prepayment != booking_info.prepayment:
+        quick_reply_buttons.append(
+          QuickReplyButton(action=MessageAction(
+            label=str(estimated_prepayment),
+            text=str(estimated_prepayment))
+          )
+        )
       reply_messages.append(TextSendMessage(text="請輸入訂金金額:", quick_reply=QuickReply(items=quick_reply_buttons)))
       session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_PREPAYMENT
     elif user_message == line_config.USER_COMMAND_EDIT_BOOKING__EDIT_SOURCE:
