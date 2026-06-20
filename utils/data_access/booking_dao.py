@@ -3,6 +3,7 @@ import psycopg2.pool
 from typing import Optional
 from datetime import datetime, timedelta
 from utils.booking_utils import is_generic_name, is_generic_phone_number
+from utils.taiwan_holiday_utils import is_booking_holiday_night
 from utils.line_notification_service import LineNotificationService
 from .data_class.booking_info import BookingInfo
 from .data_class.closure_info import ClosureInfo
@@ -1058,8 +1059,7 @@ class BookingDAO:
       current_date = check_in_date
 
       while current_date <= last_date:
-        # Determine if the current date is a holiday (Saturday)
-        is_holiday = current_date.weekday() == 5  # 5 = Saturday
+        is_holiday = is_booking_holiday_night(current_date)
 
         # Add price for each room for the current date
         for room_id in room_ids:
