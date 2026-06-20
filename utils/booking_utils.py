@@ -29,7 +29,7 @@ def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant
   if variant == 'carousel':
     message = (
       f"電話：{phone_number}\n"
-      f"入住：{booking_info.check_in_date.strftime('%m/%d')}\n"
+      f"入住：{booking_info.check_in_date.strftime('%y/%m/%d')}\n"
       f"晚數：{nights}\n"
       f"訂金：{prepayment}元/{prepayment_status}\n"
     )
