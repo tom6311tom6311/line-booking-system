@@ -967,6 +967,32 @@ class BookingDAO:
 
     return customer
 
+  def get_customer_by_name(self, name) -> Optional[Customer]:
+    connection = self.get_connection()
+    if not connection:
+      return None
+
+    customer = None
+    try:
+      cursor = connection.cursor()
+      cursor.execute("SELECT customer_id, name, phone_number, created, modified FROM Customers WHERE name=%s ORDER BY modified DESC LIMIT 1", (name,))
+      row = cursor.fetchone()
+      cursor.close()
+      if (row):
+        customer = Customer(
+          customer_id=row[0],
+          name=row[1],
+          phone_number=row[2],
+          created=row[3],
+          modified=row[4]
+        )
+    except Exception as e:
+      self.logger.error(f"Error query customer: {e}")
+    finally:
+      self.release_connection(connection)
+
+    return customer
+
   ##########################################
   ###     Room data access functions     ###
   ##########################################

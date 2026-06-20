@@ -7,7 +7,7 @@ from const import line_config, property_config
 from const.notification_templates import ASK_FOR_PREPAYMENT
 from utils.data_access.data_class.booking_info import BookingInfo
 from utils.data_access.booking_dao import BookingDAO
-from utils.booking_utils import format_booking_info, get_prepayment_estimation, get_booking_room_brief
+from utils.booking_utils import format_booking_info, get_prepayment_estimation, get_booking_room_brief, is_generic_name
 from utils.input_utils import is_valid_date, is_valid_phone_number, is_valid_num_nights, is_valid_price, format_phone_number
 from utils.line_messaging_utils import generate_go_to_previous_step_button
 
@@ -22,6 +22,19 @@ PREVIOUS_STEP = {
   line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_NOTES: line_config.USER_FLOW_STEP_CREATE_BOOKING__SELECT_SOURCE,
   line_config.USER_FLOW_STEP_CREATE_BOOKING__CONFIRM: line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_NOTES,
 }
+
+def append_customer_phone_quick_reply(quick_reply_buttons, customer_name, booking_dao):
+  if is_generic_name(customer_name):
+    return
+
+  customer = booking_dao.get_customer_by_name(customer_name)
+  if customer and customer.phone_number:
+    quick_reply_buttons.append(
+      QuickReplyButton(action=MessageAction(
+        label=customer.phone_number,
+        text=customer.phone_number)
+      )
+    )
 
 def handle_create_booking_messages(user_message: str, session: dict, booking_dao: BookingDAO):
   reply_messages = []
@@ -58,14 +71,24 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
       reply_messages.append(TextSendMessage(text=f"{'' if is_previous_step else '輸入格式有誤，'}請重新輸入顧客姓名:", quick_reply=QuickReply(items=quick_reply_buttons)))
     else:
       session['data']['customer_name'] = user_message
+      append_customer_phone_quick_reply(quick_reply_buttons, user_message, booking_dao)
       reply_messages.append(TextSendMessage(text="請輸入顧客電話:", quick_reply=QuickReply(items=quick_reply_buttons)))
       session['step'] = line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_PHONE_NUMBER
 
   elif session['step'] == line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_PHONE_NUMBER:
     if is_previous_step or not is_valid_phone_number(user_message):
+      if 'customer_name' in session['data']:
+        append_customer_phone_quick_reply(quick_reply_buttons, session['data']['customer_name'], booking_dao)
       reply_messages.append(TextSendMessage(text=f"{'' if is_previous_step else '輸入格式有誤，'}請重新輸入顧客電話:", quick_reply=QuickReply(items=quick_reply_buttons)))
     else:
       session['data']['phone_number'] = format_phone_number(user_message)
+      customer = booking_dao.get_customer_by_phone_number(session['data']['phone_number'])
+      if (
+        customer and
+        is_generic_name(session['data']['customer_name']) and
+        not is_generic_name(customer.name)
+      ):
+        session['data']['customer_name'] = customer.name
       quick_reply_buttons.append(
         QuickReplyButton(action=DatetimePickerAction(
           label="選擇入住日期",
