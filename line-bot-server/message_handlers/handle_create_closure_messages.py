@@ -15,6 +15,32 @@ PREVIOUS_STEP = {
   line_config.USER_FLOW_STEP_CREATE_CLOSURE__CONFIRM: line_config.USER_FLOW_STEP_CREATE_CLOSURE__GET_REASON,
 }
 
+def append_closure_room_quick_reply_buttons(quick_reply_buttons, room_ids):
+  room_ids = room_ids or []
+
+  if room_ids:
+    quick_reply_buttons.append(
+      QuickReplyButton(action=MessageAction(
+        label=line_config.USER_COMMAND_CREATE_CLOSURE__SELECT_ALL_ROOMS,
+        text=line_config.USER_COMMAND_CREATE_CLOSURE__SELECT_ALL_ROOMS)
+      )
+    )
+
+  quick_reply_buttons += [
+    QuickReplyButton(action=MessageAction(
+      label=room_id,
+      text=room_id)
+    ) for room_id in room_ids
+  ]
+
+def append_closure_reason_quick_reply_button(quick_reply_buttons):
+  quick_reply_buttons.append(
+    QuickReplyButton(action=MessageAction(
+      label=line_config.USER_COMMAND_CREATE_CLOSURE__GET_REASON_FINISH,
+      text=line_config.USER_COMMAND_CREATE_CLOSURE__GET_REASON_FINISH)
+    )
+  )
+
 def handle_create_closure_messages(user_message: str, session: dict, booking_dao: BookingDAO):
   reply_messages = []
   quick_reply_buttons = [
@@ -32,7 +58,7 @@ def handle_create_closure_messages(user_message: str, session: dict, booking_dao
     if (session['step'] and PREVIOUS_STEP[session['step']]):
       session['step'] = PREVIOUS_STEP[session['step']]
       is_previous_step = True
-      if session['step'] == line_config.USER_FLOW_STEP_CREATE_BOOKING__SELECT_ROOMS:
+      if session['step'] == line_config.USER_FLOW_STEP_CREATE_CLOSURE__SELECT_ROOMS:
         session['data']['room_ids'] = []
     else:
       session['flow'], session['step'], session['data'] = None, None, {}
@@ -82,27 +108,22 @@ def handle_create_closure_messages(user_message: str, session: dict, booking_dao
       session['data']['last_date'] = session['data']['start_date'] + timedelta(days=session['data']['num_nights'] - 1)
       session['data']['room_ids'] = []
       available_room_ids = booking_dao.get_available_room_ids(session['data']['start_date'], session['data']['last_date'])
-      quick_reply_buttons += [
-        QuickReplyButton(action=MessageAction(
-          label=room_id,
-          text=room_id)
-        ) for room_id in available_room_ids
-      ]
+      append_closure_room_quick_reply_buttons(quick_reply_buttons, available_room_ids)
       reply_messages.append(TextSendMessage(text="請選擇關閉房間:", quick_reply=QuickReply(items=quick_reply_buttons)))
       session['step'] = line_config.USER_FLOW_STEP_CREATE_CLOSURE__SELECT_ROOMS
 
   elif session['step'] == line_config.USER_FLOW_STEP_CREATE_CLOSURE__SELECT_ROOMS:
     if user_message != line_config.USER_COMMAND_CREATE_CLOSURE__SELECT_ROOMS_FINISH:
-      valid_room_ids = booking_dao.get_all_room_ids()
-      available_room_ids = booking_dao.get_available_room_ids(session['data']['start_date'], session['data']['last_date'])
+      valid_room_ids = booking_dao.get_all_room_ids() or []
+      available_room_ids = booking_dao.get_available_room_ids(session['data']['start_date'], session['data']['last_date']) or []
       available_room_ids = [room_id for room_id in available_room_ids if room_id not in session['data']['room_ids']]
-      if is_previous_step or user_message not in valid_room_ids or user_message in session['data']['room_ids']:
-        quick_reply_buttons += [
-          QuickReplyButton(action=MessageAction(
-            label=room_id,
-            text=room_id)
-          ) for room_id in available_room_ids
-        ]
+      if user_message == line_config.USER_COMMAND_CREATE_CLOSURE__SELECT_ALL_ROOMS and available_room_ids:
+        session['data']['room_ids'] += available_room_ids
+        append_closure_reason_quick_reply_button(quick_reply_buttons)
+        reply_messages.append(TextSendMessage(text="請輸入原因:", quick_reply=QuickReply(items=quick_reply_buttons)))
+        session['step'] = line_config.USER_FLOW_STEP_CREATE_CLOSURE__GET_REASON
+      elif is_previous_step or user_message not in valid_room_ids or user_message in session['data']['room_ids']:
+        append_closure_room_quick_reply_buttons(quick_reply_buttons, available_room_ids)
         reply_messages.append(TextSendMessage(text=f"{'' if is_previous_step else '輸入格式有誤，'}請選擇關閉房間:\n(已選[{''.join(session['data']['room_ids'])}])", quick_reply=QuickReply(items=quick_reply_buttons)))
       else:
         session['data']['room_ids'].append(user_message)
@@ -112,31 +133,16 @@ def handle_create_closure_messages(user_message: str, session: dict, booking_dao
             text=line_config.USER_COMMAND_CREATE_CLOSURE__SELECT_ROOMS_FINISH)
           )
         )
-        quick_reply_buttons += [
-          QuickReplyButton(action=MessageAction(
-            label=room_id,
-            text=room_id)
-          ) for room_id in available_room_ids if room_id != user_message
-        ]
+        append_closure_room_quick_reply_buttons(quick_reply_buttons, [room_id for room_id in available_room_ids if room_id != user_message])
         reply_messages.append(TextSendMessage(text=f"請選擇關閉房間:\n(已選[{''.join(session['data']['room_ids'])}])", quick_reply=QuickReply(items=quick_reply_buttons)))
     else:
-      quick_reply_buttons.append(
-        QuickReplyButton(action=MessageAction(
-          label=line_config.USER_COMMAND_CREATE_CLOSURE__GET_REASON_FINISH,
-          text=line_config.USER_COMMAND_CREATE_CLOSURE__GET_REASON_FINISH)
-        )
-      )
+      append_closure_reason_quick_reply_button(quick_reply_buttons)
       reply_messages.append(TextSendMessage(text="請輸入原因:", quick_reply=QuickReply(items=quick_reply_buttons)))
       session['step'] = line_config.USER_FLOW_STEP_CREATE_CLOSURE__GET_REASON
 
   elif session['step'] == line_config.USER_FLOW_STEP_CREATE_CLOSURE__GET_REASON:
     if is_previous_step:
-      quick_reply_buttons.append(
-        QuickReplyButton(action=MessageAction(
-          label=line_config.USER_COMMAND_CREATE_CLOSURE__GET_REASON_FINISH,
-          text=line_config.USER_COMMAND_CREATE_CLOSURE__GET_REASON_FINISH)
-        )
-      )
+      append_closure_reason_quick_reply_button(quick_reply_buttons)
       reply_messages.append(TextSendMessage(text="請輸入原因:", quick_reply=QuickReply(items=quick_reply_buttons)))
     else:
       session['data']['reason'] = '' if user_message == line_config.USER_COMMAND_CREATE_CLOSURE__GET_REASON_FINISH else user_message
