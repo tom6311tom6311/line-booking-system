@@ -316,9 +316,10 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
         ).strip()
         sms_url = f"sms:{booking_info.phone_number}?body={quote(sms_body)}"
 
-        reply_messages.append(TextSendMessage(text="簡訊內容："))
+        reply_messages.append(TextSendMessage(text="匯款訊息："))
         reply_messages.append(TextSendMessage(text=sms_body))
-        reply_messages.append(TextSendMessage(text=f"發送簡訊：\n\n{sms_url}"))
+        if booking_info.source == '自洽':
+          reply_messages.append(TextSendMessage(text=f"發送簡訊：\n\n{sms_url}"))
 
       # clear session data
       session['flow'], session['step'], session['data'] = None, None, {}
