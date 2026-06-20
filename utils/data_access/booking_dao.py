@@ -372,7 +372,7 @@ class BookingDAO:
       self.release_connection(connection)
     return next_id
 
-  def search_booking_by_keyword(self, keyword, limit=3) -> Optional[list[BookingInfo]]:
+  def search_booking_by_keyword(self, keyword, limit=10) -> Optional[list[BookingInfo]]:
     connection = self.get_connection()
     if not connection:
       return None
