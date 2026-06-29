@@ -1,0 +1,4 @@
+{$DOMAIN} {
+  encode gzip zstd
+  reverse_proxy line-bot-server:5000
+}

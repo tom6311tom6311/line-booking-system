@@ -27,6 +27,10 @@ line_bot_api = LineBotApi(line_config.LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(line_config.LINE_CHANNEL_SECRET)
 booking_dao = BookingDAO.get_instance(db_config, app.logger)
 
+@app.route('/health')
+def health():
+  return 'OK'
+
 # RESTful handlers
 @app.route('/bookings/<booking_id>')
 def get_booking(booking_id):

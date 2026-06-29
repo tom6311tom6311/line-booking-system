@@ -6,5 +6,7 @@ scheduler/data/*
 **/__pycache__
 certs/*
 !certs/.gitkeep
+secrets/*
+!secrets/.gitkeep
 backup/*
 !backup/.gitkeep

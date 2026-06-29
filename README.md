@@ -59,9 +59,13 @@ DB_SSLROOTCERT=
 
 Set `DB_HOST` to the RDS endpoint, keep `DB_PORT=5432`, and set `DB_SSLMODE=verify-full` if you want certificate hostname verification. Download the AWS RDS CA bundle as `certs/global-bundle.pem` and set `DB_SSLROOTCERT=/app/certs/global-bundle.pem`.
 
+If Google Calendar sync is enabled, place the service account file at `secrets/google_service_account.json` and set `GOOGLE_SERVICE_ACCOUNT_CRED_FILE=/app/secrets/google_service_account.json`.
+
 ```bash
-docker-compose up --build
+docker-compose --env-file .env.prod up -d --build
 ```
+
+On Lightsail, point your domain DNS to the instance static IP, open ports 80 and 443, and let the bundled Caddy service provision HTTPS automatically. Configure the LINE webhook URL as `https://your-domain.com/callback`.
 
 ## How It Works
 
