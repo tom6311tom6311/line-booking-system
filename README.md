@@ -1,11 +1,11 @@
 # Line Booking System
 
-This project is a microservices-based **Room Booking Management System** built with Docker Compose. It includes a **PostgreSQL database** and a **Python-Flask LINE bot server** to facilitate booking creation, updates, and synchronization with external systems like **Google Calendar** and **Notion**.
+This project is a microservices-based **Room Booking Management System** built with Docker Compose. It includes a **Python-Flask LINE bot server**, scheduler jobs, and an external PostgreSQL database such as AWS RDS.
 
 ## Features
 
 - **Microservices Architecture**: Services are containerized using Docker.
-- **PostgreSQL Database**: Stores booking data and related information.
+- **External PostgreSQL Database**: Stores booking data and related information.
 - **LINE Bot Integration**: Admins and stakeholders interact with the system via a LINE bot.
 - **Synchronization**: Bookings are synchronized with Google Calendar and Notion.
 
@@ -14,8 +14,9 @@ This project is a microservices-based **Room Booking Management System** built w
 ```
 /project-root
 │
-├── /db                    # PostgreSQL service
+├── /db/sql                # PostgreSQL schema/reference SQL
 ├── /line-bot-server        # Python-Flask LINE bot service
+├── /scheduler              # Scheduled sync/notification jobs
 └── docker-compose.yml      # Docker Compose configuration
 ```
 
@@ -47,7 +48,7 @@ This project is a microservices-based **Room Booking Management System** built w
 The app reads PostgreSQL connection settings from environment variables:
 
 ```bash
-DB_HOST=db
+DB_HOST=YOUR_RDS_ENDPOINT
 DB_PORT=5432
 DB_USER=YOUR_DB_USER
 DB_PASSWORD=YOUR_DB_PASSWORD
@@ -56,20 +57,16 @@ DB_SSLMODE=
 DB_SSLROOTCERT=
 ```
 
-For local Docker development, keep `DB_HOST=db` and run the full Compose stack.
-
-For AWS RDS, set `DB_HOST` to the RDS endpoint, keep `DB_PORT=5432`, and set `DB_SSLMODE=verify-full` if you want certificate hostname verification. Download the AWS RDS CA bundle as `certs/global-bundle.pem` and set `DB_SSLROOTCERT=/app/certs/global-bundle.pem`.
-
-Start only the app services so the local database container is not used:
+Set `DB_HOST` to the RDS endpoint, keep `DB_PORT=5432`, and set `DB_SSLMODE=verify-full` if you want certificate hostname verification. Download the AWS RDS CA bundle as `certs/global-bundle.pem` and set `DB_SSLROOTCERT=/app/certs/global-bundle.pem`.
 
 ```bash
-docker-compose up --build line-bot-server scheduler
+docker-compose up --build
 ```
 
 ## How It Works
 
 - **LINE Bot Server**: Admins can interact with the system via the LINE bot, handling booking creation, updates, and more.
-- **PostgreSQL**: The database stores all booking-related data, including customer info, rooms, and booking status.
+- **PostgreSQL**: An external database stores all booking-related data, including customer info, rooms, and booking status.
 - **Scheduler (Future Implementation)**: A scheduler will handle synchronization tasks with Google Calendar and Notion.
 
 ## License
