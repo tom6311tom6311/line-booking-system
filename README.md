@@ -42,6 +42,30 @@ This project is a microservices-based **Room Booking Management System** built w
    docker-compose up --build
    ```
 
+## Database Configuration
+
+The app reads PostgreSQL connection settings from environment variables:
+
+```bash
+DB_HOST=db
+DB_PORT=5432
+DB_USER=YOUR_DB_USER
+DB_PASSWORD=YOUR_DB_PASSWORD
+DB_NAME=YOUR_DB_NAME
+DB_SSLMODE=
+DB_SSLROOTCERT=
+```
+
+For local Docker development, keep `DB_HOST=db` and run the full Compose stack.
+
+For AWS RDS, set `DB_HOST` to the RDS endpoint, keep `DB_PORT=5432`, and set `DB_SSLMODE=verify-full` if you want certificate hostname verification. Download the AWS RDS CA bundle as `certs/global-bundle.pem` and set `DB_SSLROOTCERT=/app/certs/global-bundle.pem`.
+
+Start only the app services so the local database container is not used:
+
+```bash
+docker-compose up --build line-bot-server scheduler
+```
+
 ## How It Works
 
 - **LINE Bot Server**: Admins can interact with the system via the LINE bot, handling booking creation, updates, and more.

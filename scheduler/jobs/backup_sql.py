@@ -23,6 +23,7 @@ def backup_sql():
     command = [
       "pg_dump",
       "-h", db_config.DB_HOST,
+      "-p", db_config.DB_PORT,
       "-U", db_config.DB_USER,
       "-F", "c",  # Custom format for compressed backup
       "-f", backup_file,
@@ -32,9 +33,12 @@ def backup_sql():
     # Set the password environment variable for pg_dump
     env = os.environ.copy()
     env["PGPASSWORD"] = db_config.DB_PASSWORD
+    if db_config.DB_SSLMODE:
+      env["PGSSLMODE"] = db_config.DB_SSLMODE
+    if db_config.DB_SSLROOTCERT:
+      env["PGSSLROOTCERT"] = db_config.DB_SSLROOTCERT
 
-    with open(backup_file, "w") as f:
-      subprocess.run(command, env=env, check=True)
+    subprocess.run(command, env=env, check=True)
     logging.info(f"Backup successful: {backup_file}")
 
     # Handle file rotation

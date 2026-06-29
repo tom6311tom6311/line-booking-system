@@ -17,20 +17,37 @@ class BookingDAO:
     self.db_config = db_config
     self.logger = logger
     self.enable_notification = enable_notification
+    self.connection_pool = None
+    self.create_connection_pool()
+
+  def create_connection_pool(self):
+    if self.connection_pool:
+      return self.connection_pool
+
     try:
+      connection_options = {
+        "user": self.db_config.DB_USER,
+        "password": self.db_config.DB_PASSWORD,
+        "host": self.db_config.DB_HOST,
+        "port": self.db_config.DB_PORT,
+        "database": self.db_config.DB_NAME
+      }
+      if self.db_config.DB_SSLMODE:
+        connection_options["sslmode"] = self.db_config.DB_SSLMODE
+      if self.db_config.DB_SSLROOTCERT:
+        connection_options["sslrootcert"] = self.db_config.DB_SSLROOTCERT
+
       # Create a connection pool with min and max connections
       self.connection_pool = psycopg2.pool.SimpleConnectionPool(
         1, 20,  # Min 1 and Max 20 connections in the pool
-        user=self.db_config.DB_USER,
-        password=self.db_config.DB_PASSWORD,
-        host=self.db_config.DB_HOST,
-        database=self.db_config.DB_NAME
+        **connection_options
       )
       if self.connection_pool:
         self.logger.info("Connection pool created successfully")
 
     except (Exception, psycopg2.DatabaseError) as error:
       self.logger.error(f"Error while creating the connection pool: {error}")
+    return self.connection_pool
 
   @classmethod
   def get_instance(cls, db_config=None, logger=None, enable_notification=True):
@@ -40,6 +57,11 @@ class BookingDAO:
 
   def get_connection(self):
     try:
+      if not self.connection_pool:
+        self.create_connection_pool()
+      if not self.connection_pool:
+        return None
+
       connection = self.connection_pool.getconn()
       if connection:
         connection.autocommit = True

@@ -4,15 +4,16 @@ services:
     build: ./line-bot-server
     ports:
       - "${PORT_LINE_BOT_SERVER}:5000"
-    depends_on:
-      - db
     environment:
       FLASK_ENV: development
       BASE_URL: ${BASE_URL}
-      DB_HOST: db
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
+      DB_SSLMODE: ${DB_SSLMODE:-}
+      DB_SSLROOTCERT: ${DB_SSLROOTCERT:-}
       LINE_CHANNEL_ACCESS_TOKEN: ${LINE_CHANNEL_ACCESS_TOKEN}
       LINE_CHANNEL_SECRET: ${LINE_CHANNEL_SECRET}
       LINE_BROADCAST_GROUP_ID: ${LINE_BROADCAST_GROUP_ID}
@@ -21,6 +22,7 @@ services:
     volumes:
       - ./utils:/app/utils
       - ./const:/app/const
+      - ./certs:/app/certs:ro
       - /etc/localtime:/etc/localtime:ro
 
   db:
@@ -44,14 +46,14 @@ services:
 
   scheduler:
     build: ./scheduler
-    depends_on:
-      db:
-        condition: service_healthy
     environment:
-      DB_HOST: db
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
+      DB_SSLMODE: ${DB_SSLMODE:-}
+      DB_SSLROOTCERT: ${DB_SSLROOTCERT:-}
       GOOGLE_SERVICE_ACCOUNT_CRED_FILE: ${GOOGLE_SERVICE_ACCOUNT_CRED_FILE}
       GOOGLE_CALENDAR_ID: ${GOOGLE_CALENDAR_ID}
       GOOGLE_CALENDAR_SYNC_MIN_TIME: ${GOOGLE_CALENDAR_SYNC_MIN_TIME}
@@ -63,6 +65,7 @@ services:
     volumes:
       - ./utils:/app/utils
       - ./const:/app/const
+      - ./certs:/app/certs:ro
       - ./backup:/app/backup
       - /etc/localtime:/etc/localtime:ro
 
