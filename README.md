@@ -65,7 +65,7 @@ If Google Calendar sync is enabled, place the service account file at `secrets/g
 docker-compose --env-file .env.prod up -d --build
 ```
 
-On Lightsail, point your domain DNS to the instance static IP, open ports 80 and 443, and let the bundled Caddy service provision HTTPS automatically. Configure the LINE webhook URL as `https://your-domain.com/callback`.
+On Lightsail, point your domain DNS to the instance static IP and open ports 80 and 443. Caddy will provision and renew HTTPS automatically. Configure the LINE webhook URL as `https://your-domain.com/callback`.
 
 ## How It Works
 
