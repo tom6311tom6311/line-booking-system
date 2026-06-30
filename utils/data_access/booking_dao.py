@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from typing import Optional
 from datetime import datetime, timedelta
 from utils.booking_utils import is_generic_name, is_generic_phone_number
+from utils.datetime_utils import get_local_today
 from utils.taiwan_holiday_utils import is_booking_holiday_night
 from utils.line_notification_service import LineNotificationService
 from .data_class.booking_info import BookingInfo
@@ -510,12 +511,13 @@ class BookingDAO:
 
     return matches
 
-  def search_booking_not_prepaid(self) -> Optional[list[BookingInfo]]:
+  def search_booking_not_prepaid(self, min_check_in_date=None) -> Optional[list[BookingInfo]]:
     matches = []
     try:
       with self.cursor() as cursor:
         if not cursor:
           return None
+        min_check_in_date = min_check_in_date or get_local_today()
 
         query = """
         SELECT b.booking_id, b.status, c.name, c.phone_number, b.check_in_date, b.last_date,
@@ -525,7 +527,7 @@ class BookingDAO:
         JOIN Customers c ON b.customer_id = c.customer_id
         JOIN RoomBookings rb ON b.booking_id = rb.booking_id
         JOIN Rooms r ON rb.room_id = r.room_id
-        WHERE b.check_in_date >= NOW()::date
+        WHERE b.check_in_date >= %s
           AND b.status != 'canceled'::booking_statuses
           AND b.prepayment > 0 AND b.prepayment_status = 'unpaid'::prepayment_statuses
         GROUP BY b.booking_id, c.customer_id
@@ -533,7 +535,7 @@ class BookingDAO:
           b.check_in_date, b.booking_id;
         """
 
-        cursor.execute(query)
+        cursor.execute(query, (min_check_in_date,))
         rows = cursor.fetchall()
 
       for row in rows:

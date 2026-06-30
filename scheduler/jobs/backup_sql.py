@@ -1,8 +1,8 @@
 import os
 import logging
 import subprocess
-from datetime import datetime
 from const import db_config
+from utils.datetime_utils import get_local_now
 
 BACKUP_DIR = './backup/sql_backups'
 MAX_BACKUPS = 15
@@ -16,7 +16,7 @@ def backup_sql():
     os.makedirs(BACKUP_DIR, exist_ok=True)
 
     # Generate timestamped filename
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = get_local_now().strftime("%Y%m%d_%H%M%S")
     backup_file = os.path.join(BACKUP_DIR, f"{db_config.DB_NAME}-{timestamp}.sql")
 
     # Perform the database backup using mysqldump

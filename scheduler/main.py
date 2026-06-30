@@ -9,6 +9,7 @@ from jobs.export_historical_bookings import export_historical_bookings
 from jobs.notify_daily_bookings import notify_daily_bookings
 from jobs.notify_not_prepaid_bookings import notify_not_prepaid_bookings
 from jobs.backup_sql import backup_sql
+from utils.datetime_utils import APP_TIMEZONE
 
 JOBS_CONFIG_PATH = 'jobs_config.yaml'
 
@@ -35,7 +36,7 @@ JOB_FUNCTIONS = {
 # Scheduler setup
 def schedule_jobs(config):
   logging.info("Scheduling jobs")
-  scheduler = BlockingScheduler()
+  scheduler = BlockingScheduler(timezone=APP_TIMEZONE)
   for job_name, job_details in config['jobs'].items():
     enabled = job_details['enabled'] == 'True'
     job_function = JOB_FUNCTIONS[job_details['job_function']]
@@ -52,7 +53,8 @@ def schedule_jobs(config):
       cron_expr = job_details['cron'].split()
       trigger = CronTrigger(
         minute=cron_expr[0], hour=cron_expr[1], day=cron_expr[2],
-        month=cron_expr[3], day_of_week=cron_expr[4]
+        month=cron_expr[3], day_of_week=cron_expr[4],
+        timezone=APP_TIMEZONE
       )
       scheduler.add_job(job_function, trigger, id=job_name)
       logging.info(f"Scheduled job: {job_name} with cron: {job_details['cron']}")

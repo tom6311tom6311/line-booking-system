@@ -1,16 +1,16 @@
 import os
 import logging
-import datetime
 from linebot import LineBotApi
 from linebot.models import TextSendMessage
 from const import db_config
 from utils.data_access.booking_dao import BookingDAO
+from utils.datetime_utils import get_local_today
 from utils.line_messaging_utils import generate_booking_carousel_message, generate_closure_carousel_message
 
 # Task to load latest bookings and sync to Google Calendar
 def notify_daily_bookings():
   booking_dao = BookingDAO.get_instance(db_config, logging)
-  date_today = datetime.date.today()
+  date_today = get_local_today()
   messages = []
   bookings_all = booking_dao.search_booking_by_date(date_today.strftime('%Y-%m-%d'))
 
