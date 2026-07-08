@@ -1,0 +1,278 @@
+{
+  "site": {
+    "name": "富莉庭緣民宿",
+    "license": "合法民宿-南投縣民宿658號",
+    "phone": "0932-929748",
+    "phoneHref": "tel:0932929748",
+    "ownerContact": "0932929748 黃先生",
+    "facebookUrl": "https://www.facebook.com/fullybnb/?ref=bookmarks",
+    "facebookLabel": "Facebook 粉絲團",
+    "mapUrl": "https://maps.app.goo.gl/PP2u87yD6js3h3bq7",
+    "address": "南投縣埔里鎮麒麟里武界路 38 號"
+  },
+  "assets": {
+    "logo": "../assets/images/kanban-logo-transparent.png",
+    "map": "../assets/images/map.jpg"
+  },
+  "header": {
+    "homeAriaLabel": "回到首頁",
+    "logoAlt": "富莉庭緣民宿",
+    "navAriaLabel": "主要導覽",
+    "bookingLabel": "訂房",
+    "navItems": [
+      { "label": "房型", "href": "#rooms" },
+      { "label": "附近景點", "href": "#nearby" },
+      { "label": "交通", "href": "#traffic" }
+    ]
+  },
+  "hero": {
+    "ariaLabel": "富莉庭緣民宿",
+    "imageAlt": "埔里富莉庭緣民宿外觀與庭院",
+    "eyebrow": "南投埔里・合法民宿 658 號",
+    "title": "富莉庭緣民宿",
+    "description": "在山景、草地與鄉村間住一晚。",
+    "primaryCtaLabel": "電話訂房",
+    "secondaryCtaLabel": "查看房型",
+    "secondaryCtaHref": "#rooms",
+    "images": [
+      {
+        "src": "../assets/images/hero-building-main.jpg",
+        "alt": "藍天白雲下的富莉庭緣民宿建築外觀",
+        "portraitSplit": true
+      },
+      {
+        "src": "../assets/images/hero-patio-yard.jpg",
+        "alt": "富莉庭緣民宿廊下看向草地與山景"
+      },
+      {
+        "src": "../assets/images/hero-sign-entrance.jpg",
+        "alt": "富莉庭緣民宿入口招牌與鄉間道路"
+      },
+      {
+        "src": "../assets/images/hero-yard-swings.jpg",
+        "alt": "夕陽下庭院裡的鞦韆與山景"
+      },
+      {
+        "src": "../assets/images/hero-cherry-blossom.jpg",
+        "alt": "櫻花枝下的富莉庭緣民宿與山景"
+      },
+      {
+        "src": "../assets/images/hero-lobby-counter.jpg",
+        "alt": "富莉庭緣民宿室內公共空間與吧台"
+      },
+      {
+        "src": "../assets/images/hero-lounge.jpg",
+        "alt": "富莉庭緣民宿客廳休憩空間"
+      },
+      {
+        "src": "../assets/images/hero-mountain-view.jpg",
+        "alt": "富莉庭緣民宿周邊山景"
+      },
+      {
+        "src": "../assets/images/hero-porch.jpg",
+        "alt": "富莉庭緣民宿門廊與庭院"
+      }
+    ]
+  },
+  "intro": {
+    "eyebrow": "About Fully BnB",
+    "title": "綠意圍繞的好客民宿",
+    "description": "民宿座落在埔里鎮東南隅，這裡是民宿主人黃先生的故鄉。年少離鄉到北部打拚多年後，他和家人回到埔里買下一塊土地，一起規劃庭院、房間與生活的樣子，逐步實現想像中的田園日常。",
+    "storyAriaLabel": "民宿故事",
+    "stories": [
+      {
+        "title": "好客，是我們最在意的事",
+        "description": "我們不追求飯店式的華麗，而是希望每位旅人都能住得舒適、自在。乾淨明亮的房間、柔軟的床鋪與安靜的山景，讓您有回到家的感覺。",
+        "image": "../assets/images/room-berries-02.jpg",
+        "imageAlt": "富莉庭緣民宿乾淨明亮的房間"
+      },
+      {
+        "title": "自家菜園入菜的有機早餐",
+        "description": "早餐使用自家耕作的有機蔬菜，依當季收成準備清爽家常的料理。從早晨開始，就能吃到埔里土地帶來的自然味道。",
+        "image": "../assets/images/story-breakfast.jpg",
+        "imageAlt": "富莉庭緣民宿自家耕作入菜的早餐"
+      },
+      {
+        "title": "住進埔里的鄉間生活",
+        "description": "四周沒有擁擠車流與城市光害，取而代之的是菜園、野溪、菇寮、雜貨店與鄉間小路。清晨可散步看山，夜晚則能安靜地看見星空。",
+        "image": "../assets/images/story-nature-path.jpg",
+        "imageAlt": "富莉庭緣民宿庭院小徑與夕陽"
+      },
+      {
+        "title": "讓孩子在草地上奔跑",
+        "description": "民宿前方保留寬敞草皮，孩子可以自在跑跳、玩球與放電，大人也能在一旁放慢腳步，看著山景享受戶外時光。",
+        "image": "../assets/images/story-grass-yard.jpg",
+        "imageAlt": "富莉庭緣民宿寬敞草皮與山景"
+      }
+    ]
+  },
+  "sections": {
+    "rooms": {
+      "eyebrow": "Rooms",
+      "title": "房型與價格",
+      "description": "房價含早餐，春節價格另計，包棟請來電洽詢。"
+    },
+    "nearby": {
+      "eyebrow": "Nearby",
+      "title": "附近可以這樣玩",
+      "description": "從自然步道、在地小吃到文化景點，整理幾個適合安排進埔里行程的去處。"
+    },
+    "traffic": {
+      "eyebrow": "Traffic",
+      "title": "交通與位置",
+      "description": "導航可搜尋「富莉庭緣民宿」。自行開車由國道六號埔里交流道下，往武界方向。"
+    }
+  },
+  "bookingNote": {
+    "lead": "包棟方案 NT$15,000 起。",
+    "description": "10 至 24 人可包棟，享有專屬室內空間、戶外草皮與自在聚會時間，限透過電話預約。"
+  },
+  "roomCard": {
+    "priceAriaLabel": "房價",
+    "weekdayPrefix": "平日",
+    "holidayPrefix": "假日",
+    "breakfastIncludedLabel": "房價含早餐",
+    "extraBedPrefix": "加床",
+    "featuresAriaLabel": "房型特色",
+    "ctaLabel": "詢問此房型"
+  },
+  "carousel": {
+    "imageSuffix": "照片",
+    "previousPrefix": "上一張",
+    "nextPrefix": "下一張",
+    "paginationAriaLabel": "照片頁數",
+    "goToPrefix": "查看第",
+    "goToSuffix": "張"
+  },
+  "footer": {
+    "name": "富莉庭緣民宿",
+    "license": "合法民宿-南投縣民宿658號"
+  },
+  "rooms": [
+    {
+      "name": "稻香",
+      "category": "雙人景觀套房",
+      "weekdayPrice": "NT$2,200",
+      "holidayPrice": "NT$2,800",
+      "extraBedPrice": "NT$500 / 晚",
+      "images": [
+        "../assets/images/room-dao-01.jpg",
+        "../assets/images/room-dao-02.jpg",
+        "../assets/images/room-dao-03.jpg"
+      ],
+      "highlights": ["景觀陽台", "樓中樓童趣設計", "櫻花木建材"]
+    },
+    {
+      "name": "森林",
+      "category": "雙人景觀套房",
+      "weekdayPrice": "NT$2,200",
+      "holidayPrice": "NT$2,800",
+      "extraBedPrice": "NT$500 / 晚",
+      "images": [
+        "../assets/images/room-wood-01.jpg",
+        "../assets/images/room-wood-02.jpg"
+      ],
+      "highlights": ["山景陽台", "加大雙人床", "日式原木風格"]
+    },
+    {
+      "name": "藍莓 / 紅莓",
+      "category": "雙人景觀套房",
+      "weekdayPrice": "NT$2,200",
+      "holidayPrice": "NT$2,800",
+      "extraBedPrice": "NT$500 / 晚",
+      "images": [
+        "../assets/images/room-berries-01.jpg",
+        "../assets/images/room-berries-02.jpg",
+        "../assets/images/room-berries-03.jpg",
+        "../assets/images/room-berries-04.jpg",
+        "../assets/images/room-berries-05.jpg"
+      ],
+      "highlights": ["景觀最佳", "雙人沙發", "白樺木家具"]
+    },
+    {
+      "name": "太陽 / 月亮",
+      "category": "四人家庭套房",
+      "weekdayPrice": "NT$3,000",
+      "holidayPrice": "NT$3,600",
+      "extraBedPrice": "NT$500 / 晚",
+      "images": [
+        "../assets/images/room-sunmoon-01.jpg",
+        "../assets/images/room-sunmoon-02.jpg",
+        "../assets/images/room-sunmoon-03.jpg"
+      ],
+      "highlights": ["家庭房型", "良好採光", "北美胡桃木和室"]
+    }
+  ],
+  "nearbyPlaces": [
+    {
+      "name": "聽瀑營地",
+      "category": "自然野趣",
+      "distance": "民宿周邊",
+      "image": "../assets/images/nearby-camp.jpg",
+      "description": "溪邊玩水、露營與季節賞螢的附近景點。"
+    },
+    {
+      "name": "鯉魚潭",
+      "category": "親子景點",
+      "distance": "埔里周邊",
+      "image": "../assets/images/nearby-lake.jpg",
+      "description": "湖畔散步、親山步道與筊白筍特色伴手禮。"
+    },
+    {
+      "name": "觀音瀑布",
+      "category": "自然景點",
+      "distance": "埔里周邊",
+      "image": "../assets/images/nearby-guanyin-waterfall.jpg",
+      "description": "從吊橋步行進入即可親近瀑布與溪谷，夏天適合安排一段清涼的自然散步。"
+    },
+    {
+      "name": "中台禪寺",
+      "category": "文化寺廟",
+      "distance": "埔里周邊",
+      "image": "../assets/images/nearby-chung-tai.jpg",
+      "description": "規模宏大的佛教建築與清幽園區，適合安排半日文化參訪。"
+    },
+    {
+      "name": "寶湖宮天地堂（地母廟）",
+      "category": "文化寺廟",
+      "distance": "埔里周邊",
+      "image": "../assets/images/nearby-dimu-temple.jpg",
+      "description": "依山而建、視野開闊，是埔里常見的祈福與登高看景行程，假日還有素齋供應哦！"
+    },
+    {
+      "name": "埔里酒廠",
+      "category": "在地文化",
+      "distance": "埔里市區",
+      "image": "../assets/images/nearby-puli-winery.jpg",
+      "description": "認識埔里釀酒文化與地方伴手禮的經典景點，也很適合雨天或回程順路停留。"
+    },
+    {
+      "name": "18 度 C 巧克力工房",
+      "category": "埔里美食",
+      "distance": "埔里市區",
+      "image": "../assets/images/nearby-chocolate.jpg",
+      "description": "埔里人氣甜點，生巧克力、生吐司、冰淇淋。"
+    },
+    {
+      "name": "埔里市場炒麵",
+      "category": "埔里美食",
+      "distance": "埔里市區",
+      "image": "../assets/images/nearby-market-stir-fry.jpg",
+      "description": "夜晚想吃熱炒或宵夜時，可以到市場周邊感受埔里晚上熱鬧的一面。"
+    },
+    {
+      "name": "亞標小吃",
+      "category": "埔里美食",
+      "distance": "埔里市區",
+      "image": "../assets/images/nearby-yabiao.jpg",
+      "description": "份量實在、口味家常，是適合多人一起分享的在地小吃選擇。"
+    },
+    {
+      "name": "嘟嘟冷熱冰",
+      "category": "埔里美食",
+      "distance": "埔里市區",
+      "image": "../assets/images/nearby-dudu-ice.jpg",
+      "description": "埔里經典冰品店，熱配料搭上碎冰的冷熱冰，很適合作為飯後甜點。"
+    }
+  ]
+}
