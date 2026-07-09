@@ -9,9 +9,10 @@ import {
 
 test("empty manage tab does not show an empty booking summary", async ({ page }) => {
   await page.goto("/#booking");
-  await page.getByRole("button", { name: "修改訂單" }).click();
+  await page.getByRole("button", { name: "查詢/取消" }).click();
 
-  await expect(page.getByRole("heading", { name: "查詢/修改訂單" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "查詢訂單" })).toBeVisible();
+  await expect(page.locator(".booking-manage-note")).toContainText("如需修改入住日期、房型、加床、備註或其他訂房內容，請直接來電聯絡民宿");
   await expect(page.getByRole("heading", { name: "訂單內容" })).toHaveCount(0);
 });
 
@@ -89,7 +90,7 @@ test("manage lookup shows reservation financial details and can cancel eligible 
   });
 
   await page.goto("/#booking");
-  await page.getByRole("button", { name: "修改訂單" }).click();
+  await page.getByRole("button", { name: "查詢/取消" }).click();
   await page.getByPlaceholder("例如 1024").fill(String(reservation.bookingId));
   await page.getByPlaceholder("訂房電話").fill("0922222222");
   await page.getByRole("button", { name: "查詢訂單" }).click();
@@ -129,7 +130,7 @@ test("manage lookup prevents online cancellation within 7 days of check-in", asy
   const { reservation } = await createResponse.json();
 
   await page.goto("/#booking");
-  await page.getByRole("button", { name: "修改訂單" }).click();
+  await page.getByRole("button", { name: "查詢/取消" }).click();
   await page.getByPlaceholder("例如 1024").fill(String(reservation.bookingId));
   await page.getByPlaceholder("訂房電話").fill("0933333333");
   await page.getByRole("button", { name: "查詢訂單" }).click();

@@ -938,6 +938,7 @@ export function BookingSection() {
         <div className="booking-panel booking-manage-panel">
           <div className="booking-form">
             <h3>{bookingSection.manage.formTitle}</h3>
+            <p className="booking-manage-note">{bookingSection.manage.supportNote}</p>
             <label>
               <span>{bookingSection.manage.bookingId}</span>
               <input value={lookupBookingId} onChange={(event) => setLookupBookingId(event.target.value)} placeholder={bookingSection.manage.bookingIdPlaceholder} />

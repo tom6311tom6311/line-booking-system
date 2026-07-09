@@ -128,7 +128,7 @@
     "title": "線上訂房",
     "tabs": {
       "booking": "訂房",
-      "manage": "修改訂單"
+      "manage": "查詢/取消"
     },
     "steps": {
       "ariaLabel": "訂房步驟",
@@ -197,7 +197,8 @@
       "create": "建立新訂單"
     },
     "manage": {
-      "formTitle": "查詢/修改訂單",
+      "formTitle": "查詢訂單",
+      "supportNote": "目前官網僅提供查詢與取消訂單。如需修改入住日期、房型、加床、備註或其他訂房內容，請直接來電聯絡民宿，我們會協助您處理。",
       "bookingId": "訂單編號",
       "bookingIdPlaceholder": "例如 1024",
       "phone": "電話",
@@ -212,7 +213,7 @@
       "totalPrice": "總金額",
       "prepayment": "訂金",
       "cancel": "取消訂單",
-      "cancelUnavailable": "依照訂房政策，入住日前 7 天內不可取消訂房，若有疑問請直接聯絡民宿。"
+      "cancelUnavailable": "依照訂房政策，入住日前 7 天內不可取消訂房，若有疑問請直接來電聯絡民宿。"
     },
     "complete": {
       "title": "訂房完成",
@@ -238,7 +239,7 @@
       "cancelSuccessSuffix": "已取消。",
       "cancelError": "取消訂單失敗。",
       "saveBookingId": "請保存訂單編號",
-      "saveBookingIdSuffix": "之後可用電話查詢或修改。"
+      "saveBookingIdSuffix": "之後可用電話查詢訂單。"
     },
     "breakdown": {
       "roomSubtotal": "房費",

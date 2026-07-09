@@ -857,6 +857,17 @@ button:focus-visible {
   top: 88px;
 }
 
+.booking-manage-note {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid rgba(95, 125, 100, 0.22);
+  border-radius: 8px;
+  background: rgba(232, 237, 223, 0.72);
+  color: var(--sage-900);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
 .booking-summary p {
   display: flex;
   align-items: center;
