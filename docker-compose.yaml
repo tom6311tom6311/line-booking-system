@@ -45,6 +45,7 @@ services:
       LINE_ADMIN_USER_IDS: ${LINE_ADMIN_USER_IDS:-}
       PROPERTY_NAME: ${PROPERTY_NAME}
       BANK_ACCOUNT_INFO: ${BANK_ACCOUNT_INFO}
+      PUBLIC_BOOKING_DISCOUNT_PER_ROOM_NIGHT: ${PUBLIC_BOOKING_DISCOUNT_PER_ROOM_NIGHT:-0}
     volumes:
       - ./certs:/app/certs:ro
       - /etc/localtime:/etc/localtime:ro

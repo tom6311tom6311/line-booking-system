@@ -1,13 +1,30 @@
+import os
 from datetime import datetime, timedelta
 
 from flask import jsonify, request
 
-from const.booking_const import EXTRA_BED_PRICE_PER_NIGHT, ROOM_TYPES
+from const.booking_const import EXTRA_BED_PRICE_PER_NIGHT, PUBLIC_BOOKING_SOURCE, ROOM_TYPES
 from utils.datetime_utils import get_local_today
 from utils.input_utils import format_phone_number, is_valid_date, is_valid_phone_number
 
 ROOM_TYPE_LABELS = { room_type: room_type_name for room_type, room_type_name, _ in ROOM_TYPES }
 MIN_CANCEL_DAYS_BEFORE_CHECK_IN = 7
+
+
+def get_public_booking_discount_per_room_night():
+  try:
+    return max(0, int(os.getenv('PUBLIC_BOOKING_DISCOUNT_PER_ROOM_NIGHT', '0') or 0))
+  except ValueError:
+    return 0
+
+
+def calculate_public_booking_discount(room_ids, nights):
+  return get_public_booking_discount_per_room_night() * len(room_ids) * nights
+
+
+def apply_public_booking_discount(total_price, room_ids, nights):
+  discount_amount = min(int(total_price), calculate_public_booking_discount(room_ids, nights))
+  return int(total_price) - discount_amount, discount_amount
 
 
 def api_error(message, status_code=400):
@@ -59,8 +76,13 @@ def serialize_room(room, is_available=None):
   return serialized
 
 
-def serialize_booking(booking_info):
+def serialize_booking(booking_info, website_discount_amount=0):
   check_out = booking_info.last_date + timedelta(days=1)
+  nights = (check_out - booking_info.check_in_date).days
+  if not website_discount_amount and booking_info.source == PUBLIC_BOOKING_SOURCE:
+    website_discount_amount = calculate_public_booking_discount(list(booking_info.room_ids), nights)
+  website_discount_amount = int(website_discount_amount or 0)
+  original_total_price = int(booking_info.total_price) + website_discount_amount
   return {
     'bookingId': booking_info.booking_id,
     'status': booking_info.status,
@@ -68,10 +90,12 @@ def serialize_booking(booking_info):
     'phoneNumber': booking_info.phone_number,
     'checkIn': booking_info.check_in_date.isoformat(),
     'checkOut': check_out.isoformat(),
-    'nights': (check_out - booking_info.check_in_date).days,
+    'nights': nights,
     'roomIds': list(booking_info.room_ids),
     'extraBedCount': booking_info.extra_bed_count,
     'extraBedCounts': booking_info.extra_bed_counts,
+    'originalTotalPrice': original_total_price,
+    'websiteDiscountAmount': website_discount_amount,
     'totalPrice': int(booking_info.total_price),
     'prepayment': int(booking_info.prepayment),
     'prepaymentStatus': booking_info.prepayment_status,

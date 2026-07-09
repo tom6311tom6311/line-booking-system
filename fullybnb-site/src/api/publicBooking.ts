@@ -30,6 +30,8 @@ export type PublicReservation = {
   roomIds: string[];
   extraBedCount: number;
   extraBedCounts: Record<string, number>;
+  originalTotalPrice?: number;
+  websiteDiscountAmount?: number;
   totalPrice: number;
   prepayment: number;
   prepaymentStatus: string;
@@ -44,6 +46,8 @@ export type PublicQuote = {
   roomIds: string[];
   extraBedCount: number;
   extraBedCounts: Record<string, number>;
+  originalTotalPrice: number;
+  websiteDiscountAmount: number;
   totalPrice: number;
   suggestedPrepayment: number;
 };

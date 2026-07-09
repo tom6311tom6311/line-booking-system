@@ -27,6 +27,7 @@ from utils.public_booking_api_utils import (
   serialize_booking,
   serialize_room,
   validate_public_room_ids,
+  apply_public_booking_discount,
 )
 from utils.line_notification_service import LineNotificationService
 from const.booking_const import PUBLIC_BOOKING_SOURCE
@@ -102,9 +103,10 @@ def api_public_quote():
   except ValueError as e:
     return api_error(str(e))
 
-  total_price = booking_dao.get_total_price_estimation(room_ids, check_in_date, last_date, sum(extra_bed_counts.values()))
-  if total_price is None:
+  original_total_price = booking_dao.get_total_price_estimation(room_ids, check_in_date, last_date, sum(extra_bed_counts.values()))
+  if original_total_price is None:
     return api_error("Unable to calculate price", 500)
+  total_price, website_discount_amount = apply_public_booking_discount(original_total_price, room_ids, nights)
   return jsonify({
     'checkIn': check_in_date.isoformat(),
     'checkOut': check_out_date.isoformat(),
@@ -112,6 +114,8 @@ def api_public_quote():
     'roomIds': room_ids,
     'extraBedCount': sum(extra_bed_counts.values()),
     'extraBedCounts': extra_bed_counts,
+    'originalTotalPrice': int(original_total_price),
+    'websiteDiscountAmount': website_discount_amount,
     'totalPrice': int(total_price),
     'suggestedPrepayment': get_prepayment_estimation(total_price),
   })
@@ -124,16 +128,17 @@ def api_public_create_reservation():
     if not customer_name:
       raise ValueError("customerName is required")
     phone_number = normalize_api_phone_number(payload.get('phoneNumber'))
-    check_in_date, _, last_date, _ = parse_date_range(payload)
+    check_in_date, _, last_date, nights = parse_date_range(payload)
     room_ids = validate_public_room_ids(payload.get('roomIds'), booking_dao)
     extra_bed_counts = parse_extra_bed_counts(payload.get('extraBedCounts'), room_ids, booking_dao)
     ensure_rooms_available(room_ids, check_in_date, last_date, booking_dao)
   except ValueError as e:
     return api_error(str(e))
 
-  total_price = booking_dao.get_total_price_estimation(room_ids, check_in_date, last_date, sum(extra_bed_counts.values()))
-  if total_price is None:
+  original_total_price = booking_dao.get_total_price_estimation(room_ids, check_in_date, last_date, sum(extra_bed_counts.values()))
+  if original_total_price is None:
     return api_error("Unable to calculate price", 500)
+  total_price, website_discount_amount = apply_public_booking_discount(original_total_price, room_ids, nights)
 
   booking_info = BookingInfo(
     booking_id=booking_dao.get_next_booking_id(),
@@ -158,7 +163,7 @@ def api_public_create_reservation():
   created_booking_info = booking_dao.get_booking_info(booking_id)
   room_type_summary = booking_dao.get_booking_room_type_summary(booking_id)
   LineNotificationService(app.logger).notify_public_booking_created_admins(created_booking_info, room_type_summary)
-  return jsonify({ 'reservation': serialize_booking(created_booking_info) }), 201
+  return jsonify({ 'reservation': serialize_booking(created_booking_info, website_discount_amount) }), 201
 
 @app.route(f'{PUBLIC_API_PREFIX}/reservations/overlap')
 def api_public_overlapping_reservations():
@@ -230,9 +235,11 @@ def api_public_update_reservation(booking_id):
   except ValueError as e:
     return api_error(str(e))
 
-  total_price = booking_dao.get_total_price_estimation(room_ids, booking_info.check_in_date, booking_info.last_date, booking_info.extra_bed_count)
-  if total_price is None:
+  original_total_price = booking_dao.get_total_price_estimation(room_ids, booking_info.check_in_date, booking_info.last_date, booking_info.extra_bed_count)
+  if original_total_price is None:
     return api_error("Unable to calculate price", 500)
+  nights = (booking_info.last_date - booking_info.check_in_date).days + 1
+  total_price, website_discount_amount = apply_public_booking_discount(original_total_price, room_ids, nights)
   booking_info.total_price = total_price
   if booking_info.prepayment_status != 'paid':
     booking_info.prepayment = get_prepayment_estimation(total_price)
@@ -243,7 +250,7 @@ def api_public_update_reservation(booking_id):
     return api_error("Unable to update reservation", 500)
 
   updated_booking_info = booking_dao.get_booking_info(updated_booking_id)
-  return jsonify({ 'reservation': serialize_booking(updated_booking_info) })
+  return jsonify({ 'reservation': serialize_booking(updated_booking_info, website_discount_amount) })
 
 @app.route(f'{PUBLIC_API_PREFIX}/reservations/<int:booking_id>/cancel', methods=['POST'])
 def api_public_cancel_reservation(booking_id):

@@ -889,6 +889,10 @@ button:focus-visible {
   font-weight: 850;
 }
 
+.booking-summary dd.booking-discount-amount {
+  color: var(--clay-dark);
+}
+
 .booking-confirmation-note {
   display: block !important;
   padding: 12px;
@@ -1239,6 +1243,28 @@ button:focus-visible {
   border-radius: 8px;
   background: var(--paper);
   color: var(--muted);
+}
+
+.booking-discount-banner {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border: 1px solid rgba(185, 130, 90, 0.32);
+  border-radius: 8px;
+  background: rgba(185, 130, 90, 0.1);
+  color: var(--sage-900);
+}
+
+.booking-discount-banner strong {
+  color: var(--clay-dark);
+  font-size: 16px;
+}
+
+.booking-discount-banner span {
+  color: var(--muted);
+  font-weight: 700;
+  line-height: 1.6;
 }
 
 .booking-policies h3 {

@@ -149,6 +149,10 @@
       "search": "查詢空房",
       "searching": "查詢中"
     },
+    "discountBanner": {
+      "title": "官網限定優惠",
+      "description": "透過本官網線上訂房，每房每晚現折 NT$100，優惠將自動反映在訂單金額中！"
+    },
     "roomCard": {
       "weekdayPrefix": "平日",
       "holidayPrefix": "假日",
@@ -186,6 +190,8 @@
       "notes": "備註",
       "noNotes": "無",
       "nights": "晚數",
+      "originalTotalPrice": "原價",
+      "websiteDiscount": "官網優惠",
       "totalPrice": "總金額",
       "prepayment": "訂金",
       "create": "建立新訂單"

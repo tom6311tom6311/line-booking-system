@@ -577,6 +577,18 @@ export function BookingSection() {
             <dt>{bookingSection.manage.rooms}</dt>
             <dd>{renderRoomDetails(selectedRoomIds, normalizeExtraBedCounts(selectedRoomIds, extraBedCounts))}</dd>
           </div>
+          {quote.websiteDiscountAmount > 0 && (
+            <>
+              <div>
+                <dt>{bookingSection.summary.originalTotalPrice}</dt>
+                <dd>{formatCurrency(quote.originalTotalPrice)}</dd>
+              </div>
+              <div>
+                <dt>{bookingSection.summary.websiteDiscount}</dt>
+                <dd className="booking-discount-amount">-{formatCurrency(quote.websiteDiscountAmount)}</dd>
+              </div>
+            </>
+          )}
           <div>
             <dt>{bookingSection.summary.totalPrice}</dt>
             <dd>{formatCurrency(quote.totalPrice)}</dd>
@@ -599,6 +611,11 @@ export function BookingSection() {
   return (
     <section className="section booking-section" id="booking">
       <SectionHeading eyebrow={bookingSection.eyebrow} title={bookingSection.title} />
+
+      <div className="booking-discount-banner">
+        <strong>{bookingSection.discountBanner.title}</strong>
+        <span>{bookingSection.discountBanner.description}</span>
+      </div>
 
       <div className="booking-policies">
         <h3>{reservationPolicies.title}</h3>
@@ -878,6 +895,18 @@ export function BookingSection() {
                   <dt>{bookingSection.manage.rooms}</dt>
                   <dd>{renderRoomDetails(createdReservation.roomIds, createdReservation.extraBedCounts)}</dd>
                 </div>
+                {createdReservation.websiteDiscountAmount && createdReservation.websiteDiscountAmount > 0 && (
+                  <>
+                    <div>
+                      <dt>{bookingSection.summary.originalTotalPrice}</dt>
+                      <dd>{formatCurrency(createdReservation.originalTotalPrice || createdReservation.totalPrice + createdReservation.websiteDiscountAmount)}</dd>
+                    </div>
+                    <div>
+                      <dt>{bookingSection.summary.websiteDiscount}</dt>
+                      <dd className="booking-discount-amount">-{formatCurrency(createdReservation.websiteDiscountAmount)}</dd>
+                    </div>
+                  </>
+                )}
                 <div>
                   <dt>{bookingSection.summary.totalPrice}</dt>
                   <dd>{formatCurrency(createdReservation.totalPrice)}</dd>
@@ -967,6 +996,18 @@ export function BookingSection() {
                     <dt>{bookingSection.manage.rooms}</dt>
                     <dd>{renderRoomDetails(lookupReservation.roomIds, lookupReservation.extraBedCounts)}</dd>
                   </div>
+                  {lookupReservation.websiteDiscountAmount && lookupReservation.websiteDiscountAmount > 0 && (
+                    <>
+                      <div>
+                        <dt>{bookingSection.summary.originalTotalPrice}</dt>
+                        <dd>{formatCurrency(lookupReservation.originalTotalPrice || lookupReservation.totalPrice + lookupReservation.websiteDiscountAmount)}</dd>
+                      </div>
+                      <div>
+                        <dt>{bookingSection.summary.websiteDiscount}</dt>
+                        <dd className="booking-discount-amount">-{formatCurrency(lookupReservation.websiteDiscountAmount)}</dd>
+                      </div>
+                    </>
+                  )}
                   <div>
                     <dt>{bookingSection.manage.totalPrice}</dt>
                     <dd>{formatCurrency(lookupReservation.totalPrice)}</dd>
