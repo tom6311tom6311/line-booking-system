@@ -9,6 +9,7 @@ GENERIC_NAMES = ['先生', '小姐', '無名氏']
 PUBLIC_BOOKING_SOURCE = '官網'
 VALID_BOOKING_SOURCES = ['自洽', PUBLIC_BOOKING_SOURCE, 'Booking_com', 'FB', 'Agoda', '台灣旅宿', 'Airbnb']
 GENERIC_PHONE_NUMBER_POSTFIX = '000000'
+EXTRA_BED_PRICE_PER_NIGHT = 500
 ROOM_TYPES = [
   ('standard_double_room', '雙人套房', '間'),
   ('standard_family_room', '四人套房', '間'),

@@ -52,6 +52,13 @@ def is_valid_price(price: str):
       return True
   return False
 
+def is_valid_extra_bed_count(extra_bed_count: str, max_extra_bed_count: int):
+  if extra_bed_count.isdigit():
+    extra_bed_count = int(extra_bed_count)
+    if 0 <= extra_bed_count <= max_extra_bed_count:
+      return True
+  return False
+
 def extract_booking_id(command, template):
   """
   Checks if the input string matches the given template and extracts the booking_id if it matches.

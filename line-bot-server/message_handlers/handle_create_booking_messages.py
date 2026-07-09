@@ -8,7 +8,7 @@ from const.notification_templates import ASK_FOR_PREPAYMENT
 from utils.data_access.data_class.booking_info import BookingInfo
 from utils.data_access.booking_dao import BookingDAO
 from utils.booking_utils import format_booking_info, get_prepayment_estimation, get_booking_room_brief, is_generic_name
-from utils.input_utils import is_valid_date, is_valid_phone_number, is_valid_num_nights, is_valid_price, format_phone_number
+from utils.input_utils import is_valid_date, is_valid_phone_number, is_valid_num_nights, is_valid_price, is_valid_extra_bed_count, format_phone_number
 from utils.line_messaging_utils import generate_go_to_previous_step_button
 
 PREVIOUS_STEP = {
@@ -16,7 +16,9 @@ PREVIOUS_STEP = {
   line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_CHECK_IN_DATE: line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_PHONE_NUMBER,
   line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_NUM_NIGHTS: line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_CHECK_IN_DATE,
   line_config.USER_FLOW_STEP_CREATE_BOOKING__SELECT_ROOMS: line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_CHECK_IN_DATE,
-  line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_TOTAL_PRICE: line_config.USER_FLOW_STEP_CREATE_BOOKING__SELECT_ROOMS,
+  line_config.USER_FLOW_STEP_CREATE_BOOKING__SELECT_EXTRA_BED_ROOM: line_config.USER_FLOW_STEP_CREATE_BOOKING__SELECT_ROOMS,
+  line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_EXTRA_BED_COUNT: line_config.USER_FLOW_STEP_CREATE_BOOKING__SELECT_EXTRA_BED_ROOM,
+  line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_TOTAL_PRICE: line_config.USER_FLOW_STEP_CREATE_BOOKING__SELECT_EXTRA_BED_ROOM,
   line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_PREPAYMENT: line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_TOTAL_PRICE,
   line_config.USER_FLOW_STEP_CREATE_BOOKING__SELECT_SOURCE: line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_PREPAYMENT,
   line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_NOTES: line_config.USER_FLOW_STEP_CREATE_BOOKING__SELECT_SOURCE,
@@ -35,6 +37,67 @@ def append_customer_phone_quick_reply(quick_reply_buttons, customer_name, bookin
         text=customer.phone_number)
       )
     )
+
+def append_extra_bed_count_quick_reply_buttons(quick_reply_buttons, max_extra_bed_count):
+  for extra_bed_count in range(1, max_extra_bed_count + 1):
+    quick_reply_buttons.append(
+      QuickReplyButton(action=MessageAction(
+        label=f"加{extra_bed_count}床",
+        text=str(extra_bed_count))
+      )
+    )
+
+def get_extra_bed_room_options(session, booking_dao):
+  room_ids = session['data']['room_ids']
+  selected_extra_bed_room_ids = session['data'].get('extra_bed_counts', {}).keys()
+  rooms_by_id = {
+    room['room_id']: room
+    for room in booking_dao.get_rooms_by_ids(room_ids)
+  }
+  return [
+    room_id
+    for room_id in room_ids
+    if rooms_by_id[room_id]['extra_bed_number'] > 0 and room_id not in selected_extra_bed_room_ids
+  ]
+
+def append_extra_bed_room_quick_reply_buttons(quick_reply_buttons, session, booking_dao):
+  continue_command = (
+    line_config.USER_COMMAND_UPDATE_BOOKING__SELECT_EXTRA_BED_FINISH
+    if session['data'].get('extra_bed_counts')
+    else line_config.USER_COMMAND_UPDATE_BOOKING__SELECT_EXTRA_BED_COUNT_0
+  )
+  quick_reply_buttons.append(
+    QuickReplyButton(action=MessageAction(
+      label=continue_command,
+      text=continue_command)
+    )
+  )
+  for room_id in get_extra_bed_room_options(session, booking_dao):
+    quick_reply_buttons.append(
+      QuickReplyButton(action=MessageAction(
+        label=room_id,
+        text=room_id)
+      )
+    )
+
+def get_current_extra_bed_room_id(session):
+  return session['data']['extra_bed_room_id']
+
+def append_total_price_question(reply_messages, quick_reply_buttons, session, booking_dao):
+  estimated_total_price = booking_dao.get_total_price_estimation(
+    session['data']['room_ids'],
+    session['data']['check_in_date'],
+    session['data']['last_date'],
+    sum(session['data'].get('extra_bed_counts', {}).values())
+  )
+  quick_reply_buttons.append(
+    QuickReplyButton(action=MessageAction(
+      label=str(estimated_total_price),
+      text=str(estimated_total_price))
+    )
+  )
+  reply_messages.append(TextSendMessage(text="請輸入總金額:", quick_reply=QuickReply(items=quick_reply_buttons)))
+  session['step'] = line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_TOTAL_PRICE
 
 def handle_create_booking_messages(user_message: str, session: dict, booking_dao: BookingDAO):
   reply_messages = []
@@ -55,6 +118,9 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
       is_previous_step = True
       if session['step'] == line_config.USER_FLOW_STEP_CREATE_BOOKING__SELECT_ROOMS:
         session['data']['room_ids'] = []
+        session['data']['extra_bed_counts'] = {}
+      if session['step'] == line_config.USER_FLOW_STEP_CREATE_BOOKING__SELECT_EXTRA_BED_ROOM:
+        session['data'].pop('extra_bed_room_id', None)
     else:
       session['flow'], session['step'], session['data'] = None, None, {}
       reply_messages.append(TextSendMessage(text="已取消"))
@@ -180,26 +246,57 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
         ]
         reply_messages.append(TextSendMessage(text=f"請選擇入住房間:\n(已選[{''.join(session['data']['room_ids'])}])", quick_reply=QuickReply(items=quick_reply_buttons)))
     else:
-      estimated_total_price = booking_dao.get_total_price_estimation(
-        session['data']['room_ids'],
-        session['data']['check_in_date'],
-        session['data']['last_date']
-      )
-      quick_reply_buttons.append(
-        QuickReplyButton(action=MessageAction(
-          label=str(estimated_total_price),
-          text=str(estimated_total_price))
-        )
-      )
-      reply_messages.append(TextSendMessage(text="請輸入總金額:", quick_reply=QuickReply(items=quick_reply_buttons)))
-      session['step'] = line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_TOTAL_PRICE
+      if not session['data']['room_ids']:
+        reply_messages.append(TextSendMessage(text="請至少選擇一間房間"))
+        return reply_messages
+      session['data']['extra_bed_counts'] = {}
+      append_extra_bed_room_quick_reply_buttons(quick_reply_buttons, session, booking_dao)
+      reply_messages.append(TextSendMessage(text="請選擇要加床的房間", quick_reply=QuickReply(items=quick_reply_buttons)))
+      session['step'] = line_config.USER_FLOW_STEP_CREATE_BOOKING__SELECT_EXTRA_BED_ROOM
+
+  elif session['step'] == line_config.USER_FLOW_STEP_CREATE_BOOKING__SELECT_EXTRA_BED_ROOM:
+    if is_previous_step:
+      append_extra_bed_room_quick_reply_buttons(quick_reply_buttons, session, booking_dao)
+      reply_messages.append(TextSendMessage(text="請選擇要加床的房間", quick_reply=QuickReply(items=quick_reply_buttons)))
+    elif (
+      user_message == line_config.USER_COMMAND_UPDATE_BOOKING__SELECT_EXTRA_BED_COUNT_0 or
+      user_message == line_config.USER_COMMAND_UPDATE_BOOKING__SELECT_EXTRA_BED_FINISH
+    ):
+      append_total_price_question(reply_messages, quick_reply_buttons, session, booking_dao)
+    elif user_message in get_extra_bed_room_options(session, booking_dao):
+      session['data']['extra_bed_room_id'] = user_message
+      max_extra_bed_count = booking_dao.get_rooms_by_ids([user_message])[0]['extra_bed_number']
+      append_extra_bed_count_quick_reply_buttons(quick_reply_buttons, max_extra_bed_count)
+      reply_messages.append(TextSendMessage(text="加床數：", quick_reply=QuickReply(items=quick_reply_buttons)))
+      session['step'] = line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_EXTRA_BED_COUNT
+    else:
+      append_extra_bed_room_quick_reply_buttons(quick_reply_buttons, session, booking_dao)
+      reply_messages.append(TextSendMessage(text="輸入格式有誤，請選擇要加床的房間", quick_reply=QuickReply(items=quick_reply_buttons)))
+
+  elif session['step'] == line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_EXTRA_BED_COUNT:
+    room_id = get_current_extra_bed_room_id(session)
+    max_extra_bed_count = booking_dao.get_rooms_by_ids([room_id])[0]['extra_bed_number']
+    if is_previous_step:
+      append_extra_bed_room_quick_reply_buttons(quick_reply_buttons, session, booking_dao)
+      reply_messages.append(TextSendMessage(text="請選擇要加床的房間", quick_reply=QuickReply(items=quick_reply_buttons)))
+      session['step'] = line_config.USER_FLOW_STEP_CREATE_BOOKING__SELECT_EXTRA_BED_ROOM
+    elif not is_valid_extra_bed_count(user_message, max_extra_bed_count) or int(user_message) < 1:
+      append_extra_bed_count_quick_reply_buttons(quick_reply_buttons, max_extra_bed_count)
+      reply_messages.append(TextSendMessage(text="輸入格式有誤，請重新輸入加床數：", quick_reply=QuickReply(items=quick_reply_buttons)))
+    else:
+      session['data']['extra_bed_counts'][room_id] = int(user_message)
+      session['data'].pop('extra_bed_room_id', None)
+      append_extra_bed_room_quick_reply_buttons(quick_reply_buttons, session, booking_dao)
+      reply_messages.append(TextSendMessage(text="請選擇要加床的房間", quick_reply=QuickReply(items=quick_reply_buttons)))
+      session['step'] = line_config.USER_FLOW_STEP_CREATE_BOOKING__SELECT_EXTRA_BED_ROOM
 
   elif session['step'] == line_config.USER_FLOW_STEP_CREATE_BOOKING__GET_TOTAL_PRICE:
     if is_previous_step or not is_valid_price(user_message):
       estimated_total_price = booking_dao.get_total_price_estimation(
         session['data']['room_ids'],
         session['data']['check_in_date'],
-        session['data']['last_date']
+        session['data']['last_date'],
+        sum(session['data'].get('extra_bed_counts', {}).values())
       )
       quick_reply_buttons.append(
         QuickReplyButton(action=MessageAction(
@@ -291,7 +388,8 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
         prepayment=session['data']['prepayment'],
         prepayment_note='',
         prepayment_status=('unpaid' if session['data']['prepayment'] else 'paid'),
-        room_ids=''.join(session['data']['room_ids'])
+        room_ids=''.join(session['data']['room_ids']),
+        extra_bed_counts=session['data'].get('extra_bed_counts', {})
       )
       booking_info_preview_text = format_booking_info(booking_info, 'normal')
       reply_messages.append(TextSendMessage(text=f"請確認訂單資訊:"))
@@ -321,7 +419,8 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
         prepayment=session['data']['prepayment'],
         prepayment_note='',
         prepayment_status=('unpaid' if session['data']['prepayment'] else 'paid'),
-        room_ids=''.join(session['data']['room_ids'])
+        room_ids=''.join(session['data']['room_ids']),
+        extra_bed_counts=session['data'].get('extra_bed_counts', {})
       )
       booking_id = booking_dao.upsert_booking(booking_info)
       reply_messages.append(TextSendMessage(text=f"訂單已新增完成, ID:{booking_id}"))

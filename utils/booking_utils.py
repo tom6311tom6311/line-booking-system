@@ -21,6 +21,8 @@ def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant
   # Calculate the number of nights
   nights = (booking_info.last_date - booking_info.check_in_date).days + 1
   check_out_date = booking_info.last_date + datetime.timedelta(days=1)
+  extra_bed_details = format_extra_bed_counts(booking_info.extra_bed_counts)
+  extra_bed_line = f"加床：{extra_bed_details}\n" if booking_info.extra_bed_count else ""
 
   prepayment_status = PREPAYMENT_STATUS_MAP[booking_info.prepayment_status]
 
@@ -31,6 +33,7 @@ def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant
       f"電話：{phone_number}\n"
       f"入住：{booking_info.check_in_date.strftime('%y/%m/%d')}\n"
       f"晚數：{nights}\n"
+      f"{extra_bed_line}"
       f"訂金：{prepayment}元/{prepayment_status}\n"
     )
   elif variant == 'calendar':
@@ -39,6 +42,7 @@ def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant
       f"電話：{phone_number}\n"
       f"訂金：{prepayment}元/{prepayment_status}\n"
       f"來源：{booking_info.source}\n"
+      f"{extra_bed_line}"
       f"備註：{booking_info.notes}\n"
     )
   elif variant == 'report':
@@ -50,6 +54,7 @@ def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant
       f"晚數：{nights}\n"
       f"來源：{booking_info.source}\n"
       f"房間：{booking_info.room_ids}\n"
+      f"{extra_bed_line}"
       f"總金額：{total_price}\n"
       f"{custom_postfix}"
     )
@@ -62,6 +67,7 @@ def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant
       f"入住日期：{booking_info.check_in_date.strftime('%Y/%m/%d')}\n"
       f"退房日期：{check_out_date.strftime('%Y/%m/%d')}\n"
       f"晚數：{nights}\n"
+      f"{extra_bed_line}"
       f"總金額：{total_price}\n"
       f"備註：{booking_info.notes}\n"
       f"來源：{booking_info.source}\n"
@@ -94,8 +100,10 @@ def trim_booking_changes(booking_dict: dict, booking_info: BookingInfo):
     del booking_dict['prepayment_status']
   if ('prepayment_note' in booking_dict and booking_dict['prepayment_note'] == booking_info.prepayment_note):
     del booking_dict['prepayment_note']
-  if ('room_ids' in booking_dict and ''.join(booking_dict['room_ids']) == booking_info.customer_name):
+  if ('room_ids' in booking_dict and ''.join(booking_dict['room_ids']) == booking_info.room_ids):
     del booking_dict['room_ids']
+  if ('extra_bed_counts' in booking_dict and booking_dict['extra_bed_counts'] == booking_info.extra_bed_counts):
+    del booking_dict['extra_bed_counts']
 
   return booking_dict
 
@@ -127,6 +135,8 @@ def format_booking_changes(booking_dict: dict):
     message += f"訂金匯款摘要：{booking_dict['prepayment_note']}\n"
   if ('room_ids' in booking_dict):
     message += f"預計讓他睡：{''.join(booking_dict['room_ids'])}\n"
+  if ('extra_bed_counts' in booking_dict):
+    message += f"加床：{format_extra_bed_counts(booking_dict['extra_bed_counts'])}\n"
 
   if message == "更改項目：\n":
     return None
@@ -142,6 +152,13 @@ def is_generic_name(name):
 # Function to determine if a phone number is generic
 def is_generic_phone_number(phone_number):
   return phone_number.endswith(GENERIC_PHONE_NUMBER_POSTFIX)
+
+def format_extra_bed_counts(extra_bed_counts):
+  return '、'.join([
+    f"{room_id}{count}"
+    for room_id, count in sorted(extra_bed_counts.items())
+    if count
+  ]) or '0'
 
 def get_prepayment_estimation(total_price):
   return int(int(total_price) * 0.3 // 100 * 100)

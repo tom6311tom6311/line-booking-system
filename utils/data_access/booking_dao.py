@@ -7,6 +7,7 @@ from utils.booking_utils import is_generic_name, is_generic_phone_number
 from utils.datetime_utils import get_local_today
 from utils.taiwan_holiday_utils import is_booking_holiday_night
 from utils.line_notification_service import LineNotificationService
+from const.booking_const import EXTRA_BED_PRICE_PER_NIGHT
 from .data_class.booking_info import BookingInfo
 from .data_class.closure_info import ClosureInfo
 from .data_class.customer import Customer
@@ -102,6 +103,30 @@ class BookingDAO:
     except Exception as e:
       self.logger.error(f"Error closing all connections in the pool: {e}")
 
+  def _booking_info_from_row(self, row) -> BookingInfo:
+    extra_bed_counts = {
+      room_id: int(count)
+      for room_id, count in (row[13] or {}).items()
+    }
+    return BookingInfo(
+      booking_id=row[0],
+      status=row[1],
+      customer_name=row[2],
+      phone_number=row[3],
+      check_in_date=row[4],
+      last_date=row[5],
+      total_price=float(row[6]),
+      notes=row[7] or '',
+      source=row[8],
+      prepayment=float(row[9]),
+      prepayment_note=row[10] or '',
+      prepayment_status=row[11],
+      room_ids=row[12],
+      extra_bed_counts=extra_bed_counts,
+      created=row[14],
+      modified=row[15]
+    )
+
   # Function to query the booking info by booking_id
   def get_booking_info(self, booking_id) -> Optional[BookingInfo]:
     booking_info = None
@@ -113,7 +138,9 @@ class BookingDAO:
         query = """
         SELECT b.booking_id, b.status, c.name, c.phone_number, b.check_in_date, b.last_date,
           b.total_price, b.notes, b.source, b.prepayment, b.prepayment_note, b.prepayment_status,
-          STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids, b.created, b.modified
+          STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids,
+          JSON_OBJECT_AGG(r.room_id, rb.extra_bed_count) AS extra_bed_counts,
+          b.created, b.modified
         FROM Bookings b
         JOIN Customers c ON b.customer_id = c.customer_id
         JOIN RoomBookings rb ON b.booking_id = rb.booking_id
@@ -125,23 +152,7 @@ class BookingDAO:
         row = cursor.fetchone()
 
       if (row):
-        booking_info = BookingInfo(
-          booking_id=row[0],
-          status=row[1],
-          customer_name=row[2],
-          phone_number=row[3],
-          check_in_date=row[4],
-          last_date=row[5],
-          total_price=float(row[6]),
-          notes=row[7] or '',
-          source=row[8],
-          prepayment=float(row[9]),
-          prepayment_note=row[10] or '',
-          prepayment_status=row[11],
-          room_ids=row[12],
-          created=row[13],
-          modified=row[14]
-        )
+        booking_info = self._booking_info_from_row(row)
     except Exception as e:
       self.logger.error(f"Error querying booking info: {e}")
     return booking_info
@@ -218,12 +229,13 @@ class BookingDAO:
         # Insert room-booking relationships into RoomBookings table
         for room_id in booking_info.room_ids:
           insert_room_bookings_query = """
-          INSERT INTO RoomBookings (booking_id, room_id)
-          VALUES (%s, %s);
+          INSERT INTO RoomBookings (booking_id, room_id, extra_bed_count)
+          VALUES (%s, %s, %s);
           """
           cursor.execute(insert_room_bookings_query, (
             booking_id,
-            room_id
+            room_id,
+            booking_info.extra_bed_counts.get(room_id, 0)
           ))
 
       if (self.enable_notification):
@@ -397,7 +409,9 @@ class BookingDAO:
         query = """
         SELECT b.booking_id, b.status, c.name, c.phone_number, b.check_in_date, b.last_date,
           b.total_price, b.notes, b.source, b.prepayment, b.prepayment_note, b.prepayment_status,
-          STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids, b.created, b.modified
+          STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids,
+          JSON_OBJECT_AGG(r.room_id, rb.extra_bed_count) AS extra_bed_counts,
+          b.created, b.modified
         FROM Bookings b
         JOIN Customers c ON b.customer_id = c.customer_id
         JOIN RoomBookings rb ON b.booking_id = rb.booking_id
@@ -423,23 +437,7 @@ class BookingDAO:
 
       matches = []
       for row in rows:
-        booking_info = BookingInfo(
-          booking_id=row[0],
-          status=row[1],
-          customer_name=row[2],
-          phone_number=row[3],
-          check_in_date=row[4],
-          last_date=row[5],
-          total_price=float(row[6]),
-          notes=row[7] or '',
-          source=row[8],
-          prepayment=float(row[9]),
-          prepayment_note=row[10] or '',
-          prepayment_status=row[11],
-          room_ids=row[12],
-          created=row[13],
-          modified=row[14]
-        )
+        booking_info = self._booking_info_from_row(row)
         matches.append(booking_info)
 
       return matches
@@ -465,7 +463,9 @@ class BookingDAO:
         query = """
         SELECT b.booking_id, b.status, c.name, c.phone_number, b.check_in_date, b.last_date,
           b.total_price, b.notes, b.source, b.prepayment, b.prepayment_note, b.prepayment_status,
-          STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids, b.created, b.modified
+          STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids,
+          JSON_OBJECT_AGG(r.room_id, rb.extra_bed_count) AS extra_bed_counts,
+          b.created, b.modified
         FROM Bookings b
         JOIN Customers c ON b.customer_id = c.customer_id
         JOIN RoomBookings rb ON b.booking_id = rb.booking_id
@@ -484,23 +484,7 @@ class BookingDAO:
         rows = cursor.fetchall()
 
       for row in rows:
-        booking_info = BookingInfo(
-          booking_id=row[0],
-          status=row[1],
-          customer_name=row[2],
-          phone_number=row[3],
-          check_in_date=row[4],
-          last_date=row[5],
-          total_price=float(row[6]),
-          notes=row[7] or '',
-          source=row[8],
-          prepayment=float(row[9]),
-          prepayment_note=row[10] or '',
-          prepayment_status=row[11],
-          room_ids=row[12],
-          created=row[13],
-          modified=row[14]
-        )
+        booking_info = self._booking_info_from_row(row)
         if (not include_canceled and booking_info.status == 'canceled'):
           continue
         matches.append(booking_info)
@@ -522,7 +506,9 @@ class BookingDAO:
         query = """
         SELECT b.booking_id, b.status, c.name, c.phone_number, b.check_in_date, b.last_date,
           b.total_price, b.notes, b.source, b.prepayment, b.prepayment_note, b.prepayment_status,
-          STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids, b.created, b.modified
+          STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids,
+          JSON_OBJECT_AGG(r.room_id, rb.extra_bed_count) AS extra_bed_counts,
+          b.created, b.modified
         FROM Bookings b
         JOIN Customers c ON b.customer_id = c.customer_id
         JOIN RoomBookings rb ON b.booking_id = rb.booking_id
@@ -539,23 +525,7 @@ class BookingDAO:
         rows = cursor.fetchall()
 
       for row in rows:
-        booking_info = BookingInfo(
-          booking_id=row[0],
-          status=row[1],
-          customer_name=row[2],
-          phone_number=row[3],
-          check_in_date=row[4],
-          last_date=row[5],
-          total_price=float(row[6]),
-          notes=row[7] or '',
-          source=row[8],
-          prepayment=float(row[9]),
-          prepayment_note=row[10] or '',
-          prepayment_status=row[11],
-          room_ids=row[12],
-          created=row[13],
-          modified=row[14]
-        )
+        booking_info = self._booking_info_from_row(row)
         matches.append(booking_info)
 
     except Exception as e:
@@ -588,7 +558,9 @@ class BookingDAO:
         query = """
         SELECT b.booking_id, b.status, c.name, c.phone_number, b.check_in_date, b.last_date,
           b.total_price, b.notes, b.source, b.prepayment, b.prepayment_note, b.prepayment_status,
-          STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids, b.created, b.modified
+          STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids,
+          JSON_OBJECT_AGG(r.room_id, rb.extra_bed_count) AS extra_bed_counts,
+          b.created, b.modified
         FROM Bookings b
         JOIN Customers c ON b.customer_id = c.customer_id
         JOIN RoomBookings rb ON b.booking_id = rb.booking_id
@@ -604,23 +576,7 @@ class BookingDAO:
         rows = cursor.fetchall()
 
       for row in rows:
-        booking_info = BookingInfo(
-          booking_id=row[0],
-          status=row[1],
-          customer_name=row[2],
-          phone_number=row[3],
-          check_in_date=row[4],
-          last_date=row[5],
-          total_price=float(row[6]),
-          notes=row[7] or '',
-          source=row[8],
-          prepayment=float(row[9]),
-          prepayment_note=row[10] or '',
-          prepayment_status=row[11],
-          room_ids=row[12],
-          created=row[13],
-          modified=row[14]
-        )
+        booking_info = self._booking_info_from_row(row)
         matches.append(booking_info)
 
     except Exception as e:
@@ -640,7 +596,9 @@ class BookingDAO:
         query = """
         SELECT b.booking_id, b.status, c.name, c.phone_number, b.check_in_date, b.last_date,
           b.total_price, b.notes, b.source, b.prepayment, b.prepayment_note, b.prepayment_status,
-          STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids, b.created, b.modified
+          STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids,
+          JSON_OBJECT_AGG(r.room_id, rb.extra_bed_count) AS extra_bed_counts,
+          b.created, b.modified
         FROM Bookings b
         JOIN Customers c ON b.customer_id = c.customer_id
         JOIN RoomBookings rb ON b.booking_id = rb.booking_id
@@ -654,23 +612,7 @@ class BookingDAO:
         rows = cursor.fetchall()
 
       for row in rows:
-        booking_info = BookingInfo(
-          booking_id=row[0],
-          status=row[1],
-          customer_name=row[2],
-          phone_number=row[3],
-          check_in_date=row[4],
-          last_date=row[5],
-          total_price=float(row[6]),
-          notes=row[7] or '',
-          source=row[8],
-          prepayment=float(row[9]),
-          prepayment_note=row[10] or '',
-          prepayment_status=row[11],
-          room_ids=row[12],
-          created=row[13],
-          modified=row[14]
-        )
+        booking_info = self._booking_info_from_row(row)
         matches.append(booking_info)
 
     except Exception as e:
@@ -1046,7 +988,7 @@ class BookingDAO:
       self.logger.error(f"Error fetching available room ids: {e}")
     return available_room_ids
 
-  def get_total_price_estimation(self, room_ids, check_in_date, last_date):
+  def get_total_price_estimation(self, room_ids, check_in_date, last_date, extra_bed_count=0):
     total_price = None
     try:
       with self.cursor() as cursor:
@@ -1087,6 +1029,8 @@ class BookingDAO:
 
         # Move to the next day
         current_date += timedelta(days=1)
+
+      total_price += int(extra_bed_count) * EXTRA_BED_PRICE_PER_NIGHT * ((last_date - check_in_date).days + 1)
 
     except Exception as e:
       self.logger.error(f"Error calculating total price: {e}")

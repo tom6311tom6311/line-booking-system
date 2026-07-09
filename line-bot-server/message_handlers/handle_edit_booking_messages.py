@@ -5,8 +5,53 @@ from const.booking_const import VALID_BOOKING_SOURCES
 from const import line_config
 from utils.data_access.booking_dao import BookingDAO
 from utils.booking_utils import format_booking_changes, trim_booking_changes, get_prepayment_estimation
-from utils.input_utils import is_valid_date, is_valid_phone_number, is_valid_num_nights, is_valid_price, format_phone_number
+from utils.input_utils import is_valid_date, is_valid_phone_number, is_valid_num_nights, is_valid_price, is_valid_extra_bed_count, format_phone_number
 from utils.line_messaging_utils import generate_edit_booking_select_attribute_quick_reply_buttons, generate_go_to_previous_step_button
+
+def append_extra_bed_count_quick_reply_buttons(quick_reply_buttons, max_extra_bed_count):
+  for extra_bed_count in range(1, max_extra_bed_count + 1):
+    quick_reply_buttons.append(
+      QuickReplyButton(action=MessageAction(
+        label=f"加{extra_bed_count}床",
+        text=str(extra_bed_count))
+      )
+    )
+
+def get_extra_bed_room_options(session, booking_dao):
+  room_ids = session['data']['extra_bed_room_ids']
+  selected_extra_bed_room_ids = session['data'].get('extra_bed_counts', {}).keys()
+  rooms_by_id = {
+    room['room_id']: room
+    for room in booking_dao.get_rooms_by_ids(room_ids)
+  }
+  return [
+    room_id
+    for room_id in room_ids
+    if rooms_by_id[room_id]['extra_bed_number'] > 0 and room_id not in selected_extra_bed_room_ids
+  ]
+
+def append_extra_bed_room_quick_reply_buttons(quick_reply_buttons, session, booking_dao):
+  continue_command = (
+    line_config.USER_COMMAND_UPDATE_BOOKING__SELECT_EXTRA_BED_FINISH
+    if session['data'].get('extra_bed_counts')
+    else line_config.USER_COMMAND_UPDATE_BOOKING__SELECT_EXTRA_BED_COUNT_0
+  )
+  quick_reply_buttons.append(
+    QuickReplyButton(action=MessageAction(
+      label=continue_command,
+      text=continue_command)
+    )
+  )
+  for room_id in get_extra_bed_room_options(session, booking_dao):
+    quick_reply_buttons.append(
+      QuickReplyButton(action=MessageAction(
+        label=room_id,
+        text=room_id)
+      )
+    )
+
+def get_current_extra_bed_room_id(session):
+  return session['data']['extra_bed_room_id']
 
 def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: BookingDAO):
   reply_messages = []
@@ -25,6 +70,12 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
 
   if user_message == line_config.USER_COMMAND_EDIT_BOOKING__FINISH:
     booking_info = booking_dao.get_booking_info(session['data']['booking_id'])
+    room_ids = session['data']['room_ids'] if 'room_ids' in session['data'] else list(booking_info.room_ids)
+    extra_bed_counts = session['data']['extra_bed_counts'] if 'extra_bed_counts' in session['data'] else booking_info.extra_bed_counts
+    session['data']['extra_bed_counts'] = {
+      room_id: extra_bed_counts.get(room_id, 0)
+      for room_id in room_ids
+    }
     session['data'] = trim_booking_changes(session['data'], booking_info)
     booking_changes_summary = format_booking_changes(session['data'])
     if not booking_changes_summary:
@@ -46,6 +97,13 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
     return reply_messages
 
   if user_message == line_config.USER_COMMAND_GO_TO_PREVIOUS_STEP_OF_CURRENT_FLOW:
+    if session['step'] == line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_EXTRA_BED_COUNT:
+      session['data'].pop('extra_bed_room_id', None)
+      quick_reply_buttons = [generate_go_to_previous_step_button()]
+      append_extra_bed_room_quick_reply_buttons(quick_reply_buttons, session, booking_dao)
+      reply_messages.append(TextSendMessage(text="請選擇要加床的房間", quick_reply=QuickReply(items=quick_reply_buttons)))
+      session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__SELECT_EXTRA_BED_ROOM
+      return reply_messages
     quick_reply_buttons += generate_edit_booking_select_attribute_quick_reply_buttons()
     reply_messages.append(TextSendMessage(text="請選擇要更改的項目:", quick_reply=QuickReply(items=quick_reply_buttons)))
     session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__SELECT_ATTRIBUTE
@@ -78,11 +136,23 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
       ]
       reply_messages.append(TextSendMessage(text="請選擇入住房間:", quick_reply=QuickReply(items=quick_reply_buttons)))
       session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_ROOMS
+    elif user_message == line_config.USER_COMMAND_EDIT_BOOKING__EDIT_EXTRA_BED_COUNT:
+      room_ids = session['data']['room_ids'] if 'room_ids' in session['data'] else list(booking_info.room_ids)
+      if not room_ids:
+        reply_messages.append(TextSendMessage(text="請先選擇入住房間"))
+        return reply_messages
+      session['data']['extra_bed_counts'] = {}
+      session['data']['extra_bed_room_ids'] = room_ids
+      session['data'].pop('extra_bed_room_id', None)
+      append_extra_bed_room_quick_reply_buttons(quick_reply_buttons, session, booking_dao)
+      reply_messages.append(TextSendMessage(text="請選擇要加床的房間", quick_reply=QuickReply(items=quick_reply_buttons)))
+      session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__SELECT_EXTRA_BED_ROOM
     elif user_message == line_config.USER_COMMAND_EDIT_BOOKING__EDIT_TOTAL_PRICE:
       estimated_total_price = booking_dao.get_total_price_estimation(
         session['data']['room_ids'] if 'room_ids' in session['data'] else list(booking_info.room_ids),
         session['data']['check_in_date'] if 'check_in_date' in session['data'] else booking_info.check_in_date,
         session['data']['last_date'] if 'last_date' in session['data'] else booking_info.last_date,
+        sum(session['data']['extra_bed_counts'].values()) if 'extra_bed_counts' in session['data'] else booking_info.extra_bed_count,
       )
       quick_reply_buttons.append(
         QuickReplyButton(action=MessageAction(
@@ -226,6 +296,40 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
       reply_messages.append(TextSendMessage(text="請選擇要更改的項目:", quick_reply=QuickReply(items=quick_reply_buttons)))
       session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__SELECT_ATTRIBUTE
 
+  elif session['step'] == line_config.USER_FLOW_STEP_EDIT_BOOKING__SELECT_EXTRA_BED_ROOM:
+    if (
+      user_message == line_config.USER_COMMAND_UPDATE_BOOKING__SELECT_EXTRA_BED_COUNT_0 or
+      user_message == line_config.USER_COMMAND_UPDATE_BOOKING__SELECT_EXTRA_BED_FINISH
+    ):
+      session['data'].pop('extra_bed_room_id', None)
+      quick_reply_buttons += generate_edit_booking_select_attribute_quick_reply_buttons()
+      reply_messages.append(TextSendMessage(text="請選擇要更改的項目:", quick_reply=QuickReply(items=quick_reply_buttons)))
+      session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__SELECT_ATTRIBUTE
+    elif user_message in get_extra_bed_room_options(session, booking_dao):
+      session['data']['extra_bed_room_id'] = user_message
+      max_extra_bed_count = booking_dao.get_rooms_by_ids([user_message])[0]['extra_bed_number']
+      append_extra_bed_count_quick_reply_buttons(quick_reply_buttons, max_extra_bed_count)
+      reply_messages.append(TextSendMessage(text="加床數：", quick_reply=QuickReply(items=quick_reply_buttons)))
+      session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_EXTRA_BED_COUNT
+    else:
+      quick_reply_buttons = [generate_go_to_previous_step_button()]
+      append_extra_bed_room_quick_reply_buttons(quick_reply_buttons, session, booking_dao)
+      reply_messages.append(TextSendMessage(text="輸入格式有誤，請選擇要加床的房間", quick_reply=QuickReply(items=quick_reply_buttons)))
+
+  elif session['step'] == line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_EXTRA_BED_COUNT:
+    room_id = get_current_extra_bed_room_id(session)
+    max_extra_bed_count = booking_dao.get_rooms_by_ids([room_id])[0]['extra_bed_number']
+    if not is_valid_extra_bed_count(user_message, max_extra_bed_count) or int(user_message) < 1:
+      quick_reply_buttons = [generate_go_to_previous_step_button()]
+      append_extra_bed_count_quick_reply_buttons(quick_reply_buttons, max_extra_bed_count)
+      reply_messages.append(TextSendMessage(text="輸入格式有誤，請重新輸入加床數：", quick_reply=QuickReply(items=quick_reply_buttons)))
+    else:
+      session['data']['extra_bed_counts'][room_id] = int(user_message)
+      session['data'].pop('extra_bed_room_id', None)
+      append_extra_bed_room_quick_reply_buttons(quick_reply_buttons, session, booking_dao)
+      reply_messages.append(TextSendMessage(text="請選擇要加床的房間", quick_reply=QuickReply(items=quick_reply_buttons)))
+      session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__SELECT_EXTRA_BED_ROOM
+
   elif session['step'] == line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_TOTAL_PRICE:
     if not is_valid_price(user_message):
       quick_reply_buttons = [generate_go_to_previous_step_button()]
@@ -234,6 +338,7 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
         session['data']['room_ids'] if 'room_ids' in session['data'] else list(booking_info.room_ids),
         session['data']['check_in_date'] if 'check_in_date' in session['data'] else booking_info.check_in_date,
         session['data']['last_date'] if 'last_date' in session['data'] else booking_info.last_date,
+        sum(session['data']['extra_bed_counts'].values()) if 'extra_bed_counts' in session['data'] else booking_info.extra_bed_count,
       )
       quick_reply_buttons.append(
         QuickReplyButton(action=MessageAction(
@@ -378,6 +483,8 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
         booking_info.prepayment_note = session['data']['prepayment_note']
       if ('room_ids' in session['data']):
         booking_info.room_ids = ''.join(session['data']['room_ids'])
+      if ('extra_bed_counts' in session['data']):
+        booking_info.extra_bed_counts = session['data']['extra_bed_counts']
       booking_id = booking_dao.upsert_booking(booking_info)
       reply_messages.append(TextSendMessage(text=f"訂單ID{booking_id}已更改完成"))
 

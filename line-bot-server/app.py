@@ -18,6 +18,7 @@ from utils.public_booking_api_utils import (
   get_owned_booking_or_error,
   get_rooms_by_id,
   normalize_api_phone_number,
+  parse_extra_bed_counts,
   parse_api_json,
   parse_date_range,
   serialize_booking,
@@ -80,11 +81,12 @@ def api_public_quote():
   try:
     check_in_date, check_out_date, last_date, nights = parse_date_range(payload)
     room_ids = validate_public_room_ids(payload.get('roomIds'), booking_dao)
+    extra_bed_counts = parse_extra_bed_counts(payload.get('extraBedCounts'), room_ids, booking_dao)
     ensure_rooms_available(room_ids, check_in_date, last_date, booking_dao)
   except ValueError as e:
     return api_error(str(e))
 
-  total_price = booking_dao.get_total_price_estimation(room_ids, check_in_date, last_date)
+  total_price = booking_dao.get_total_price_estimation(room_ids, check_in_date, last_date, sum(extra_bed_counts.values()))
   if total_price is None:
     return api_error("Unable to calculate price", 500)
   return jsonify({
@@ -92,6 +94,8 @@ def api_public_quote():
     'checkOut': check_out_date.isoformat(),
     'nights': nights,
     'roomIds': room_ids,
+    'extraBedCount': sum(extra_bed_counts.values()),
+    'extraBedCounts': extra_bed_counts,
     'totalPrice': int(total_price),
     'suggestedPrepayment': get_prepayment_estimation(total_price),
   })
@@ -106,11 +110,12 @@ def api_public_create_reservation():
     phone_number = normalize_api_phone_number(payload.get('phoneNumber'))
     check_in_date, _, last_date, _ = parse_date_range(payload)
     room_ids = validate_public_room_ids(payload.get('roomIds'), booking_dao)
+    extra_bed_counts = parse_extra_bed_counts(payload.get('extraBedCounts'), room_ids, booking_dao)
     ensure_rooms_available(room_ids, check_in_date, last_date, booking_dao)
   except ValueError as e:
     return api_error(str(e))
 
-  total_price = booking_dao.get_total_price_estimation(room_ids, check_in_date, last_date)
+  total_price = booking_dao.get_total_price_estimation(room_ids, check_in_date, last_date, sum(extra_bed_counts.values()))
   if total_price is None:
     return api_error("Unable to calculate price", 500)
 
@@ -127,7 +132,8 @@ def api_public_create_reservation():
     prepayment=get_prepayment_estimation(total_price),
     prepayment_note='',
     prepayment_status='unpaid',
-    room_ids=''.join(room_ids)
+    room_ids=''.join(room_ids),
+    extra_bed_counts=extra_bed_counts
   )
   booking_id = booking_dao.upsert_booking(booking_info)
   if not booking_id:
@@ -174,6 +180,14 @@ def api_public_update_reservation(booking_id):
 
     room_ids = list(booking_info.room_ids)
     validate_public_room_ids(room_ids, booking_dao)
+    if 'extraBedCounts' in payload:
+      booking_info.extra_bed_counts = parse_extra_bed_counts(payload.get('extraBedCounts'), room_ids, booking_dao)
+    else:
+      existing_extra_bed_counts = {
+        room_id: booking_info.extra_bed_counts.get(room_id, 0)
+        for room_id in room_ids
+      }
+      booking_info.extra_bed_counts = parse_extra_bed_counts(existing_extra_bed_counts, room_ids, booking_dao)
     ensure_rooms_available(room_ids, booking_info.check_in_date, booking_info.last_date, booking_dao, booking_id)
 
     if 'notes' in payload:
@@ -182,7 +196,7 @@ def api_public_update_reservation(booking_id):
   except ValueError as e:
     return api_error(str(e))
 
-  total_price = booking_dao.get_total_price_estimation(room_ids, booking_info.check_in_date, booking_info.last_date)
+  total_price = booking_dao.get_total_price_estimation(room_ids, booking_info.check_in_date, booking_info.last_date, booking_info.extra_bed_count)
   if total_price is None:
     return api_error("Unable to calculate price", 500)
   booking_info.total_price = total_price

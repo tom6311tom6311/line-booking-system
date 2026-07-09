@@ -68,6 +68,7 @@ def generate_edit_booking_select_attribute_quick_reply_buttons():
       line_config.USER_COMMAND_EDIT_BOOKING__EDIT_PHONE_NUMBER,
       line_config.USER_COMMAND_EDIT_BOOKING__EDIT_DATES,
       line_config.USER_COMMAND_EDIT_BOOKING__EDIT_ROOMS,
+      line_config.USER_COMMAND_EDIT_BOOKING__EDIT_EXTRA_BED_COUNT,
       line_config.USER_COMMAND_EDIT_BOOKING__EDIT_TOTAL_PRICE,
       line_config.USER_COMMAND_EDIT_BOOKING__EDIT_PREPAYMENT,
       line_config.USER_COMMAND_EDIT_BOOKING__EDIT_SOURCE,

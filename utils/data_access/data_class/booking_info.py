@@ -1,5 +1,5 @@
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import Dict, Any
 
@@ -18,15 +18,20 @@ class BookingInfo:
   prepayment_note: str
   prepayment_status: str
   room_ids: str
+  extra_bed_counts: dict[str, int] = field(default_factory=dict)
   created: datetime = None
   modified: datetime = None
+
+  @property
+  def extra_bed_count(self):
+    return sum(int(count) for count in self.extra_bed_counts.values())
 
   def __hash__(self):
     return hash((
       self.booking_id, self.status, self.customer_name, self.phone_number, 
       self.check_in_date, self.last_date, self.total_price, self.notes, 
       self.source, self.prepayment, self.prepayment_note, self.prepayment_status, 
-      self.room_ids
+      self.room_ids, tuple(sorted(self.extra_bed_counts.items()))
     ))
 
   def __eq__(self, other):
@@ -45,7 +50,8 @@ class BookingInfo:
       int(self.prepayment) == int(other.prepayment) and
       self.prepayment_note == other.prepayment_note and
       self.prepayment_status == other.prepayment_status and
-      self.room_ids == other.room_ids
+      self.room_ids == other.room_ids and
+      self.extra_bed_counts == other.extra_bed_counts
     )
 
   def __sub__(self, other) -> Dict[str, Any]:
