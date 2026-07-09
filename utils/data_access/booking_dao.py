@@ -116,10 +116,10 @@ class BookingDAO:
       phone_number=row[3],
       check_in_date=row[4],
       last_date=row[5],
-      total_price=float(row[6]),
+      total_price=int(row[6] or 0),
       notes=row[7] or '',
       source=row[8],
-      prepayment=float(row[9]),
+      prepayment=int(row[9] or 0),
       prepayment_note=row[10] or '',
       prepayment_status=row[11],
       room_ids=row[12],
@@ -194,8 +194,8 @@ class BookingDAO:
             booking_info.status,
             booking_info.check_in_date,
             booking_info.last_date,
-            booking_info.total_price,
-            booking_info.prepayment,
+            int(booking_info.total_price),
+            int(booking_info.prepayment),
             booking_info.prepayment_status,
             booking_info.source,
             booking_info.notes,
@@ -219,8 +219,8 @@ class BookingDAO:
             booking_info.status,
             booking_info.check_in_date,
             booking_info.last_date,
-            booking_info.total_price,
-            booking_info.prepayment,
+            int(booking_info.total_price),
+            int(booking_info.prepayment),
             booking_info.prepayment_status,
             booking_info.source,
             booking_info.notes
@@ -346,7 +346,7 @@ class BookingDAO:
         WHERE booking_id = %s
         RETURNING booking_id;
         """
-        cursor.execute(query, (prepayment, prepayment_note, booking_id))
+        cursor.execute(query, (int(prepayment), prepayment_note, booking_id))
         result = cursor.fetchone()
 
       if result:

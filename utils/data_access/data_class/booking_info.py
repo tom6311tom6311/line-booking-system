@@ -1,4 +1,3 @@
-import math
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import Dict, Any
@@ -11,10 +10,10 @@ class BookingInfo:
   phone_number: str
   check_in_date: date
   last_date: date
-  total_price: float
+  total_price: int
   notes: str
   source: str
-  prepayment: float
+  prepayment: int
   prepayment_note: str
   prepayment_status: str
   room_ids: str
@@ -44,10 +43,10 @@ class BookingInfo:
       self.phone_number == other.phone_number and
       self.check_in_date == other.check_in_date and
       self.last_date == other.last_date and
-      int(self.total_price) == int(other.total_price) and
+      self.total_price == other.total_price and
       self.notes == other.notes and
       self.source == other.source and
-      int(self.prepayment) == int(other.prepayment) and
+      self.prepayment == other.prepayment and
       self.prepayment_note == other.prepayment_note and
       self.prepayment_status == other.prepayment_status and
       self.room_ids == other.room_ids and
@@ -68,9 +67,9 @@ class BookingInfo:
       old_value = getattr(self, field)
       new_value = getattr(other, field)
 
-      if isinstance(old_value, float) or isinstance(new_value, float):
-        if (int(old_value) != int(new_value)):
-          differences[field] = { "old": old_value, "new": new_value }
+      if field in { "total_price", "prepayment" }:
+        if int(old_value) != int(new_value):
+          differences[field] = { "old": int(old_value), "new": int(new_value) }
       elif old_value != new_value:
         differences[field] = { "old": old_value, "new": new_value }
 
