@@ -220,9 +220,15 @@ button:focus-visible {
   z-index: 3;
 }
 
-.hero-carousel-dots {
+.carousel-dots.hero-carousel-dots {
   z-index: 3;
+  right: var(--page-gutter);
   bottom: 28px;
+  left: auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .eyebrow {
@@ -503,6 +509,7 @@ button:focus-visible {
   cursor: pointer;
   transition:
     width 220ms ease,
+    height 220ms ease,
     background 220ms ease,
     opacity 220ms ease;
 }
@@ -510,6 +517,19 @@ button:focus-visible {
 .carousel-dots button.is-active {
   width: 22px;
   background: var(--clay);
+}
+
+.carousel-dots.hero-carousel-dots button.is-active {
+  width: 8px;
+  height: 22px;
+}
+
+.carousel-dots.hero-carousel-dots button {
+  background: rgba(255, 255, 255, 0.56);
+}
+
+.carousel-dots.hero-carousel-dots button.is-active {
+  background: rgba(185, 130, 90, 0.72);
 }
 
 .story-viewport .story-carousel-button {
@@ -611,6 +631,37 @@ button:focus-visible {
   border-left: 5px solid var(--sage-500);
   background: #f5efe0;
   color: #584b3b;
+}
+
+.reservation-note {
+  margin-top: 14px;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--muted);
+}
+
+.reservation-note h3 {
+  margin: 0 0 10px;
+  color: var(--green-900);
+  font-size: 18px;
+  letter-spacing: 0;
+}
+
+.reservation-note ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+.reservation-note li::marker {
+  color: var(--sage-700);
+}
+
+.booking-note + .room-grid {
+  margin-top: 22px;
 }
 
 .band {
@@ -754,6 +805,28 @@ button:focus-visible {
 
 .site-footer p {
   margin: 4px 0;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 18px;
+  margin-top: 14px;
+}
+
+.footer-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.footer-links a:hover,
+.footer-links a:focus-visible {
+  color: #dbe8d2;
 }
 
 @media (max-width: 1040px) {

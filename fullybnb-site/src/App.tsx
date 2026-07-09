@@ -140,7 +140,7 @@ export function App() {
   const [isPortraitViewport, setIsPortraitViewport] = useState(() =>
     window.matchMedia("(orientation: portrait)").matches,
   );
-  const { site, assets, hero, intro, sections, bookingNote, footer } = siteContent;
+  const { site, assets, hero, intro, sections, bookingNote, reservationNotes, footer } = siteContent;
 
   const heroSlides = hero.images.flatMap((image) => {
     if (!isPortraitViewport || !image.portraitSplit) {
@@ -471,17 +471,23 @@ export function App() {
         </section>
 
         <section className="section" id="rooms">
-          <SectionHeading eyebrow={sections.rooms.eyebrow} title={sections.rooms.title}>
-            {sections.rooms.description}
-          </SectionHeading>
-          <div className="room-grid">
-            {rooms.map((room) => (
-              <RoomCard key={room.name} room={room} />
-            ))}
+          <SectionHeading eyebrow={sections.rooms.eyebrow} title={sections.rooms.title} />
+          <div className="reservation-note">
+            <h3>{reservationNotes.title}</h3>
+            <ul>
+              {reservationNotes.items.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
           </div>
           <div className="booking-note">
             <strong>{bookingNote.lead}</strong>
             <span>{bookingNote.description}</span>
+          </div>
+          <div className="room-grid">
+            {rooms.map((room) => (
+              <RoomCard key={room.name} room={room} />
+            ))}
           </div>
         </section>
 
@@ -556,18 +562,6 @@ export function App() {
               {sections.traffic.description}
             </SectionHeading>
             <div className="contact-list">
-              <a href={site.phoneHref}>
-                <Phone size={19} aria-hidden="true" />
-                {site.ownerContact}
-              </a>
-              <a
-                href={site.facebookUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <Facebook size={19} aria-hidden="true" />
-                {site.facebookLabel}
-              </a>
               <a
                 href={site.mapUrl}
                 target="_blank"
@@ -590,6 +584,16 @@ export function App() {
       <footer className="site-footer">
         <p>{footer.name}</p>
         <p>{footer.license}</p>
+        <div className="footer-links">
+          <a href={site.phoneHref}>
+            <Phone size={18} aria-hidden="true" />
+            {site.ownerContact}
+          </a>
+          <a href={site.facebookUrl} target="_blank" rel="noreferrer">
+            <Facebook size={18} aria-hidden="true" />
+            {site.facebookLabel}
+          </a>
+        </div>
       </footer>
     </>
   );

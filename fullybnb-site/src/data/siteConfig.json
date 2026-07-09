@@ -2,9 +2,9 @@
   "site": {
     "name": "富莉庭緣民宿",
     "license": "合法民宿-南投縣民宿658號",
-    "phone": "0932-929748",
-    "phoneHref": "tel:0932929748",
-    "ownerContact": "0932929748 黃先生",
+    "phone": "(049)292-6288",
+    "phoneHref": "tel:0492926288",
+    "ownerContact": "(049)292-6288",
     "facebookUrl": "https://www.facebook.com/fullybnb/?ref=bookmarks",
     "facebookLabel": "Facebook 粉絲團",
     "mapUrl": "https://maps.app.goo.gl/PP2u87yD6js3h3bq7",
@@ -109,8 +109,7 @@
   "sections": {
     "rooms": {
       "eyebrow": "Rooms",
-      "title": "房型與價格",
-      "description": "房價含早餐，春節價格另計，包棟請來電洽詢。"
+      "title": "房型與價格"
     },
     "nearby": {
       "eyebrow": "Nearby",
@@ -126,6 +125,14 @@
   "bookingNote": {
     "lead": "包棟方案 NT$15,000 起。",
     "description": "10 至 24 人可包棟，享有專屬室內空間、戶外草皮與自在聚會時間，限透過電話預約。"
+  },
+  "reservationNotes": {
+    "title": "訂房與取消說明",
+    "items": [
+      "週六及國定假日為假日，其餘為平日。",
+      "訂房確認後會發送簡訊給您，請依照指示於三日內預付訂金，逾期恕不保留房間。",
+      "取消訂房：入住日前 7 天取消可退全額訂金，其餘情況恕不退費。"
+    ]
   },
   "roomCard": {
     "priceAriaLabel": "房價",
