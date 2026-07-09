@@ -1,5 +1,6 @@
 .env*
 !.env.template
+!.env.local.template
 **/.DS_Store
 scheduler/data/*
 **/google_service_account_cred-*.json

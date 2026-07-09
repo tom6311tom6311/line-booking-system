@@ -825,7 +825,6 @@ export function BookingSection() {
                   onChange={(event) => updatePhoneNumber(event.target.value)}
                   placeholder={bookingSection.form.phonePlaceholder}
                   inputMode="numeric"
-                  maxLength={10}
                   pattern="09[0-9]{8}"
                   type="tel"
                 />
@@ -950,7 +949,6 @@ export function BookingSection() {
                 onChange={(event) => setLookupPhoneNumber(normalizeMobilePhoneInput(event.target.value))}
                 placeholder={bookingSection.manage.phonePlaceholder}
                 inputMode="numeric"
-                maxLength={10}
                 pattern="09[0-9]{8}"
                 type="tel"
               />

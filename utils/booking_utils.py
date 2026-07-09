@@ -2,15 +2,14 @@ import datetime
 import typing
 from const.booking_const import GENERIC_NAMES, BOOKING_STATUS_MARK, PREPAYMENT_STATUS_MAP, GENERIC_PHONE_NUMBER_POSTFIX, ROOM_TYPES
 from utils.data_access.data_class.booking_info import BookingInfo
+from utils.input_utils import format_phone_number_for_display
 
 # Function to format the booking info as per the required format
 def format_booking_info(booking_info: typing.Optional[BookingInfo]=None, variant='normal', custom_status_mark='', custom_postfix=''):
   if not booking_info:
     return None
 
-  phone_number = booking_info.phone_number
-  if phone_number.startswith('+886'):
-    phone_number = '0' + phone_number[4:]
+  phone_number = format_phone_number_for_display(booking_info.phone_number)
   total_price = int(booking_info.total_price)
   prepayment = int(booking_info.prepayment)
 
@@ -113,8 +112,7 @@ def format_booking_changes(booking_dict: dict):
   if ('customer_name' in booking_dict):
     message += f"姓名：{booking_dict['customer_name']}\n"
   if ('phone_number' in booking_dict):
-    if booking_dict['phone_number'].startswith('+886'):
-      phone_number = '0' + booking_dict['phone_number'][4:]
+    phone_number = format_phone_number_for_display(booking_dict['phone_number'])
     message += f"電話：{phone_number}\n"
   if ('check_in_date' in booking_dict):
     message += f"入住日期：{booking_dict['check_in_date'].strftime('%Y/%m/%d')}\n"

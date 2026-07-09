@@ -5,7 +5,7 @@ from flask import jsonify, request
 
 from const.booking_const import EXTRA_BED_PRICE_PER_NIGHT, PUBLIC_BOOKING_SOURCE, ROOM_TYPES
 from utils.datetime_utils import get_local_today
-from utils.input_utils import format_phone_number, is_valid_date, is_valid_phone_number
+from utils.input_utils import format_phone_number, format_phone_number_for_display, is_valid_date, is_valid_phone_number
 
 ROOM_TYPE_LABELS = { room_type: room_type_name for room_type, room_type_name, _ in ROOM_TYPES }
 MIN_CANCEL_DAYS_BEFORE_CHECK_IN = 7
@@ -87,7 +87,7 @@ def serialize_booking(booking_info, website_discount_amount=0):
     'bookingId': booking_info.booking_id,
     'status': booking_info.status,
     'customerName': booking_info.customer_name,
-    'phoneNumber': booking_info.phone_number,
+    'phoneNumber': format_phone_number_for_display(booking_info.phone_number),
     'checkIn': booking_info.check_in_date.isoformat(),
     'checkOut': check_out.isoformat(),
     'nights': nights,

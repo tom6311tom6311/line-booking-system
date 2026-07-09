@@ -8,7 +8,7 @@ from const.notification_templates import ASK_FOR_PREPAYMENT
 from utils.data_access.data_class.booking_info import BookingInfo
 from utils.data_access.booking_dao import BookingDAO
 from utils.booking_utils import format_booking_info, get_prepayment_estimation, get_booking_room_brief, is_generic_name
-from utils.input_utils import is_valid_date, is_valid_phone_number, is_valid_num_nights, is_valid_price, is_valid_extra_bed_count, format_phone_number
+from utils.input_utils import is_valid_date, is_valid_phone_number, is_valid_num_nights, is_valid_price, is_valid_extra_bed_count, format_phone_number, format_phone_number_for_display
 from utils.line_messaging_utils import append_total_price_quick_reply_buttons, generate_go_to_previous_step_button
 
 PREVIOUS_STEP = {
@@ -426,7 +426,7 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
           prepayment=booking_info.prepayment,
           bank_account_info=property_config.BANK_ACCOUNT_INFO
         ).strip()
-        sms_url = f"sms:{booking_info.phone_number}?body={quote(sms_body)}"
+        sms_url = f"sms:{format_phone_number_for_display(booking_info.phone_number)}?body={quote(sms_body)}"
 
         reply_messages.append(TextSendMessage(text="匯款訊息："))
         reply_messages.append(TextSendMessage(text=sms_body))

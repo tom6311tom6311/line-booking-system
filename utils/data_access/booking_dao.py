@@ -33,7 +33,8 @@ class BookingDAO:
         "password": self.db_config.DB_PASSWORD,
         "host": self.db_config.DB_HOST,
         "port": self.db_config.DB_PORT,
-        "database": self.db_config.DB_NAME
+        "database": self.db_config.DB_NAME,
+        "connect_timeout": self.db_config.DB_CONNECT_TIMEOUT
       }
       if self.db_config.DB_SSLMODE:
         connection_options["sslmode"] = self.db_config.DB_SSLMODE

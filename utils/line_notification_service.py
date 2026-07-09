@@ -6,6 +6,7 @@ from const import line_config, property_config
 from const.notification_templates import ASK_FOR_PREPAYMENT
 from utils.data_access.data_class.booking_info import BookingInfo
 from utils.booking_utils import format_booking_info, get_booking_room_brief
+from utils.input_utils import format_phone_number_for_display
 
 class LineNotificationService:
   def __init__(self, logger):
@@ -44,7 +45,7 @@ class LineNotificationService:
         prepayment=int(booking_info.prepayment),
         bank_account_info=property_config.BANK_ACCOUNT_INFO
       ).strip()
-      sms_url = f"sms:{booking_info.phone_number}?body={quote(sms_body)}"
+      sms_url = f"sms:{format_phone_number_for_display(booking_info.phone_number)}?body={quote(sms_body)}"
       messages = [
         TextSendMessage(text=f"官網訂單已建立，請發送訂金簡訊：\n\n{format_booking_info(booking_info)}"),
         TextSendMessage(text=f"匯款訊息：\n\n{sms_body}"),

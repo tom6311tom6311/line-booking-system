@@ -36,6 +36,11 @@ def format_phone_number(phone_number: str):
     return '+886' + phone_number[1:]
   return phone_number
 
+def format_phone_number_for_display(phone_number: str):
+  if phone_number.startswith('+8869') and len(phone_number) == 13:
+    return '0' + phone_number[4:]
+  return phone_number
+
 def is_valid_num_nights(num_nights: str):
   if num_nights.isdigit():
     # Convert to integer and check range
