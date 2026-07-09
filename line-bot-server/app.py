@@ -28,6 +28,7 @@ from utils.public_booking_api_utils import (
   serialize_room,
   validate_public_room_ids,
 )
+from utils.line_notification_service import LineNotificationService
 from const.booking_const import PUBLIC_BOOKING_SOURCE
 from utils.data_access.data_class.booking_info import BookingInfo
 from message_handlers.handle_default_messages import handle_default_messages
@@ -155,6 +156,8 @@ def api_public_create_reservation():
     return api_error("Unable to create reservation", 500)
 
   created_booking_info = booking_dao.get_booking_info(booking_id)
+  room_type_summary = booking_dao.get_booking_room_type_summary(booking_id)
+  LineNotificationService(app.logger).notify_public_booking_created_admins(created_booking_info, room_type_summary)
   return jsonify({ 'reservation': serialize_booking(created_booking_info) }), 201
 
 @app.route(f'{PUBLIC_API_PREFIX}/reservations/overlap')

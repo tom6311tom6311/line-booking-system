@@ -3,6 +3,11 @@ import os
 # LINE messaging API
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv('LINE_CHANNEL_ACCESS_TOKEN')
 LINE_CHANNEL_SECRET = os.getenv('LINE_CHANNEL_SECRET')
+LINE_ADMIN_USER_IDS = [
+  user_id.strip()
+  for user_id in os.getenv('LINE_ADMIN_USER_IDS', '').split(',')
+  if user_id.strip()
+]
 
 # User flows and steps
 USER_FLOW_CREATE_BOOKING = 'USER_FLOW.CREATE_BOOKING'
