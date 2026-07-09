@@ -665,8 +665,6 @@ button:focus-visible {
 .booking-room-carousel-button {
   position: absolute;
   top: 50%;
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--sage-900);
   transform: translateY(-50%);
 }
 
@@ -676,11 +674,6 @@ button:focus-visible {
 
 .booking-room-carousel-button.carousel-button-next {
   right: 0;
-}
-
-.booking-room-carousel-button:focus-visible,
-.booking-room-carousel-button:hover {
-  transform: translateY(-50%) scale(1.04);
 }
 
 .booking-room-carousel-button:disabled {
@@ -1050,12 +1043,20 @@ button:focus-visible {
 
 @media (hover: hover) and (pointer: fine) {
   .booking-room-carousel-button:hover {
-    transform: scale(1.04);
+    background: var(--sage-700);
+    transform: translateY(-50%);
   }
 }
 
 .booking-room-carousel-button:focus-visible {
-  transform: scale(1.04);
+  background: var(--sage-700);
+  transform: translateY(-50%);
+}
+
+@media (min-width: 900px) {
+  .booking-room-carousel {
+    max-width: 620px;
+  }
 }
 
 .carousel-button-previous {

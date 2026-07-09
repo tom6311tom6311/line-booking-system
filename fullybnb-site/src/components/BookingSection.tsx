@@ -48,6 +48,27 @@ function getDaysUntilDate(dateValue: string) {
   return Math.round((targetDate.getTime() - todayDate.getTime()) / 86400000);
 }
 
+function parseDateInputValue(dateValue: string) {
+  const date = new Date(`${dateValue}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function addDaysToDateInputValue(dateValue: string, days: number) {
+  const date = parseDateInputValue(dateValue);
+  if (!date) {
+    return "";
+  }
+
+  date.setDate(date.getDate() + days);
+  return toDateInputValue(date);
+}
+
+function isValidStayPeriod(checkIn: string, checkOut: string) {
+  const checkInDate = parseDateInputValue(checkIn);
+  const checkOutDate = parseDateInputValue(checkOut);
+  return Boolean(checkInDate && checkOutDate && checkOutDate > checkInDate);
+}
+
 function getPreselectedRoomIdsFromHash() {
   const [, hashQuery = ""] = window.location.hash.split("?");
   const roomIds = new URLSearchParams(hashQuery).get("roomIds");
@@ -160,6 +181,7 @@ function getFallbackNightlyPrices(room: PublicRoom, checkIn: string, checkOut: s
 export function BookingSection() {
   const { bookingSection, reservationPolicies } = siteContent;
   const defaultDates = useMemo(getDefaultDates, []);
+  const todayDate = useMemo(() => toDateInputValue(new Date()), []);
   const [mode, setMode] = useState<BookingMode>("new");
   const [bookingStep, setBookingStep] = useState<BookingStep>("search");
   const [checkIn, setCheckIn] = useState(defaultDates.checkIn);
@@ -188,6 +210,7 @@ export function BookingSection() {
   const bookingSteps: BookingStep[] = ["search", "rooms", "contact", "review", "complete"];
   const activeStepIndex = bookingSteps.indexOf(bookingStep);
   const activeRoomIndex = rooms.length ? Math.min(Math.max(roomSlideIndex, 0), rooms.length - 1) : 0;
+  const isStayPeriodValid = isValidStayPeriod(checkIn, checkOut);
   const isRoomSelectionValid = Boolean(selectedRoomIds.length && quote && !isQuoteLoading);
   const isContactInfoValid = Boolean(customerName.trim() && isValidMobilePhone(phoneNumber));
 
@@ -253,6 +276,9 @@ export function BookingSection() {
 
   function updateCheckIn(value: string) {
     setCheckIn(value);
+    if (!isValidStayPeriod(value, checkOut)) {
+      setCheckOut(addDaysToDateInputValue(value, 1));
+    }
     setBookingStep("search");
     setCreatedReservation(null);
   }
@@ -267,6 +293,16 @@ export function BookingSection() {
     setErrorMessage("");
     setStatusMessage("");
     setCreatedReservation(null);
+    if (!isValidStayPeriod(checkIn, checkOut)) {
+      setRooms([]);
+      setNightlyRoomPrices({});
+      setSelectedRoomIds([]);
+      setExtraBedCounts({});
+      setQuote(null);
+      setBookingStep("search");
+      setErrorMessage(bookingSection.messages.invalidStayPeriod);
+      return;
+    }
     setIsAvailabilityLoading(true);
     try {
       const availability = await getAvailability(checkIn, checkOut);
@@ -613,13 +649,13 @@ export function BookingSection() {
             <div className="booking-date-row">
               <label>
                 <span>{bookingSection.dateFields.checkIn}</span>
-                <input type="date" value={checkIn} onChange={(event) => updateCheckIn(event.target.value)} />
+                <input type="date" value={checkIn} min={todayDate} onChange={(event) => updateCheckIn(event.target.value)} />
               </label>
               <label>
                 <span>{bookingSection.dateFields.checkOut}</span>
-                <input type="date" value={checkOut} onChange={(event) => updateCheckOut(event.target.value)} />
+                <input type="date" value={checkOut} min={addDaysToDateInputValue(checkIn, 1)} onChange={(event) => updateCheckOut(event.target.value)} />
               </label>
-              <button className="primary-button booking-search-button" type="button" onClick={handleAvailabilitySearch} disabled={isAvailabilityLoading}>
+              <button className="primary-button booking-search-button" type="button" onClick={handleAvailabilitySearch} disabled={isAvailabilityLoading || !isStayPeriodValid}>
                 <Search size={18} aria-hidden="true" />
                 {isAvailabilityLoading ? bookingSection.dateFields.searching : bookingSection.dateFields.search}
               </button>

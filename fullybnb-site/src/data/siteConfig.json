@@ -217,6 +217,7 @@
     "messages": {
       "tabsAriaLabel": "訂房功能",
       "availabilityError": "查詢空房失敗。",
+      "invalidStayPeriod": "退房日期必須晚於入住日期。",
       "roomsRequired": "請先選擇房間。",
       "nameRequired": "請輸入姓名。",
       "bookingPhoneRequired": "請輸入電話。",
