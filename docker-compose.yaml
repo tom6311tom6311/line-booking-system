@@ -2,11 +2,15 @@ services:
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
+    depends_on:
+      - line-bot-server
+      - fullybnb-site
     ports:
       - "80:80"
       - "443:443"
     environment:
-      DOMAIN: ${DOMAIN}
+      BOT_DOMAIN: ${BOT_DOMAIN}
+      SITE_DOMAIN: ${SITE_DOMAIN}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
@@ -28,7 +32,6 @@ services:
     environment:
       FLASK_ENV: production
       APP_TIMEZONE: ${APP_TIMEZONE:-Asia/Taipei}
-      BASE_URL: ${BASE_URL}
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT:-5432}
       DB_USER: ${DB_USER}
@@ -72,6 +75,19 @@ services:
       - ./secrets:/app/secrets:ro
       - ./backup:/app/backup
       - /etc/localtime:/etc/localtime:ro
+
+  fullybnb-site:
+    build:
+      context: ./fullybnb-site
+    restart: unless-stopped
+    expose:
+      - "80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 volumes:
   caddy_data:

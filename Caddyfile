@@ -1,4 +1,9 @@
-{$DOMAIN} {
+{$BOT_DOMAIN} {
   encode gzip zstd
   reverse_proxy line-bot-server:5000
+}
+
+{$SITE_DOMAIN} {
+  encode gzip zstd
+  reverse_proxy fullybnb-site:80
 }
