@@ -1,4 +1,4 @@
-import { Phone } from "lucide-react";
+import { CalendarCheck } from "lucide-react";
 import { ImageCarousel } from "./ImageCarousel";
 import { siteContent, type Room } from "../data/siteContent";
 
@@ -7,7 +7,14 @@ type Props = {
 };
 
 export function RoomCard({ room }: Props) {
-  const { roomCard, site } = siteContent;
+  const { roomCard } = siteContent;
+  const bookingHref = `#booking${room.roomIds?.length ? `?roomIds=${encodeURIComponent(room.roomIds.join(","))}` : ""}`;
+
+  function handleBookingClick() {
+    window.setTimeout(() => {
+      window.dispatchEvent(new Event("hashchange"));
+    }, 0);
+  }
 
   return (
     <article className="room-card">
@@ -36,8 +43,17 @@ export function RoomCard({ room }: Props) {
             <li key={highlight}>{highlight}</li>
           ))}
         </ul>
-        <a className="text-button" href={site.phoneHref}>
-          <Phone size={17} aria-hidden="true" />
+        {room.specialNotes?.length ? (
+          <ul className="room-special-notes">
+            {room.specialNotes.map((note) => (
+              <li key={note.roomId}>
+                {note.text}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <a className="text-button" href={bookingHref} onClick={handleBookingClick}>
+          <CalendarCheck size={17} aria-hidden="true" />
           {roomCard.ctaLabel}
         </a>
       </div>

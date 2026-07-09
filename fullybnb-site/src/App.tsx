@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight, Facebook, MapPin, Phone } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { PointerEvent, TouchEvent } from "react";
+import { BookingSection } from "./components/BookingSection";
 import { RoomCard } from "./components/RoomCard";
 import { SectionHeading } from "./components/SectionHeading";
 import { nearbyPlaces, rooms, siteContent } from "./data/siteContent";
@@ -140,7 +141,7 @@ export function App() {
   const [isPortraitViewport, setIsPortraitViewport] = useState(() =>
     window.matchMedia("(orientation: portrait)").matches,
   );
-  const { site, assets, hero, intro, sections, bookingNote, reservationNotes, footer } = siteContent;
+  const { site, assets, hero, intro, sections, bookingNote, footer } = siteContent;
 
   const heroSlides = hero.images.flatMap((image) => {
     if (!isPortraitViewport || !image.portraitSplit) {
@@ -396,8 +397,7 @@ export function App() {
             <h1>{hero.title}</h1>
             <p>{hero.description}</p>
             <div className="hero-actions">
-              <a className="primary-button" href={site.phoneHref}>
-                <Phone size={19} aria-hidden="true" />
+              <a className="primary-button" href={hero.primaryCtaHref}>
                 {hero.primaryCtaLabel}
               </a>
               <a className="secondary-button" href={hero.secondaryCtaHref}>
@@ -472,14 +472,6 @@ export function App() {
 
         <section className="section" id="rooms">
           <SectionHeading eyebrow={sections.rooms.eyebrow} title={sections.rooms.title} />
-          <div className="reservation-note">
-            <h3>{reservationNotes.title}</h3>
-            <ul>
-              {reservationNotes.items.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </div>
           <div className="booking-note">
             <strong>{bookingNote.lead}</strong>
             <span>{bookingNote.description}</span>
@@ -490,6 +482,8 @@ export function App() {
             ))}
           </div>
         </section>
+
+        <BookingSection />
 
         <section className="section" id="nearby">
           <SectionHeading eyebrow={sections.nearby.eyebrow} title={sections.nearby.title}>

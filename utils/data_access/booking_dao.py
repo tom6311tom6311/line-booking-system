@@ -495,6 +495,41 @@ class BookingDAO:
 
     return matches
 
+  def get_overlapping_bookings_by_phone(self, phone_number, check_in_date, last_date) -> Optional[list[BookingInfo]]:
+    matches = []
+    try:
+      with self.cursor() as cursor:
+        if not cursor:
+          return None
+
+        query = """
+        SELECT b.booking_id, b.status, c.name, c.phone_number, b.check_in_date, b.last_date,
+          b.total_price, b.notes, b.source, b.prepayment, b.prepayment_note, b.prepayment_status,
+          STRING_AGG(r.room_id, '' ORDER BY r.ctid) AS room_ids,
+          JSON_OBJECT_AGG(r.room_id, rb.extra_bed_count) AS extra_bed_counts,
+          b.created, b.modified
+        FROM Bookings b
+        JOIN Customers c ON b.customer_id = c.customer_id
+        JOIN RoomBookings rb ON b.booking_id = rb.booking_id
+        JOIN Rooms r ON rb.room_id = r.room_id
+        WHERE c.phone_number = %s
+          AND b.status != 'canceled'::booking_statuses
+          AND b.check_in_date <= %s
+          AND b.last_date >= %s
+        GROUP BY b.booking_id, c.customer_id
+        ORDER BY b.check_in_date, b.booking_id;
+        """
+        cursor.execute(query, (phone_number, last_date, check_in_date))
+        rows = cursor.fetchall()
+
+      for row in rows:
+        matches.append(self._booking_info_from_row(row))
+    except Exception as e:
+      self.logger.error(f"Error searching overlapping bookings by phone: {e}")
+      matches = None
+
+    return matches
+
   def search_booking_not_prepaid(self, min_check_in_date=None) -> Optional[list[BookingInfo]]:
     matches = []
     try:

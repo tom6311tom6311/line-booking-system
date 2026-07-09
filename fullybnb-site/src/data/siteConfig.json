@@ -31,7 +31,8 @@
     "eyebrow": "南投埔里・合法民宿 658 號",
     "title": "富莉庭緣民宿",
     "description": "在山景、草地與鄉村間住一晚。",
-    "primaryCtaLabel": "電話訂房",
+    "primaryCtaLabel": "線上訂房",
+    "primaryCtaHref": "#booking",
     "secondaryCtaLabel": "查看房型",
     "secondaryCtaHref": "#rooms",
     "images": [
@@ -122,16 +123,134 @@
       "description": "導航可搜尋「富莉庭緣民宿」。自行開車由國道六號埔里交流道下，往武界方向。"
     }
   },
+  "bookingSection": {
+    "eyebrow": "Booking",
+    "title": "線上訂房",
+    "tabs": {
+      "booking": "訂房",
+      "manage": "修改訂單"
+    },
+    "steps": {
+      "ariaLabel": "訂房步驟",
+      "search": "查詢日期",
+      "rooms": "選擇房間",
+      "contact": "填寫資料",
+      "review": "確認送出",
+      "complete": "訂房完成"
+    },
+    "actions": {
+      "back": "上一步",
+      "backToSearch": "重新查詢",
+      "next": "下一步"
+    },
+    "dateFields": {
+      "checkIn": "入住日期",
+      "checkOut": "退房日期",
+      "search": "查詢空房",
+      "searching": "查詢中"
+    },
+    "roomCard": {
+      "weekdayPrefix": "平日",
+      "holidayPrefix": "假日",
+      "extraBedPrefix": "可加",
+      "extraBedSuffix": "床",
+      "stayTotal": "小計",
+      "add": "加入訂單",
+      "selected": "已加入",
+      "extraBedLabel": "加床",
+      "extraBedPlaceholder": "加入訂單後可選擇加床"
+    },
+    "roomCarousel": {
+      "ariaLabel": "可訂房間",
+      "previous": "上一間房",
+      "next": "下一間房",
+      "paginationAriaLabel": "可訂房間頁數",
+      "goToPrefix": "查看第",
+      "goToSuffix": "間房"
+    },
+    "form": {
+      "title": "訂房資料",
+      "name": "姓名",
+      "namePlaceholder": "訂房人姓名",
+      "phone": "電話",
+      "phonePlaceholder": "0912345678",
+      "notes": "備註",
+      "notesPlaceholder": "抵達時間、特殊需求等"
+    },
+    "summary": {
+      "title": "訂單摘要",
+      "quoting": "計價中...",
+      "emptyQuote": "選擇房間後會自動計價。",
+      "customerName": "訂房人",
+      "phone": "電話",
+      "notes": "備註",
+      "noNotes": "無",
+      "nights": "晚數",
+      "totalPrice": "總金額",
+      "prepayment": "訂金",
+      "create": "建立新訂單"
+    },
+    "manage": {
+      "formTitle": "查詢/修改訂單",
+      "bookingId": "訂單編號",
+      "bookingIdPlaceholder": "例如 1024",
+      "phone": "電話",
+      "phonePlaceholder": "訂房電話",
+      "search": "查詢訂單",
+      "searching": "查詢中",
+      "summaryTitle": "訂單內容",
+      "status": "訂單狀態",
+      "activeStatus": "有效訂單",
+      "canceledStatus": "已取消",
+      "rooms": "房間",
+      "totalPrice": "總金額",
+      "prepayment": "訂金",
+      "cancel": "取消訂單",
+      "cancelUnavailable": "依照訂房政策，入住日前 7 天內不可取消訂房，若有疑問請直接聯絡民宿。"
+    },
+    "complete": {
+      "title": "訂房完成",
+      "bookingId": "訂單編號",
+      "prepaymentStatus": "訂金狀態",
+      "prepaymentNotice": "我們將在1日內透過簡訊發送訂金匯款資訊給您，務請留意並依指示於3日內完成匯款，感謝您！"
+    },
+    "messages": {
+      "tabsAriaLabel": "訂房功能",
+      "availabilityError": "查詢空房失敗。",
+      "roomsRequired": "請先選擇房間。",
+      "nameRequired": "請輸入姓名。",
+      "bookingPhoneRequired": "請輸入電話。",
+      "mobilePhoneInvalid": "電話請輸入 09 開頭的 10 碼手機號碼。",
+      "createSuccessPrefix": "訂單",
+      "createSuccessSuffix": "已建立。",
+      "createError": "建立訂單失敗。",
+      "invalidBookingId": "請輸入有效的訂單編號。",
+      "lookupPhoneRequired": "請輸入訂房電話。",
+      "lookupError": "查詢訂單失敗。",
+      "cancelSuccessPrefix": "訂單",
+      "cancelSuccessSuffix": "已取消。",
+      "cancelError": "取消訂單失敗。",
+      "saveBookingId": "請保存訂單編號",
+      "saveBookingIdSuffix": "之後可用電話查詢或修改。"
+    },
+    "breakdown": {
+      "roomSubtotal": "房費",
+      "extraBedPrefix": "加",
+      "extraBedSuffix": "床",
+      "nightUnit": "晚",
+      "multiply": "×"
+    }
+  },
   "bookingNote": {
     "lead": "包棟方案 NT$15,000 起。",
     "description": "10 至 24 人可包棟，享有專屬室內空間、戶外草皮與自在聚會時間，限透過電話預約。"
   },
-  "reservationNotes": {
-    "title": "訂房與取消說明",
+  "reservationPolicies": {
+    "title": "訂房政策",
     "items": [
       "週六及國定假日為假日，其餘為平日。",
       "訂房確認後會發送簡訊給您，請依照指示於三日內預付訂金，逾期恕不保留房間。",
-      "取消訂房：入住日前 7 天取消可退全額訂金，其餘情況恕不退費。"
+      "取消訂房：入住日 7 天前可取消並退還全額訂金，其餘情況恕不退費。"
     ]
   },
   "roomCard": {
@@ -141,7 +260,7 @@
     "breakfastIncludedLabel": "房價含早餐",
     "extraBedPrefix": "加床",
     "featuresAriaLabel": "房型特色",
-    "ctaLabel": "詢問此房型"
+    "ctaLabel": "預訂此房型"
   },
   "carousel": {
     "imageSuffix": "照片",
@@ -157,6 +276,7 @@
   },
   "rooms": [
     {
+      "roomIds": ["稻"],
       "name": "稻香",
       "category": "雙人景觀套房",
       "weekdayPrice": "NT$2,200",
@@ -167,9 +287,10 @@
         "../assets/images/room-dao-02.jpg",
         "../assets/images/room-dao-03.jpg"
       ],
-      "highlights": ["景觀陽台", "樓中樓童趣設計", "櫻花木建材"]
+      "highlights": ["景觀陽台", "樓中樓童趣設計", "胡桃木建材"]
     },
     {
+      "roomIds": ["森"],
       "name": "森林",
       "category": "雙人景觀套房",
       "weekdayPrice": "NT$2,200",
@@ -182,6 +303,7 @@
       "highlights": ["山景陽台", "加大雙人床", "日式原木風格"]
     },
     {
+      "roomIds": ["藍", "紅"],
       "name": "藍莓 / 紅莓",
       "category": "雙人景觀套房",
       "weekdayPrice": "NT$2,200",
@@ -197,6 +319,7 @@
       "highlights": ["景觀最佳", "雙人沙發", "白樺木家具"]
     },
     {
+      "roomIds": ["太", "月"],
       "name": "太陽 / 月亮",
       "category": "四人家庭套房",
       "weekdayPrice": "NT$3,000",
@@ -207,7 +330,13 @@
         "../assets/images/room-sunmoon-02.jpg",
         "../assets/images/room-sunmoon-03.jpg"
       ],
-      "highlights": ["家庭房型", "良好採光", "北美胡桃木和室"]
+      "highlights": ["家庭房型", "良好採光", "北美胡桃木和室"],
+      "specialNotes": [
+        {
+          "roomId": "月",
+          "text": "月亮房型為雅房，浴室在房門外"
+        }
+      ]
     }
   ],
   "nearbyPlaces": [

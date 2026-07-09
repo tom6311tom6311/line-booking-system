@@ -2,6 +2,7 @@ import rawConfig from "./siteConfig.json";
 import { resolveImagePath } from "./imageAssets";
 
 export type Room = {
+  roomIds?: string[];
   name: string;
   category: string;
   weekdayPrice: string;
@@ -9,6 +10,11 @@ export type Room = {
   extraBedPrice: string;
   images: string[];
   highlights: string[];
+  specialNotes?: {
+    roomId: string;
+    label?: string;
+    text: string;
+  }[];
 };
 
 export type NearbyPlace = {

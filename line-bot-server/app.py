@@ -1,5 +1,6 @@
 import os
 import json
+from datetime import timedelta
 from flask import Flask, request, abort, jsonify
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
@@ -12,8 +13,10 @@ from utils.closure_utils import format_closure_info
 from utils.input_utils import is_valid_date
 from utils.datetime_utils import get_latest_months
 from utils.line_messaging_utils import generate_booking_carousel_message, generate_closure_carousel_message
+from utils.taiwan_holiday_utils import is_booking_holiday_night
 from utils.public_booking_api_utils import (
   api_error,
+  can_cancel_public_booking,
   ensure_rooms_available,
   get_owned_booking_or_error,
   get_rooms_by_id,
@@ -67,12 +70,24 @@ def api_public_availability():
     serialize_room(room, room['room_id'] in available_room_ids)
     for room in rooms_by_id.values()
   ]
+  nightly_room_prices = {}
+  current_date = check_in_date
+  while current_date <= last_date:
+    is_holiday = is_booking_holiday_night(current_date)
+    for room in rooms_by_id.values():
+      nightly_room_prices.setdefault(room['room_id'], []).append({
+        'date': current_date.isoformat(),
+        'price': int(room['holiday_price_per_night'] if is_holiday else room['weekday_price_per_night']),
+        'rateType': 'holiday' if is_holiday else 'weekday',
+      })
+    current_date = current_date + timedelta(days=1)
   return jsonify({
     'checkIn': check_in_date.isoformat(),
     'checkOut': check_out_date.isoformat(),
     'nights': nights,
     'rooms': rooms,
     'availableRoomIds': [room['roomId'] for room in rooms if room['available']],
+    'nightlyRoomPrices': nightly_room_prices,
   })
 
 @app.route(f'{PUBLIC_API_PREFIX}/quote', methods=['POST'])
@@ -141,6 +156,22 @@ def api_public_create_reservation():
 
   created_booking_info = booking_dao.get_booking_info(booking_id)
   return jsonify({ 'reservation': serialize_booking(created_booking_info) }), 201
+
+@app.route(f'{PUBLIC_API_PREFIX}/reservations/overlap')
+def api_public_overlapping_reservations():
+  try:
+    phone_number = normalize_api_phone_number(request.args.get('phoneNumber'))
+    check_in_date, check_out_date, last_date, nights = parse_date_range(request.args)
+  except ValueError as e:
+    return api_error(str(e))
+
+  matches = booking_dao.get_overlapping_bookings_by_phone(phone_number, check_in_date, last_date) or []
+  return jsonify({
+    'checkIn': check_in_date.isoformat(),
+    'checkOut': check_out_date.isoformat(),
+    'nights': nights,
+    'reservations': [serialize_booking(booking_info) for booking_info in matches],
+  })
 
 @app.route(f'{PUBLIC_API_PREFIX}/reservations/<int:booking_id>')
 def api_public_get_reservation(booking_id):
@@ -220,6 +251,8 @@ def api_public_cancel_reservation(booking_id):
     return api_error(str(e))
   if not booking_info:
     return api_error("Reservation not found", 404)
+  if not can_cancel_public_booking(booking_info):
+    return api_error("Bookings within 7 days of check-in cannot be canceled online", 403)
 
   success = booking_dao.cancel_booking(booking_id)
   if not success:

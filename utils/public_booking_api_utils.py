@@ -2,8 +2,12 @@ from datetime import datetime, timedelta
 
 from flask import jsonify, request
 
-from const.booking_const import EXTRA_BED_PRICE_PER_NIGHT
+from const.booking_const import EXTRA_BED_PRICE_PER_NIGHT, ROOM_TYPES
+from utils.datetime_utils import get_local_today
 from utils.input_utils import format_phone_number, is_valid_date, is_valid_phone_number
+
+ROOM_TYPE_LABELS = { room_type: room_type_name for room_type, room_type_name, _ in ROOM_TYPES }
+MIN_CANCEL_DAYS_BEFORE_CHECK_IN = 7
 
 
 def api_error(message, status_code=400):
@@ -41,6 +45,7 @@ def serialize_room(room, is_available=None):
     'roomId': room['room_id'],
     'name': room['room_name'],
     'roomType': room['room_type'],
+    'roomTypeLabel': ROOM_TYPE_LABELS.get(room['room_type'], room['room_type']),
     'capacity': room['capacity'],
     'holidayPricePerNight': room['holiday_price_per_night'],
     'weekdayPricePerNight': room['weekday_price_per_night'],
@@ -141,3 +146,7 @@ def get_owned_booking_or_error(booking_id, phone_number, booking_dao):
   if not booking_info or booking_info.phone_number != normalized_phone_number:
     return None
   return booking_info
+
+
+def can_cancel_public_booking(booking_info):
+  return (booking_info.check_in_date - get_local_today()).days >= MIN_CANCEL_DAYS_BEFORE_CHECK_IN
