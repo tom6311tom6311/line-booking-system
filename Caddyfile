@@ -5,5 +5,12 @@
 
 {$SITE_DOMAIN} {
   encode gzip zstd
-  reverse_proxy fullybnb-site:80
+
+  handle /api/public/* {
+    reverse_proxy line-bot-server:5000
+  }
+
+  handle {
+    reverse_proxy fullybnb-site:80
+  }
 }

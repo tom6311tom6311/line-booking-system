@@ -964,7 +964,46 @@ class BookingDAO:
   ### RoomBooking data access functions  ###
   ##########################################
 
-  def get_available_room_ids(self, check_in_date, last_date):
+  def get_rooms_by_ids(self, room_ids=None) -> list[dict]:
+    rooms = []
+    try:
+      with self.cursor() as cursor:
+        if not cursor:
+          return []
+
+        query = """
+        SELECT room_id, room_name, room_type, capacity, holiday_price_per_night,
+          weekday_price_per_night, extra_bed_number, description, room_status
+        FROM Rooms
+        """
+        params = ()
+        if room_ids:
+          query += "WHERE room_id IN %s "
+          params = (tuple(room_ids),)
+        query += "ORDER BY ctid;"
+
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+
+      rooms = [
+        {
+          "room_id": row[0],
+          "room_name": row[1],
+          "room_type": row[2],
+          "capacity": row[3],
+          "holiday_price_per_night": int(row[4]),
+          "weekday_price_per_night": int(row[5]),
+          "extra_bed_number": row[6],
+          "description": row[7],
+          "room_status": row[8],
+        }
+        for row in rows
+      ]
+    except Exception as e:
+      self.logger.error(f"Error retrieving rooms: {e}")
+    return rooms
+
+  def get_available_room_ids(self, check_in_date, last_date, exclude_booking_id=None):
     available_room_ids = None
     try:
       with self.cursor() as cursor:
@@ -981,12 +1020,27 @@ class BookingDAO:
             JOIN Bookings b ON rb.booking_id = b.booking_id
             WHERE b.status != 'canceled'::booking_statuses -- Ignore canceled bookings
               AND (b.check_in_date <= %s AND b.last_date >= %s)
+              AND (%s IS NULL OR b.booking_id != %s)
+          )
+          AND r.room_id NOT IN (
+            SELECT rc.room_id
+            FROM RoomClosures rc
+            JOIN Closures c ON rc.closure_id = c.closure_id
+            WHERE c.status = 'valid'::closure_statuses
+              AND (c.start_date <= %s AND c.last_date >= %s)
           )
         ORDER BY r.ctid;
         """
 
         # Execute query with date range parameters
-        cursor.execute(query, (last_date, check_in_date))
+        cursor.execute(query, (
+          last_date,
+          check_in_date,
+          exclude_booking_id,
+          exclude_booking_id,
+          last_date,
+          check_in_date
+        ))
         available_room_ids = [row[0] for row in cursor.fetchall()]
     except Exception as e:
       self.logger.error(f"Error fetching available room ids: {e}")

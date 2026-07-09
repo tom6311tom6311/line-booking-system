@@ -1,16 +1,31 @@
 import os
 import json
-from flask import Flask, request, abort
+from flask import Flask, request, abort, jsonify
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, PostbackEvent, TextMessage, TextSendMessage, QuickReply, QuickReplyButton, MessageAction, DatetimePickerAction
 from const import db_config, line_config
 from utils.data_access.booking_dao import BookingDAO
 from utils.booking_utils import format_booking_info
+from utils.booking_utils import get_prepayment_estimation
 from utils.closure_utils import format_closure_info
 from utils.input_utils import is_valid_date
 from utils.datetime_utils import get_latest_months
 from utils.line_messaging_utils import generate_booking_carousel_message, generate_closure_carousel_message
+from utils.public_booking_api_utils import (
+  api_error,
+  ensure_rooms_available,
+  get_owned_booking_or_error,
+  get_rooms_by_id,
+  normalize_api_phone_number,
+  parse_api_json,
+  parse_date_range,
+  serialize_booking,
+  serialize_room,
+  validate_public_room_ids,
+)
+from const.booking_const import PUBLIC_BOOKING_SOURCE
+from utils.data_access.data_class.booking_info import BookingInfo
 from message_handlers.handle_default_messages import handle_default_messages
 from message_handlers.handle_create_booking_messages import handle_create_booking_messages
 from message_handlers.handle_edit_booking_messages import handle_edit_booking_messages
@@ -27,9 +42,176 @@ line_bot_api = LineBotApi(line_config.LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(line_config.LINE_CHANNEL_SECRET)
 booking_dao = BookingDAO.get_instance(db_config, app.logger)
 
+PUBLIC_API_PREFIX = '/api/public'
+
 @app.route('/health')
 def health():
   return 'OK'
+
+@app.route(f'{PUBLIC_API_PREFIX}/rooms')
+def api_public_rooms():
+  rooms = [serialize_room(room) for room in booking_dao.get_rooms_by_ids()]
+  return jsonify({ 'rooms': rooms })
+
+@app.route(f'{PUBLIC_API_PREFIX}/availability')
+def api_public_availability():
+  try:
+    check_in_date, check_out_date, last_date, nights = parse_date_range(request.args)
+  except ValueError as e:
+    return api_error(str(e))
+
+  rooms_by_id = get_rooms_by_id(booking_dao)
+  available_room_ids = set(booking_dao.get_available_room_ids(check_in_date, last_date) or [])
+  rooms = [
+    serialize_room(room, room['room_id'] in available_room_ids)
+    for room in rooms_by_id.values()
+  ]
+  return jsonify({
+    'checkIn': check_in_date.isoformat(),
+    'checkOut': check_out_date.isoformat(),
+    'nights': nights,
+    'rooms': rooms,
+    'availableRoomIds': [room['roomId'] for room in rooms if room['available']],
+  })
+
+@app.route(f'{PUBLIC_API_PREFIX}/quote', methods=['POST'])
+def api_public_quote():
+  payload = parse_api_json()
+  try:
+    check_in_date, check_out_date, last_date, nights = parse_date_range(payload)
+    room_ids = validate_public_room_ids(payload.get('roomIds'), booking_dao)
+    ensure_rooms_available(room_ids, check_in_date, last_date, booking_dao)
+  except ValueError as e:
+    return api_error(str(e))
+
+  total_price = booking_dao.get_total_price_estimation(room_ids, check_in_date, last_date)
+  if total_price is None:
+    return api_error("Unable to calculate price", 500)
+  return jsonify({
+    'checkIn': check_in_date.isoformat(),
+    'checkOut': check_out_date.isoformat(),
+    'nights': nights,
+    'roomIds': room_ids,
+    'totalPrice': int(total_price),
+    'suggestedPrepayment': get_prepayment_estimation(total_price),
+  })
+
+@app.route(f'{PUBLIC_API_PREFIX}/reservations', methods=['POST'])
+def api_public_create_reservation():
+  payload = parse_api_json()
+  try:
+    customer_name = (payload.get('customerName') or '').strip()
+    if not customer_name:
+      raise ValueError("customerName is required")
+    phone_number = normalize_api_phone_number(payload.get('phoneNumber'))
+    check_in_date, _, last_date, _ = parse_date_range(payload)
+    room_ids = validate_public_room_ids(payload.get('roomIds'), booking_dao)
+    ensure_rooms_available(room_ids, check_in_date, last_date, booking_dao)
+  except ValueError as e:
+    return api_error(str(e))
+
+  total_price = booking_dao.get_total_price_estimation(room_ids, check_in_date, last_date)
+  if total_price is None:
+    return api_error("Unable to calculate price", 500)
+
+  booking_info = BookingInfo(
+    booking_id=booking_dao.get_next_booking_id(),
+    status='new',
+    customer_name=customer_name,
+    phone_number=phone_number,
+    check_in_date=check_in_date,
+    last_date=last_date,
+    total_price=total_price,
+    notes=(payload.get('notes') or '').strip(),
+    source=PUBLIC_BOOKING_SOURCE,
+    prepayment=get_prepayment_estimation(total_price),
+    prepayment_note='',
+    prepayment_status='unpaid',
+    room_ids=''.join(room_ids)
+  )
+  booking_id = booking_dao.upsert_booking(booking_info)
+  if not booking_id:
+    return api_error("Unable to create reservation", 500)
+
+  created_booking_info = booking_dao.get_booking_info(booking_id)
+  return jsonify({ 'reservation': serialize_booking(created_booking_info) }), 201
+
+@app.route(f'{PUBLIC_API_PREFIX}/reservations/<int:booking_id>')
+def api_public_get_reservation(booking_id):
+  try:
+    booking_info = get_owned_booking_or_error(booking_id, request.args.get('phoneNumber'), booking_dao)
+  except ValueError as e:
+    return api_error(str(e))
+  if not booking_info:
+    return api_error("Reservation not found", 404)
+  return jsonify({ 'reservation': serialize_booking(booking_info) })
+
+@app.route(f'{PUBLIC_API_PREFIX}/reservations/<int:booking_id>', methods=['PATCH'])
+def api_public_update_reservation(booking_id):
+  payload = parse_api_json()
+  try:
+    booking_info = get_owned_booking_or_error(booking_id, payload.get('phoneNumber'), booking_dao)
+    if not booking_info:
+      return api_error("Reservation not found", 404)
+
+    if 'customerName' in payload:
+      customer_name = (payload.get('customerName') or '').strip()
+      if not customer_name:
+        raise ValueError("customerName must not be empty")
+      booking_info.customer_name = customer_name
+
+    has_date_change = 'checkIn' in payload or 'checkOut' in payload
+    if has_date_change:
+      if 'checkIn' not in payload or 'checkOut' not in payload:
+        raise ValueError("checkIn and checkOut must be updated together")
+      check_in_date, _, last_date, _ = parse_date_range(payload)
+      booking_info.check_in_date = check_in_date
+      booking_info.last_date = last_date
+
+    if 'roomIds' in payload:
+      room_ids = validate_public_room_ids(payload.get('roomIds'), booking_dao)
+      booking_info.room_ids = ''.join(room_ids)
+
+    room_ids = list(booking_info.room_ids)
+    validate_public_room_ids(room_ids, booking_dao)
+    ensure_rooms_available(room_ids, booking_info.check_in_date, booking_info.last_date, booking_dao, booking_id)
+
+    if 'notes' in payload:
+      booking_info.notes = (payload.get('notes') or '').strip()
+
+  except ValueError as e:
+    return api_error(str(e))
+
+  total_price = booking_dao.get_total_price_estimation(room_ids, booking_info.check_in_date, booking_info.last_date)
+  if total_price is None:
+    return api_error("Unable to calculate price", 500)
+  booking_info.total_price = total_price
+  if booking_info.prepayment_status != 'paid':
+    booking_info.prepayment = get_prepayment_estimation(total_price)
+    booking_info.prepayment_status = 'unpaid'
+
+  updated_booking_id = booking_dao.upsert_booking(booking_info)
+  if not updated_booking_id:
+    return api_error("Unable to update reservation", 500)
+
+  updated_booking_info = booking_dao.get_booking_info(updated_booking_id)
+  return jsonify({ 'reservation': serialize_booking(updated_booking_info) })
+
+@app.route(f'{PUBLIC_API_PREFIX}/reservations/<int:booking_id>/cancel', methods=['POST'])
+def api_public_cancel_reservation(booking_id):
+  payload = parse_api_json()
+  try:
+    booking_info = get_owned_booking_or_error(booking_id, payload.get('phoneNumber'), booking_dao)
+  except ValueError as e:
+    return api_error(str(e))
+  if not booking_info:
+    return api_error("Reservation not found", 404)
+
+  success = booking_dao.cancel_booking(booking_id)
+  if not success:
+    return api_error("Unable to cancel reservation", 500)
+  canceled_booking_info = booking_dao.get_booking_info(booking_id)
+  return jsonify({ 'reservation': serialize_booking(canceled_booking_info) })
 
 # RESTful handlers
 @app.route('/bookings/<booking_id>')
