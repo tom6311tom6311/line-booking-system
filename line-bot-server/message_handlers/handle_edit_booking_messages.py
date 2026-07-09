@@ -6,7 +6,7 @@ from const import line_config
 from utils.data_access.booking_dao import BookingDAO
 from utils.booking_utils import format_booking_changes, trim_booking_changes, get_prepayment_estimation
 from utils.input_utils import is_valid_date, is_valid_phone_number, is_valid_num_nights, is_valid_price, is_valid_extra_bed_count, format_phone_number
-from utils.line_messaging_utils import generate_edit_booking_select_attribute_quick_reply_buttons, generate_go_to_previous_step_button
+from utils.line_messaging_utils import append_total_price_quick_reply_buttons, generate_edit_booking_select_attribute_quick_reply_buttons, generate_go_to_previous_step_button
 
 def append_extra_bed_count_quick_reply_buttons(quick_reply_buttons, max_extra_bed_count):
   for extra_bed_count in range(1, max_extra_bed_count + 1):
@@ -154,19 +154,7 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
         session['data']['last_date'] if 'last_date' in session['data'] else booking_info.last_date,
         sum(session['data']['extra_bed_counts'].values()) if 'extra_bed_counts' in session['data'] else booking_info.extra_bed_count,
       )
-      quick_reply_buttons.append(
-        QuickReplyButton(action=MessageAction(
-          label=str(booking_info.total_price),
-          text=str(booking_info.total_price))
-        )
-      )
-      if estimated_total_price != booking_info.total_price:
-        quick_reply_buttons.append(
-          QuickReplyButton(action=MessageAction(
-            label=str(estimated_total_price),
-            text=str(estimated_total_price))
-          )
-        )
+      append_total_price_quick_reply_buttons(quick_reply_buttons, estimated_total_price)
       reply_messages.append(TextSendMessage(text="請輸入總金額:", quick_reply=QuickReply(items=quick_reply_buttons)))
       session['step'] = line_config.USER_FLOW_STEP_EDIT_BOOKING__EDIT_TOTAL_PRICE
     elif user_message == line_config.USER_COMMAND_EDIT_BOOKING__EDIT_PREPAYMENT:
@@ -340,12 +328,7 @@ def handle_edit_booking_messages(user_message: str, session: dict, booking_dao: 
         session['data']['last_date'] if 'last_date' in session['data'] else booking_info.last_date,
         sum(session['data']['extra_bed_counts'].values()) if 'extra_bed_counts' in session['data'] else booking_info.extra_bed_count,
       )
-      quick_reply_buttons.append(
-        QuickReplyButton(action=MessageAction(
-          label=str(estimated_total_price),
-          text=str(estimated_total_price))
-        )
-      )
+      append_total_price_quick_reply_buttons(quick_reply_buttons, estimated_total_price)
       reply_messages.append(TextSendMessage(text="輸入格式有誤，請重新輸入總金額(0~100000):", quick_reply=QuickReply(items=quick_reply_buttons)))
     else:
       session['data']['total_price'] = int(user_message)

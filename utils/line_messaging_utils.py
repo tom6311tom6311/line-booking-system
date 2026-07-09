@@ -82,3 +82,19 @@ def generate_go_to_previous_step_button():
     label=line_config.USER_COMMAND_GO_TO_PREVIOUS_STEP_OF_CURRENT_FLOW,
     text=line_config.USER_COMMAND_GO_TO_PREVIOUS_STEP_OF_CURRENT_FLOW)
   )
+
+def append_total_price_quick_reply_buttons(quick_reply_buttons, total_price):
+  original_price = int(total_price)
+  discounted_price = original_price * 9 // 10
+  quick_reply_buttons.append(
+    QuickReplyButton(action=MessageAction(
+      label=f"{original_price} (原價)",
+      text=str(original_price))
+    )
+  )
+  quick_reply_buttons.append(
+    QuickReplyButton(action=MessageAction(
+      label=f"{discounted_price} (9折)",
+      text=str(discounted_price))
+    )
+  )
