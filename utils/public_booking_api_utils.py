@@ -82,14 +82,14 @@ def serialize_room(room, is_available=None):
   return serialized
 
 
-def serialize_booking(booking_info, website_discount_amount=0):
+def serialize_booking(booking_info, website_discount_amount=0, booking_dao=None):
   check_out = booking_info.last_date + timedelta(days=1)
   nights = (check_out - booking_info.check_in_date).days
   if not website_discount_amount and booking_info.source == PUBLIC_BOOKING_SOURCE:
     website_discount_amount = calculate_public_booking_discount(list(booking_info.room_ids), nights)
   website_discount_amount = int(website_discount_amount or 0)
   original_total_price = int(booking_info.total_price) + website_discount_amount
-  return {
+  serialized = {
     'bookingId': booking_info.booking_id,
     'status': booking_info.status,
     'customerName': booking_info.customer_name,
@@ -108,6 +108,17 @@ def serialize_booking(booking_info, website_discount_amount=0):
     'source': booking_info.source,
     'notes': booking_info.notes,
   }
+  if booking_dao:
+    rooms_by_id = {
+      room['room_id']: room
+      for room in booking_dao.get_rooms_by_ids(list(booking_info.room_ids))
+    }
+    serialized['rooms'] = [
+      serialize_room(rooms_by_id[room_id])
+      for room_id in booking_info.room_ids
+      if room_id in rooms_by_id
+    ]
+  return serialized
 
 
 def get_rooms_by_id(booking_dao):

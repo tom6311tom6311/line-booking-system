@@ -28,6 +28,7 @@ export type PublicReservation = {
   checkOut: string;
   nights: number;
   roomIds: string[];
+  rooms?: PublicRoom[];
   extraBedCount: number;
   extraBedCounts: Record<string, number>;
   originalTotalPrice?: number;
@@ -99,6 +100,15 @@ export async function getAvailability(checkIn: string, checkOut: string) {
     availableRoomIds: string[];
     nightlyRoomPrices?: Record<string, NightlyRoomPrice[]>;
   }>(`/availability?${params.toString()}`);
+}
+
+export async function getHolidayRateDates(start: string, end: string) {
+  const params = new URLSearchParams({ start, end });
+  return requestJson<{
+    start: string;
+    end: string;
+    dates: string[];
+  }>(`/holiday-rate-dates?${params.toString()}`);
 }
 
 export async function quoteReservation(payload: Pick<ReservationPayload, "checkIn" | "checkOut" | "roomIds" | "extraBedCounts">) {

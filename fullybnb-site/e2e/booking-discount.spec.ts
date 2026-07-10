@@ -32,7 +32,7 @@ test("booking summary shows the site-only discount from the real backend", async
 
   const summary = page.locator(".booking-summary").first();
   await expect(summary).toContainText("原價");
-  await expect(summary).toContainText("官網優惠");
+  await expect(summary).toContainText("官網限定優惠");
   await expect(summary).toContainText(formatCurrency(quote.originalTotalPrice));
   await expect(summary).toContainText(`-${formatCurrency(quote.websiteDiscountAmount)}`);
   await expect(summary).toContainText(formatCurrency(quote.totalPrice));

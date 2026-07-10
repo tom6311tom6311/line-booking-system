@@ -147,6 +147,7 @@
       "checkIn": "入住日期",
       "checkOut": "退房日期",
       "selectPrefix": "選擇",
+      "holidayRate": "假日價",
       "search": "查詢空房",
       "searching": "查詢中"
     },
@@ -192,7 +193,7 @@
       "noNotes": "無",
       "nights": "晚數",
       "originalTotalPrice": "原價",
-      "websiteDiscount": "官網優惠",
+      "websiteDiscount": "官網限定優惠",
       "totalPrice": "總金額",
       "prepayment": "訂金",
       "create": "立即預訂"

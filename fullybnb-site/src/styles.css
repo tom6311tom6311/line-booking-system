@@ -159,16 +159,6 @@ button:focus-visible {
   touch-action: pan-y;
 }
 
-.hero-safe-area-backdrop {
-  display: none;
-}
-
-@supports (height: 100dvh) {
-  .hero {
-    min-height: 100dvh;
-  }
-}
-
 .hero-slides,
 .hero-overlay {
   position: absolute;
@@ -231,48 +221,8 @@ button:focus-visible {
   position: relative;
   z-index: 2;
   width: min(760px, calc(100% - 36px));
-  margin: 0 var(--page-gutter) clamp(54px, 10vh, 96px);
+  margin: 0 var(--page-gutter) clamp(54px, 10svh, 96px);
   color: white;
-}
-
-@supports (padding: max(0px)) {
-  .hero-safe-area-backdrop {
-    position: fixed;
-    top: 0;
-    right: 0;
-    left: 0;
-    z-index: 0;
-    display: block;
-    height: env(safe-area-inset-top);
-    min-height: env(safe-area-inset-top);
-    background-color: var(--sage-900);
-    background-position: center top;
-    background-size: cover;
-    pointer-events: none;
-  }
-
-  .hero {
-    margin-top: calc(-1 * env(safe-area-inset-top));
-    min-height: calc(100svh + env(safe-area-inset-top));
-    padding-top: env(safe-area-inset-top);
-  }
-
-  @supports (height: 100dvh) {
-    .hero {
-      min-height: calc(100dvh + env(safe-area-inset-top));
-    }
-  }
-
-  .hero-content {
-    margin-right: max(var(--page-gutter), env(safe-area-inset-right));
-    margin-left: max(var(--page-gutter), env(safe-area-inset-left));
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  .carousel-dots.hero-carousel-dots {
-    right: max(var(--page-gutter), env(safe-area-inset-right));
-    bottom: max(28px, env(safe-area-inset-bottom));
-  }
 }
 
 .carousel-dots.hero-carousel-dots {
@@ -594,6 +544,7 @@ button:focus-visible {
 .booking-calendar-grid button {
   display: inline-grid;
   place-items: center;
+  position: relative;
   min-width: 0;
   border: 1px solid transparent;
   border-radius: 8px;
@@ -638,6 +589,10 @@ button:focus-visible {
 .booking-calendar-grid button:not(:disabled):focus-visible {
   border-color: rgba(95, 125, 100, 0.36);
   background: var(--sage-100);
+}
+
+.booking-calendar-grid button.is-holiday-rate {
+  color: var(--clay-dark);
 }
 
 .booking-calendar-grid button.is-selected {

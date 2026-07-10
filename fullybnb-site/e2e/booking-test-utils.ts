@@ -1,15 +1,19 @@
 import { expect, request, type APIRequestContext, type Page } from "@playwright/test";
 
 export const apiBaseURL = process.env.E2E_API_BASE_URL || "http://127.0.0.1:5001";
+const siteIntroducedRoomIds = new Set(["稻", "森", "藍", "紅", "太", "月"]);
 
 export type AvailabilityRoom = {
   roomId: string;
+  name: string;
+  roomTypeLabel: string;
   available: boolean;
   extraBedNumber: number;
 };
 
 export type AvailabilityResponse = {
   rooms: AvailabilityRoom[];
+  availableRoomIds: string[];
 };
 
 export type QuoteResponse = {
@@ -17,6 +21,10 @@ export type QuoteResponse = {
   websiteDiscountAmount: number;
   totalPrice: number;
   suggestedPrepayment: number;
+};
+
+export type HolidayRateDatesResponse = {
+  dates: string[];
 };
 
 export type ReservationResponse = {
@@ -29,6 +37,7 @@ export type ReservationResponse = {
     nights: number;
     roomIds: string[];
     extraBedCounts: Record<string, number>;
+    rooms?: AvailabilityRoom[];
     originalTotalPrice: number;
     websiteDiscountAmount: number;
     totalPrice: number;
@@ -71,7 +80,7 @@ function getMonthDifference(fromDateValue: string, toDateValue: string) {
   return (toDate.getFullYear() - fromDate.getFullYear()) * 12 + toDate.getMonth() - fromDate.getMonth();
 }
 
-export async function selectBookingDate(page: Page, fieldLabel: "入住日期" | "退房日期", dateValue: string) {
+export async function openBookingDateCalendar(page: Page, fieldLabel: "入住日期" | "退房日期", dateValue: string) {
   const trigger = page.getByRole("button", { name: `選擇${fieldLabel}` });
   const currentDateText = await trigger.textContent();
   const currentDateValue = currentDateText
@@ -87,6 +96,11 @@ export async function selectBookingDate(page: Page, fieldLabel: "入住日期" |
     await calendar.getByRole("button", { name: navigationButtonName }).click();
   }
 
+  return calendar;
+}
+
+export async function selectBookingDate(page: Page, fieldLabel: "入住日期" | "退房日期", dateValue: string) {
+  const calendar = await openBookingDateCalendar(page, fieldLabel, dateValue);
   await calendar.getByRole("button", { name: formatDisplayDate(dateValue) }).click();
 }
 
@@ -116,10 +130,19 @@ export async function findBookableRoom(
 
     const availability = (await availabilityResponse.json()) as AvailabilityResponse;
     const room = availability.rooms.find((candidate) => (
-      candidate.available && (!options.requireExtraBed || candidate.extraBedNumber > 0)
+      siteIntroducedRoomIds.has(candidate.roomId)
+      && candidate.available
+      && (!options.requireExtraBed || candidate.extraBedNumber > 0)
     ));
     if (room) {
-      return { checkIn, checkOut, roomId: room.roomId, extraBedNumber: room.extraBedNumber };
+      return {
+        checkIn,
+        checkOut,
+        roomId: room.roomId,
+        roomName: room.name,
+        roomTypeLabel: room.roomTypeLabel,
+        extraBedNumber: room.extraBedNumber,
+      };
     }
   }
 

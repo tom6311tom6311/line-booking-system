@@ -4,6 +4,7 @@ import {
   cancelReservation,
   createReservation,
   getAvailability,
+  getHolidayRateDates,
   getReservation,
   quoteReservation,
   type PublicQuote,
@@ -12,6 +13,14 @@ import {
   type NightlyRoomPrice,
 } from "../api/publicBooking";
 import { siteContent } from "../data/siteContent";
+import {
+  BookingDatePicker,
+  addDaysToDateInputValue,
+  isPastDate,
+  isValidStayPeriod,
+  parseDateInputValue,
+  toDateInputValue,
+} from "./BookingDatePicker";
 import { ImageCarousel } from "./ImageCarousel";
 import { SectionHeading } from "./SectionHeading";
 
@@ -22,13 +31,6 @@ const minimumCancelDaysBeforeCheckIn = 7;
 
 function formatCurrency(value: number) {
   return `NT$${value.toLocaleString("zh-TW")}`;
-}
-
-function toDateInputValue(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
 }
 
 function getDefaultDates() {
@@ -49,90 +51,12 @@ function getDaysUntilDate(dateValue: string) {
   return Math.round((targetDate.getTime() - todayDate.getTime()) / 86400000);
 }
 
-function parseDateInputValue(dateValue: string) {
-  const date = new Date(`${dateValue}T00:00:00`);
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
-function addDaysToDateInputValue(dateValue: string, days: number) {
-  const date = parseDateInputValue(dateValue);
-  if (!date) {
-    return "";
-  }
-
-  date.setDate(date.getDate() + days);
-  return toDateInputValue(date);
-}
-
-function getMonthStart(dateValue: string) {
-  const date = parseDateInputValue(dateValue) || new Date();
-  return new Date(date.getFullYear(), date.getMonth(), 1);
-}
-
-function addMonths(date: Date, months: number) {
-  return new Date(date.getFullYear(), date.getMonth() + months, 1);
-}
-
-function getCalendarDates(monthDate: Date) {
-  const firstDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
-  const lastDate = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
-  const dates: Array<Date | null> = Array.from({ length: firstDate.getDay() }, () => null);
-
-  for (let day = 1; day <= lastDate.getDate(); day += 1) {
-    dates.push(new Date(monthDate.getFullYear(), monthDate.getMonth(), day));
-  }
-
-  return dates;
-}
-
-function formatDisplayDate(dateValue: string) {
-  const date = parseDateInputValue(dateValue);
-  if (!date) {
-    return "";
-  }
-
-  return date.toLocaleDateString("zh-TW", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
-function formatMonthTitle(date: Date) {
-  return date.toLocaleDateString("zh-TW", {
-    year: "numeric",
-    month: "long",
-  });
-}
-
-function isValidStayPeriod(checkIn: string, checkOut: string) {
-  const checkInDate = parseDateInputValue(checkIn);
-  const checkOutDate = parseDateInputValue(checkOut);
-  return Boolean(checkInDate && checkOutDate && checkOutDate > checkInDate);
-}
-
-function isPastDate(dateValue: string) {
-  const date = parseDateInputValue(dateValue);
-  if (!date) {
-    return false;
-  }
-
-  const today = new Date();
-  const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  return date < todayDate;
-}
-
 function getUserFacingErrorMessage(error: unknown, fallbackMessage: string) {
   if (error instanceof Error && /[\u3400-\u9fff]/.test(error.message)) {
     return error.message;
   }
 
   return fallbackMessage;
-}
-
-function isBeforeDateValue(date: Date, dateValue: string) {
-  const targetDate = parseDateInputValue(dateValue);
-  return Boolean(targetDate && date < targetDate);
 }
 
 function getPreselectedRoomIdsFromHash() {
@@ -271,14 +195,14 @@ export function BookingSection() {
   const [lookupReservation, setLookupReservation] = useState<PublicReservation | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [holidayRateDates, setHolidayRateDates] = useState<string[]>([]);
   const [isAvailabilityLoading, setIsAvailabilityLoading] = useState(false);
   const [isQuoteLoading, setIsQuoteLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLookupLoading, setIsLookupLoading] = useState(false);
   const [activeDatePicker, setActiveDatePicker] = useState<BookingDateField | null>(null);
-  const [calendarMonth, setCalendarMonth] = useState(() => getMonthStart(defaultDates.checkIn));
 
-  const roomNameById = Object.fromEntries(rooms.map((room) => [room.roomId, getRoomName(room)]));
+  const roomById = Object.fromEntries(rooms.map((room) => [room.roomId, room]));
   const bookingSteps: BookingStep[] = ["search", "rooms", "contact", "review", "complete"];
   const activeStepIndex = bookingSteps.indexOf(bookingStep);
   const activeRoomIndex = rooms.length ? Math.min(Math.max(roomSlideIndex, 0), rooms.length - 1) : 0;
@@ -290,6 +214,28 @@ export function BookingSection() {
   useEffect(() => {
     setQuote(null);
   }, [checkIn, checkOut, selectedRoomIds, extraBedCounts]);
+
+  useEffect(() => {
+    let isCurrent = true;
+    const startDate = todayDate;
+    const endDate = addDaysToDateInputValue(todayDate, 730);
+
+    getHolidayRateDates(startDate, endDate)
+      .then((result) => {
+        if (isCurrent) {
+          setHolidayRateDates(result.dates);
+        }
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setHolidayRateDates([]);
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [todayDate]);
 
   useEffect(() => {
     function handleHashChange() {
@@ -383,37 +329,6 @@ export function BookingSection() {
     setCheckOut(value);
     setBookingStep("search");
     setCreatedReservation(null);
-  }
-
-  function openDatePicker(field: BookingDateField) {
-    const selectedDate = field === "checkIn" ? checkIn : checkOut;
-    setCalendarMonth(getMonthStart(selectedDate));
-    setActiveDatePicker((current) => (current === field ? null : field));
-  }
-
-  function getMinimumSelectableDate(field: BookingDateField) {
-    return field === "checkIn" ? todayDate : addDaysToDateInputValue(checkIn, 1);
-  }
-
-  function canShowPreviousCalendarMonth(field: BookingDateField) {
-    const previousMonth = addMonths(calendarMonth, -1);
-    const minimumMonth = getMonthStart(getMinimumSelectableDate(field));
-    return previousMonth >= minimumMonth;
-  }
-
-  function selectCalendarDate(field: BookingDateField, date: Date) {
-    const selectedDate = toDateInputValue(date);
-    if (isBeforeDateValue(date, getMinimumSelectableDate(field))) {
-      setErrorMessage(field === "checkIn" ? bookingSection.messages.pastDateNotAllowed : bookingSection.messages.invalidStayPeriod);
-      return;
-    }
-
-    if (field === "checkIn") {
-      updateCheckIn(selectedDate);
-    } else {
-      updateCheckOut(selectedDate);
-    }
-    setActiveDatePicker(null);
   }
 
   async function handleAvailabilitySearch() {
@@ -670,10 +585,18 @@ export function BookingSection() {
     }
   }
 
-  function renderRoomDetails(roomIds: string[], extraBedCountsByRoom: Record<string, number>) {
+  function getRoomSummaryName(roomId: string, reservationRooms?: PublicRoom[]) {
+    const reservationRoomById = Object.fromEntries((reservationRooms || []).map((room) => [room.roomId, room]));
+    const room = reservationRoomById[roomId] || roomById[roomId];
+    const roomName = room ? getRoomName(room) : getConfiguredRoomName(roomId);
+    const roomTypeLabel = room?.roomTypeLabel || (room ? getRoomTypeLabel(room) : "");
+    return roomTypeLabel ? `${roomTypeLabel} ${roomName}` : roomName;
+  }
+
+  function renderRoomDetails(roomIds: string[], extraBedCountsByRoom: Record<string, number>, reservationRooms?: PublicRoom[]) {
     return roomIds.map((roomId) => {
       const extraBedCount = extraBedCountsByRoom[roomId] || 0;
-      const roomName = roomNameById[roomId] || getConfiguredRoomName(roomId);
+      const roomName = getRoomSummaryName(roomId, reservationRooms);
       return (
         <span className="booking-room-detail" key={roomId}>
           {roomName}
@@ -681,79 +604,6 @@ export function BookingSection() {
         </span>
       );
     });
-  }
-
-  function renderDateField(field: BookingDateField) {
-    const selectedDate = field === "checkIn" ? checkIn : checkOut;
-    const label = field === "checkIn" ? bookingSection.dateFields.checkIn : bookingSection.dateFields.checkOut;
-    const minimumDate = getMinimumSelectableDate(field);
-    const isOpen = activeDatePicker === field;
-
-    return (
-      <div className="booking-date-field">
-        <span>{label}</span>
-        <button
-          className="booking-date-trigger"
-          type="button"
-          onClick={() => openDatePicker(field)}
-          aria-label={`${bookingSection.dateFields.selectPrefix}${label}`}
-          aria-expanded={isOpen}
-        >
-          {formatDisplayDate(selectedDate)}
-        </button>
-        {isOpen && (
-          <div className="booking-calendar" role="dialog" aria-label={label}>
-            <div className="booking-calendar-header">
-              <button
-                type="button"
-                onClick={() => setCalendarMonth((current) => addMonths(current, -1))}
-                disabled={!canShowPreviousCalendarMonth(field)}
-                aria-label="上一個月"
-              >
-                <ChevronLeft size={17} aria-hidden="true" />
-              </button>
-              <strong>{formatMonthTitle(calendarMonth)}</strong>
-              <button
-                type="button"
-                onClick={() => setCalendarMonth((current) => addMonths(current, 1))}
-                aria-label="下一個月"
-              >
-                <ChevronRight size={17} aria-hidden="true" />
-              </button>
-            </div>
-            <div className="booking-calendar-weekdays" aria-hidden="true">
-              {["日", "一", "二", "三", "四", "五", "六"].map((weekday) => (
-                <span key={weekday}>{weekday}</span>
-              ))}
-            </div>
-            <div className="booking-calendar-grid">
-              {getCalendarDates(calendarMonth).map((date, index) => {
-                if (!date) {
-                  return <span className="booking-calendar-empty" key={`empty-${index}`} />;
-                }
-
-                const dateValue = toDateInputValue(date);
-                const isSelected = dateValue === selectedDate;
-                const isDisabled = isBeforeDateValue(date, minimumDate);
-                return (
-                  <button
-                    className={isSelected ? "is-selected" : ""}
-                    type="button"
-                    key={dateValue}
-                    disabled={isDisabled}
-                    onClick={() => selectCalendarDate(field, date)}
-                    aria-label={formatDisplayDate(dateValue)}
-                    aria-pressed={isSelected}
-                  >
-                    {date.getDate()}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-    );
   }
 
   const bookingSummaryContent = (
@@ -874,8 +724,34 @@ export function BookingSection() {
 
           {bookingStep === "search" && (
             <div className="booking-date-row">
-              {renderDateField("checkIn")}
-              {renderDateField("checkOut")}
+              <BookingDatePicker
+                label={bookingSection.dateFields.checkIn}
+                selectLabelPrefix={bookingSection.dateFields.selectPrefix}
+                value={checkIn}
+                minDate={todayDate}
+                invalidDateMessage={bookingSection.messages.pastDateNotAllowed}
+                holidayRateDates={holidayRateDates}
+                holidayRateLabel={bookingSection.dateFields.holidayRate}
+                isOpen={activeDatePicker === "checkIn"}
+                onToggle={() => setActiveDatePicker((current) => (current === "checkIn" ? null : "checkIn"))}
+                onClose={() => setActiveDatePicker(null)}
+                onChange={updateCheckIn}
+                onInvalidDate={setErrorMessage}
+              />
+              <BookingDatePicker
+                label={bookingSection.dateFields.checkOut}
+                selectLabelPrefix={bookingSection.dateFields.selectPrefix}
+                value={checkOut}
+                minDate={addDaysToDateInputValue(checkIn, 1)}
+                invalidDateMessage={bookingSection.messages.invalidStayPeriod}
+                holidayRateDates={holidayRateDates}
+                holidayRateLabel={bookingSection.dateFields.holidayRate}
+                isOpen={activeDatePicker === "checkOut"}
+                onToggle={() => setActiveDatePicker((current) => (current === "checkOut" ? null : "checkOut"))}
+                onClose={() => setActiveDatePicker(null)}
+                onChange={updateCheckOut}
+                onInvalidDate={setErrorMessage}
+              />
               <button className="primary-button booking-search-button" type="button" onClick={handleAvailabilitySearch} disabled={isAvailabilityLoading || !isSearchPeriodValid}>
                 <Search size={18} aria-hidden="true" />
                 {isAvailabilityLoading ? bookingSection.dateFields.searching : bookingSection.dateFields.search}
@@ -1095,7 +971,7 @@ export function BookingSection() {
                 </div>
                 <div>
                   <dt>{bookingSection.manage.rooms}</dt>
-                  <dd>{renderRoomDetails(createdReservation.roomIds, createdReservation.extraBedCounts)}</dd>
+                  <dd>{renderRoomDetails(createdReservation.roomIds, createdReservation.extraBedCounts, createdReservation.rooms)}</dd>
                 </div>
                 {createdReservation.websiteDiscountAmount && createdReservation.websiteDiscountAmount > 0 && (
                   <>
@@ -1196,7 +1072,7 @@ export function BookingSection() {
                   </div>
                   <div>
                     <dt>{bookingSection.manage.rooms}</dt>
-                    <dd>{renderRoomDetails(lookupReservation.roomIds, lookupReservation.extraBedCounts)}</dd>
+                    <dd>{renderRoomDetails(lookupReservation.roomIds, lookupReservation.extraBedCounts, lookupReservation.rooms)}</dd>
                   </div>
                   {lookupReservation.websiteDiscountAmount && lookupReservation.websiteDiscountAmount > 0 && (
                     <>

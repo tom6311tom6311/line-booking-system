@@ -23,6 +23,7 @@ from utils.public_booking_api_utils import (
   normalize_api_phone_number,
   parse_extra_bed_counts,
   parse_api_json,
+  parse_date_value,
   parse_date_range,
   serialize_booking,
   serialize_room,
@@ -58,6 +59,31 @@ def health():
 def api_public_rooms():
   rooms = [serialize_room(room) for room in booking_dao.get_rooms_by_ids()]
   return jsonify({ 'rooms': rooms })
+
+@app.route(f'{PUBLIC_API_PREFIX}/holiday-rate-dates')
+def api_public_holiday_rate_dates():
+  try:
+    start_date = parse_date_value(request.args.get('start'), 'start')
+    end_date = parse_date_value(request.args.get('end'), 'end')
+    if end_date < start_date:
+      raise ValueError("end must be after start")
+    if (end_date - start_date).days > 730:
+      raise ValueError("date range is too large")
+  except ValueError as e:
+    return api_error(str(e))
+
+  dates = []
+  current_date = start_date
+  while current_date <= end_date:
+    if is_booking_holiday_night(current_date):
+      dates.append(current_date.isoformat())
+    current_date = current_date + timedelta(days=1)
+
+  return jsonify({
+    'start': start_date.isoformat(),
+    'end': end_date.isoformat(),
+    'dates': dates,
+  })
 
 @app.route(f'{PUBLIC_API_PREFIX}/availability')
 def api_public_availability():
@@ -163,7 +189,7 @@ def api_public_create_reservation():
   created_booking_info = booking_dao.get_booking_info(booking_id)
   room_type_summary = booking_dao.get_booking_room_type_summary(booking_id)
   LineNotificationService(app.logger).notify_public_booking_created_admins(created_booking_info, room_type_summary)
-  return jsonify({ 'reservation': serialize_booking(created_booking_info, website_discount_amount) }), 201
+  return jsonify({ 'reservation': serialize_booking(created_booking_info, website_discount_amount, booking_dao) }), 201
 
 @app.route(f'{PUBLIC_API_PREFIX}/reservations/overlap')
 def api_public_overlapping_reservations():
@@ -178,7 +204,7 @@ def api_public_overlapping_reservations():
     'checkIn': check_in_date.isoformat(),
     'checkOut': check_out_date.isoformat(),
     'nights': nights,
-    'reservations': [serialize_booking(booking_info) for booking_info in matches],
+    'reservations': [serialize_booking(booking_info, booking_dao=booking_dao) for booking_info in matches],
   })
 
 @app.route(f'{PUBLIC_API_PREFIX}/reservations/<int:booking_id>')
@@ -189,7 +215,7 @@ def api_public_get_reservation(booking_id):
     return api_error(str(e))
   if not booking_info:
     return api_error("Reservation not found", 404)
-  return jsonify({ 'reservation': serialize_booking(booking_info) })
+  return jsonify({ 'reservation': serialize_booking(booking_info, booking_dao=booking_dao) })
 
 @app.route(f'{PUBLIC_API_PREFIX}/reservations/<int:booking_id>', methods=['PATCH'])
 def api_public_update_reservation(booking_id):
@@ -250,7 +276,7 @@ def api_public_update_reservation(booking_id):
     return api_error("Unable to update reservation", 500)
 
   updated_booking_info = booking_dao.get_booking_info(updated_booking_id)
-  return jsonify({ 'reservation': serialize_booking(updated_booking_info, website_discount_amount) })
+  return jsonify({ 'reservation': serialize_booking(updated_booking_info, website_discount_amount, booking_dao) })
 
 @app.route(f'{PUBLIC_API_PREFIX}/reservations/<int:booking_id>/cancel', methods=['POST'])
 def api_public_cancel_reservation(booking_id):
@@ -268,7 +294,7 @@ def api_public_cancel_reservation(booking_id):
   if not success:
     return api_error("Unable to cancel reservation", 500)
   canceled_booking_info = booking_dao.get_booking_info(booking_id)
-  return jsonify({ 'reservation': serialize_booking(canceled_booking_info) })
+  return jsonify({ 'reservation': serialize_booking(canceled_booking_info, booking_dao=booking_dao) })
 
 # RESTful handlers
 @app.route('/bookings/<booking_id>')
