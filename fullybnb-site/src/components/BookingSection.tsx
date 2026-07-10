@@ -299,15 +299,40 @@ export function BookingSection() {
   }, [checkIn, checkOut, selectedRoomIds, extraBedCounts]);
 
   function updateCheckIn(value: string) {
-    setCheckIn(value);
-    if (!isValidStayPeriod(value, checkOut)) {
-      setCheckOut(addDaysToDateInputValue(value, 1));
+    const nextCheckIn = isPastDate(value) ? todayDate : value;
+
+    if (nextCheckIn !== value) {
+      setErrorMessage(bookingSection.messages.pastDateNotAllowed);
+    } else {
+      setErrorMessage("");
+    }
+
+    setCheckIn(nextCheckIn);
+    if (!isValidStayPeriod(nextCheckIn, checkOut) || isPastDate(checkOut)) {
+      setCheckOut(addDaysToDateInputValue(nextCheckIn, 1));
     }
     setBookingStep("search");
     setCreatedReservation(null);
   }
 
   function updateCheckOut(value: string) {
+    if (isPastDate(value)) {
+      setCheckOut(addDaysToDateInputValue(checkIn, 1));
+      setErrorMessage(bookingSection.messages.pastDateNotAllowed);
+      setBookingStep("search");
+      setCreatedReservation(null);
+      return;
+    }
+
+    if (!isValidStayPeriod(checkIn, value)) {
+      setCheckOut(addDaysToDateInputValue(checkIn, 1));
+      setErrorMessage(bookingSection.messages.invalidStayPeriod);
+      setBookingStep("search");
+      setCreatedReservation(null);
+      return;
+    }
+
+    setErrorMessage("");
     setCheckOut(value);
     setBookingStep("search");
     setCreatedReservation(null);
