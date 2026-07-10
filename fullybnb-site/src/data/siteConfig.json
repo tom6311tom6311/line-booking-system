@@ -4,6 +4,7 @@
     "license": "合法民宿-南投縣民宿658號",
     "phone": "(049)292-6288",
     "phoneHref": "tel:0492926288",
+    "phoneContactName": "黃先生",
     "ownerContact": "(049)292-6288",
     "facebookUrl": "https://www.facebook.com/fullybnb/?ref=bookmarks",
     "facebookLabel": "Facebook 粉絲團",
@@ -33,8 +34,8 @@
     "description": "在山景、草地與鄉村間住一晚。",
     "primaryCtaLabel": "線上訂房",
     "primaryCtaHref": "#booking",
-    "secondaryCtaLabel": "查看房型",
-    "secondaryCtaHref": "#rooms",
+    "secondaryCtaLabel": "聯繫我們",
+    "secondaryCtaHref": "tel:0492926288",
     "images": [
       {
         "src": "../assets/images/hero-building-main.webp",

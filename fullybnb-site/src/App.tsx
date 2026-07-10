@@ -614,6 +614,10 @@ export function App() {
                 <MapPin size={19} aria-hidden="true" />
                 {site.address}
               </a>
+              <a href={site.phoneHref}>
+                <Phone size={19} aria-hidden="true" />
+                {site.phoneContactName} {site.phone}
+              </a>
             </div>
           </div>
           <div className="map-card">
