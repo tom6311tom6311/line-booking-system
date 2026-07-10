@@ -26,6 +26,28 @@ function getCircularSlides<T>(items: T[]) {
   return [items[items.length - 1], ...items, items[0]];
 }
 
+function shouldLoadCircularSlide(index: number, slideIndex: number) {
+  return Math.abs(index - slideIndex) <= 1;
+}
+
+async function preloadImage(src?: string) {
+  if (!src) {
+    return;
+  }
+
+  const image = new Image();
+  image.src = src;
+
+  if (!image.complete) {
+    await new Promise<void>((resolve) => {
+      image.onload = () => resolve();
+      image.onerror = () => resolve();
+    });
+  }
+
+  await image.decode?.().catch(() => undefined);
+}
+
 function normalizeCircularSlideIndex(slideIndex: number, itemCount: number) {
   if (itemCount <= 1) {
     return slideIndex;
@@ -250,6 +272,14 @@ export function App() {
     advanceNextHero();
   }
 
+  async function showHeroSlide(index: number) {
+    pauseHeroAutomation();
+    const targetSlideIndex = index + 1;
+    await preloadImage(circularHeroSlides[targetSlideIndex]?.src);
+    setIsHeroTransitioning(true);
+    setHeroSlideIndex(targetSlideIndex);
+  }
+
   function advanceNextHero() {
     setIsHeroTransitioning(true);
     setHeroSlideIndex((current) => normalizeCircularSlideIndex(current, heroCount) + 1);
@@ -265,6 +295,13 @@ export function App() {
     setStorySlideIndex((current) => normalizeCircularSlideIndex(current, storyCount) + 1);
   }
 
+  async function showStorySlide(index: number) {
+    const targetSlideIndex = index + 1;
+    await preloadImage(circularStories[targetSlideIndex]?.image);
+    setIsStoryTransitioning(true);
+    setStorySlideIndex(targetSlideIndex);
+  }
+
   function showPreviousNearby() {
     setIsNearbyTransitioning(true);
     setNearbySlideIndex((current) => normalizeCircularSlideIndex(current, nearbyCount) - 1);
@@ -273,6 +310,13 @@ export function App() {
   function showNextNearby() {
     setIsNearbyTransitioning(true);
     setNearbySlideIndex((current) => normalizeCircularSlideIndex(current, nearbyCount) + 1);
+  }
+
+  async function showNearbySlide(index: number) {
+    const targetSlideIndex = index + 1;
+    await preloadImage(circularNearbyPlaces[targetSlideIndex]?.image);
+    setIsNearbyTransitioning(true);
+    setNearbySlideIndex(targetSlideIndex);
   }
 
   function handleHeroTransitionEnd() {
@@ -345,37 +389,31 @@ export function App() {
             }}
             onTransitionEnd={handleHeroTransitionEnd}
           >
-            {circularHeroSlides.map((image, index) => (
-              <div
-                className={`hero-slide ${image.slideClassName}`.trim()}
-                key={`${image.slideKey}-${index}`}
-                aria-hidden={index !== heroSlideIndex}
-              >
-                <img
-                  className={`hero-image ${image.imageClassName}`.trim()}
-                  src={image.src}
-                  alt={image.alt}
-                />
-              </div>
-            ))}
+            {circularHeroSlides.map((image, index) => {
+              const shouldLoadImage = shouldLoadCircularSlide(index, heroSlideIndex);
+
+              return (
+                <div
+                  className={`hero-slide ${image.slideClassName}`.trim()}
+                  key={`${image.slideKey}-${index}`}
+                  aria-hidden={index !== heroSlideIndex}
+                >
+                  {shouldLoadImage ? (
+                    <img
+                      className={`hero-image ${image.imageClassName}`.trim()}
+                      src={image.src}
+                      alt={image.alt}
+                      loading="eager"
+                      decoding="async"
+                    />
+                  ) : (
+                    <div className="hero-image-placeholder" aria-hidden="true" />
+                  )}
+                </div>
+              );
+            })}
           </div>
           <div className="hero-overlay" />
-          <button
-            className="carousel-button carousel-button-previous hero-carousel-button"
-            type="button"
-            onClick={showPreviousHero}
-            aria-label="上一張民宿照片"
-          >
-            <ChevronLeft size={20} aria-hidden="true" />
-          </button>
-          <button
-            className="carousel-button carousel-button-next hero-carousel-button"
-            type="button"
-            onClick={showNextHero}
-            aria-label="下一張民宿照片"
-          >
-            <ChevronRight size={20} aria-hidden="true" />
-          </button>
           <div className="carousel-dots hero-carousel-dots" aria-label="民宿照片頁數">
             {heroSlides.map((image, index) => (
               <button
@@ -383,9 +421,7 @@ export function App() {
                 type="button"
                 className={index === heroIndex ? "is-active" : ""}
                 onClick={() => {
-                  pauseHeroAutomation();
-                  setIsHeroTransitioning(true);
-                  setHeroSlideIndex(index + 1);
+                  showHeroSlide(index);
                 }}
                 aria-label={`查看第 ${index + 1} 張民宿照片`}
                 aria-current={index === heroIndex}
@@ -422,15 +458,23 @@ export function App() {
                   }}
                   onTransitionEnd={handleStoryTransitionEnd}
                 >
-                  {circularStories.map((story, index) => (
-                    <article key={`${story.title}-${index}`} aria-hidden={index !== storySlideIndex}>
-                      <div>
-                        <h3>{story.title}</h3>
-                        <p>{story.description}</p>
-                      </div>
-                      <img src={story.image} alt={story.imageAlt} />
-                    </article>
-                  ))}
+                  {circularStories.map((story, index) => {
+                    const shouldLoadImage = shouldLoadCircularSlide(index, storySlideIndex);
+
+                    return (
+                      <article key={`${story.title}-${index}`} aria-hidden={index !== storySlideIndex}>
+                        <div>
+                          <h3>{story.title}</h3>
+                          <p>{story.description}</p>
+                        </div>
+                        {shouldLoadImage ? (
+                          <img src={story.image} alt={story.imageAlt} loading="eager" decoding="async" />
+                        ) : (
+                          <div className="story-image-placeholder" aria-hidden="true" />
+                        )}
+                      </article>
+                    );
+                  })}
                 </div>
                 <div className="story-carousel-controls">
                   <button
@@ -457,8 +501,7 @@ export function App() {
                       type="button"
                       className={index === storyIndex ? "is-active" : ""}
                       onClick={() => {
-                        setIsStoryTransitioning(true);
-                        setStorySlideIndex(index + 1);
+                        showStorySlide(index);
                       }}
                       aria-label={`查看${story.title}`}
                       aria-current={index === storyIndex}
@@ -499,19 +542,27 @@ export function App() {
                 }}
                 onTransitionEnd={handleNearbyTransitionEnd}
               >
-                {circularNearbyPlaces.map((place, index) => (
-                  <article className="nearby-card" key={`${place.name}-${index}`} aria-hidden={index !== nearbySlideIndex}>
-                    <div className="nearby-card-media">
-                      <img src={place.image} alt={place.name} />
-                    </div>
-                    <div className="nearby-card-content">
-                      <p className="eyebrow">{place.category}</p>
-                      <h3>{place.name}</h3>
-                      <p>{place.description}</p>
-                      <span>{place.distance}</span>
-                    </div>
-                  </article>
-                ))}
+                {circularNearbyPlaces.map((place, index) => {
+                  const shouldLoadImage = shouldLoadCircularSlide(index, nearbySlideIndex);
+
+                  return (
+                    <article className="nearby-card" key={`${place.name}-${index}`} aria-hidden={index !== nearbySlideIndex}>
+                      <div className="nearby-card-media">
+                        {shouldLoadImage ? (
+                          <img src={place.image} alt={place.name} loading="eager" decoding="async" />
+                        ) : (
+                          <div className="nearby-image-placeholder" aria-hidden="true" />
+                        )}
+                      </div>
+                      <div className="nearby-card-content">
+                        <p className="eyebrow">{place.category}</p>
+                        <h3>{place.name}</h3>
+                        <p>{place.description}</p>
+                        <span>{place.distance}</span>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
               <div className="nearby-carousel-overlay">
                 <button
@@ -537,8 +588,7 @@ export function App() {
                       type="button"
                       className={dotIndex === nearbyIndex ? "is-active" : ""}
                       onClick={() => {
-                        setIsNearbyTransitioning(true);
-                        setNearbySlideIndex(dotIndex + 1);
+                        showNearbySlide(dotIndex);
                       }}
                       aria-label={`查看${dotPlace.name}`}
                       aria-current={dotIndex === nearbyIndex}
@@ -567,7 +617,14 @@ export function App() {
             </div>
           </div>
           <div className="map-card">
-            <img src={assets.map} alt={`${site.name}簡易地圖`} />
+            <img
+              src={assets.map}
+              alt={`${site.name}簡易地圖`}
+              width={1313}
+              height={1400}
+              loading="lazy"
+              decoding="async"
+            />
             <a href={site.mapUrl} target="_blank" rel="noreferrer">
               <MapPin size={18} aria-hidden="true" />
               開啟地圖

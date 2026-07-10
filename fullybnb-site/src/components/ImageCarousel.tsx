@@ -27,6 +27,28 @@ function normalizeCircularSlideIndex(slideIndex: number, itemCount: number) {
   return slideIndex;
 }
 
+function shouldLoadSlide(index: number, slideIndex: number) {
+  return Math.abs(index - slideIndex) <= 1;
+}
+
+async function preloadImage(src?: string) {
+  if (!src) {
+    return;
+  }
+
+  const image = new Image();
+  image.src = src;
+
+  if (!image.complete) {
+    await new Promise<void>((resolve) => {
+      image.onload = () => resolve();
+      image.onerror = () => resolve();
+    });
+  }
+
+  await image.decode?.().catch(() => undefined);
+}
+
 export function ImageCarousel({ images, label }: Props) {
   const hasMultipleImages = images.length > 1;
   const [slideIndex, setSlideIndex] = useState(hasMultipleImages ? 1 : 0);
@@ -51,7 +73,8 @@ export function ImageCarousel({ images, label }: Props) {
     setSlideIndex((current) => normalizeCircularSlideIndex(current, images.length) + 1);
   }
 
-  function showSlide(index: number) {
+  async function showSlide(index: number) {
+    await preloadImage(images[index]);
     setIsTransitioning(true);
     setSlideIndex(index + 1);
   }
@@ -160,6 +183,7 @@ export function ImageCarousel({ images, label }: Props) {
         onTransitionEnd={handleTransitionEnd}
       >
         {slides.map((image, index) => {
+          const shouldLoadImage = shouldLoadSlide(index, slideIndex);
           const imageIndex = hasMultipleImages
             ? index === 0
               ? images.length - 1
@@ -169,12 +193,22 @@ export function ImageCarousel({ images, label }: Props) {
             : 0;
 
           return (
-            <img
-              key={`${image}-${index}`}
-              src={image}
-              alt={`${label}${carousel.imageSuffix} ${imageIndex + 1}`}
-              aria-hidden={hasMultipleImages && index !== slideIndex}
-            />
+            shouldLoadImage ? (
+              <img
+                key={`${image}-${index}`}
+                src={image}
+                alt={`${label}${carousel.imageSuffix} ${imageIndex + 1}`}
+                aria-hidden={hasMultipleImages && index !== slideIndex}
+                loading="eager"
+                decoding="async"
+              />
+            ) : (
+              <div
+                aria-hidden="true"
+                className="carousel-image-placeholder"
+                key={`${image}-${index}`}
+              />
+            )
           );
         })}
       </div>

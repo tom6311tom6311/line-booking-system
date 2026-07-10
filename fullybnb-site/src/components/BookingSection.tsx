@@ -156,6 +156,10 @@ function getRoomImageGroup(room: PublicRoom) {
   });
 }
 
+function isSiteIntroducedRoom(room: PublicRoom) {
+  return Boolean(getRoomImageGroup(room));
+}
+
 function getRoomSpecialNotes(room: PublicRoom) {
   return getRoomImageGroup(room)?.specialNotes?.filter((note) => note.roomId === room.roomId) || [];
 }
@@ -306,7 +310,7 @@ export function BookingSection() {
     setIsAvailabilityLoading(true);
     try {
       const availability = await getAvailability(checkIn, checkOut);
-      const availableRooms = availability.rooms.filter((room) => room.available);
+      const availableRooms = availability.rooms.filter((room) => room.available && isSiteIntroducedRoom(room));
       const [preselectedRoomId] = getPreselectedRoomIdsFromHash();
       const isPreselectedRoomAvailable = availableRooms.some((room) => room.roomId === preselectedRoomId);
       const preselectedRoomIds = isPreselectedRoomAvailable && preselectedRoomId ? [preselectedRoomId] : [];
@@ -626,7 +630,7 @@ export function BookingSection() {
         </ul>
       </div>
 
-      <div className="booking-tabs" role="tablist" aria-label={bookingSection.messages.tabsAriaLabel}>
+      <div className="booking-tabs" role="group" aria-label={bookingSection.messages.tabsAriaLabel}>
         <button type="button" className={mode === "new" ? "is-active" : ""} onClick={() => setMode("new")}>
           {bookingSection.tabs.booking}
         </button>
