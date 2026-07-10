@@ -73,8 +73,8 @@ function normalizeBookingUrl() {
   window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#booking`);
 }
 
-function scrollBookingIntoView() {
-  const bookingElement = document.getElementById("booking");
+function scrollBookingIntoView(behavior: ScrollBehavior = "smooth") {
+  const bookingElement = document.getElementById("booking-scroll-target") || document.getElementById("booking");
 
   if (!bookingElement) {
     return;
@@ -85,14 +85,19 @@ function scrollBookingIntoView() {
 
   window.scrollTo({
     top: Math.max(scrollTop, 0),
-    behavior: "smooth",
+    behavior,
   });
 }
 
-function scheduleBookingScroll() {
+function scheduleBookingScroll(behavior: ScrollBehavior = "smooth", stabilize = false) {
   window.requestAnimationFrame(() => {
-    window.requestAnimationFrame(scrollBookingIntoView);
+    window.requestAnimationFrame(() => scrollBookingIntoView(behavior));
   });
+
+  if (stabilize) {
+    window.setTimeout(() => scrollBookingIntoView("auto"), 250);
+    window.setTimeout(() => scrollBookingIntoView("auto"), 900);
+  }
 }
 
 function getRoomName(room: PublicRoom) {
@@ -275,9 +280,13 @@ export function BookingSection() {
   }, [todayDate]);
 
   useEffect(() => {
-    function handleHashChange() {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+
+    function handleHashChange(behavior: ScrollBehavior = "smooth", stabilize = false) {
       if (window.location.hash.startsWith("#booking")) {
-        scheduleBookingScroll();
+        scheduleBookingScroll(behavior, stabilize);
       }
 
       if (window.location.hash.startsWith("#booking?roomIds=")) {
@@ -293,9 +302,11 @@ export function BookingSection() {
       }
     }
 
-    handleHashChange();
-    window.addEventListener("hashchange", handleHashChange);
-    return () => window.removeEventListener("hashchange", handleHashChange);
+    const handleUserHashChange = () => handleHashChange("smooth", false);
+
+    handleHashChange("auto", true);
+    window.addEventListener("hashchange", handleUserHashChange);
+    return () => window.removeEventListener("hashchange", handleUserHashChange);
   }, []);
 
   useEffect(() => {
@@ -774,7 +785,9 @@ export function BookingSection() {
 
   return (
     <section className="section booking-section" id="booking">
-      <SectionHeading eyebrow={bookingSection.eyebrow} title={bookingSection.title} />
+      <div id="booking-scroll-target">
+        <SectionHeading eyebrow={bookingSection.eyebrow} title={bookingSection.title} />
+      </div>
 
       <div className="booking-discount-banner">
         <strong>{bookingSection.discountBanner.title}</strong>
