@@ -1319,12 +1319,12 @@ button:focus-visible {
 }
 
 .booking-discount-banner strong {
-  color: var(--clay-dark);
+  color: var(--sage-900);
   font-size: 16px;
 }
 
 .booking-discount-banner span {
-  color: var(--muted);
+  color: var(--sage-900);
   font-weight: 700;
   line-height: 1.6;
 }

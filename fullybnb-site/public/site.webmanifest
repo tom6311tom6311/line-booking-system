@@ -1,0 +1,19 @@
+{
+  "name": "富莉庭緣民宿",
+  "short_name": "Fully BnB",
+  "icons": [
+    {
+      "src": "/favicon-192.webp",
+      "sizes": "192x192",
+      "type": "image/webp"
+    },
+    {
+      "src": "/favicon-512.webp",
+      "sizes": "512x512",
+      "type": "image/webp"
+    }
+  ],
+  "theme_color": "#334839",
+  "background_color": "#faf7eb",
+  "display": "standalone"
+}
