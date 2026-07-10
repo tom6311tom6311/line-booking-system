@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Facebook, MapPin, Phone } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { PointerEvent, TouchEvent } from "react";
 import { BookingSection } from "./components/BookingSection";
 import { RoomCard } from "./components/RoomCard";
@@ -9,6 +9,10 @@ import { nearbyPlaces, rooms, siteContent } from "./data/siteContent";
 const swipeMinimumDistance = 45;
 const swipeIntentRatio = 1.2;
 const heroAutoPauseDurationMs = 10000;
+
+function setStableViewportHeight() {
+  document.documentElement.style.setProperty("--stable-viewport-height", `${window.innerHeight}px`);
+}
 
 function getCircularActiveIndex(slideIndex: number, itemCount: number) {
   if (itemCount <= 0) {
@@ -198,13 +202,15 @@ export function App() {
   const storySwipeHandlers = useSwipeNavigation(showPreviousStory, showNextStory, storyCount > 1);
   const nearbySwipeHandlers = useSwipeNavigation(showPreviousNearby, showNextNearby, nearbyCount > 1);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const orientationQuery = window.matchMedia("(orientation: portrait)");
 
     function updateViewportOrientation(event: MediaQueryListEvent) {
       setIsPortraitViewport(event.matches);
+      window.setTimeout(setStableViewportHeight, 250);
     }
 
+    setStableViewportHeight();
     setIsPortraitViewport(orientationQuery.matches);
     orientationQuery.addEventListener("change", updateViewportOrientation);
 

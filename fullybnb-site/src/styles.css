@@ -31,6 +31,7 @@
   --shadow: 0 18px 45px rgba(51, 64, 53, 0.12);
   --page-max-width: 1120px;
   --page-gutter: max(18px, calc((100% - var(--page-max-width)) / 2));
+  --stable-viewport-height: 100svh;
 }
 
 * {
@@ -152,7 +153,8 @@ button:focus-visible {
 
 .hero {
   position: relative;
-  min-height: 100svh;
+  height: var(--stable-viewport-height);
+  min-height: var(--stable-viewport-height);
   display: grid;
   align-items: end;
   overflow: hidden;
@@ -221,7 +223,7 @@ button:focus-visible {
   position: relative;
   z-index: 2;
   width: min(760px, calc(100% - 36px));
-  margin: 0 var(--page-gutter) clamp(54px, 10svh, 96px);
+  margin: 0 var(--page-gutter) clamp(54px, calc(var(--stable-viewport-height) * 0.1), 96px);
   color: white;
 }
 
@@ -1632,7 +1634,8 @@ button:focus-visible {
 
 @media (max-width: 760px) {
   .hero {
-    min-height: 100svh;
+    height: var(--stable-viewport-height);
+    min-height: var(--stable-viewport-height);
   }
 
   .hero-content {
