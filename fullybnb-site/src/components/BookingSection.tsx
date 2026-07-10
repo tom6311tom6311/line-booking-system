@@ -710,6 +710,17 @@ export function BookingSection() {
     </>
   );
 
+  const bookingPoliciesContent = (
+    <div className="booking-policies">
+      <h3>{reservationPolicies.title}</h3>
+      <ul>
+        {reservationPolicies.items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </div>
+  );
+
   return (
     <section className="section booking-section" id="booking">
       <SectionHeading eyebrow={bookingSection.eyebrow} title={bookingSection.title} />
@@ -717,15 +728,6 @@ export function BookingSection() {
       <div className="booking-discount-banner">
         <strong>{bookingSection.discountBanner.title}</strong>
         <span>{bookingSection.discountBanner.description}</span>
-      </div>
-
-      <div className="booking-policies">
-        <h3>{reservationPolicies.title}</h3>
-        <ul>
-          {reservationPolicies.items.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
       </div>
 
       <div className="booking-tabs" role="group" aria-label={bookingSection.messages.tabsAriaLabel}>
@@ -1158,6 +1160,8 @@ export function BookingSection() {
           )}
         </div>
       )}
+
+      {bookingPoliciesContent}
     </section>
   );
 }
