@@ -232,6 +232,18 @@ button:focus-visible {
 }
 
 @supports (padding: max(0px)) {
+  .hero {
+    margin-top: calc(-1 * env(safe-area-inset-top));
+    min-height: calc(100svh + env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
+  }
+
+  @supports (height: 100dvh) {
+    .hero {
+      min-height: calc(100dvh + env(safe-area-inset-top));
+    }
+  }
+
   .hero-content {
     margin-right: max(var(--page-gutter), env(safe-area-inset-right));
     margin-left: max(var(--page-gutter), env(safe-area-inset-left));
