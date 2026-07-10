@@ -195,7 +195,7 @@ function getRoomTypeLabel(room: PublicRoom) {
     grass: "帳篷",
   };
 
-  return room.roomTypeLabel || labels[room.roomType] || room.roomType;
+  return labels[room.roomType] || room.roomType;
 }
 
 function getBookingStepIcon(step: BookingStep) {
@@ -918,14 +918,13 @@ export function BookingSection() {
                       <ImageCarousel images={roomImageGroup.images} label={`${getRoomName(room)}${room.description}`} />
                     )}
                     <div>
-                      <p className="eyebrow">{room.description}</p>
+                      <p className="eyebrow">{getRoomTypeLabel(room)}</p>
                       <h3>{getRoomName(room)}</h3>
                       <ul className="tag-list booking-room-tags" aria-label={`${getRoomName(room)}特色`}>
-                        <li>{getRoomTypeLabel(room)}</li>
-                        <li>{bookingSection.roomCard.extraBedPrefix}{room.extraBedNumber}{bookingSection.roomCard.extraBedSuffix}</li>
                         {roomImageGroup?.highlights.map((highlight) => (
                           <li key={highlight}>{highlight}</li>
                         ))}
+                        <li>{bookingSection.roomCard.extraBedPrefix}{room.extraBedNumber}{bookingSection.roomCard.extraBedSuffix}</li>
                       </ul>
                       {roomSpecialNotes.length > 0 && (
                         <ul className="room-special-notes booking-room-special-notes">
