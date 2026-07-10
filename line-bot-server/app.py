@@ -25,6 +25,7 @@ from utils.public_booking_api_utils import (
   parse_api_json,
   parse_date_value,
   parse_date_range,
+  is_public_bookable_date_range,
   serialize_booking,
   serialize_room,
   validate_public_room_ids,
@@ -93,7 +94,11 @@ def api_public_availability():
     return api_error(str(e))
 
   rooms_by_id = get_rooms_by_id(booking_dao)
-  available_room_ids = set(booking_dao.get_available_room_ids(check_in_date, last_date) or [])
+  available_room_ids = (
+    set(booking_dao.get_available_room_ids(check_in_date, last_date) or [])
+    if is_public_bookable_date_range(check_in_date, last_date)
+    else set()
+  )
   rooms = [
     serialize_room(room, room['room_id'] in available_room_ids)
     for room in rooms_by_id.values()

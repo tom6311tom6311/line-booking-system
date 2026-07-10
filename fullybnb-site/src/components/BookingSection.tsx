@@ -31,6 +31,7 @@ type BookingDateField = "checkIn" | "checkOut";
 const minimumCancelDaysBeforeCheckIn = 7;
 const websiteBookingSource = "官網";
 const bookingScrollOffsetPx = 18;
+const publicBookingMaxAdvanceDays = 180;
 
 function formatCurrency(value: number) {
   return `NT$${value.toLocaleString("zh-TW")}`;
@@ -134,6 +135,12 @@ function isValidMobilePhone(value: string) {
   return /^09\d{8}$/.test(value);
 }
 
+function isAfterDate(dateValue: string, maxDateValue: string) {
+  const date = parseDateInputValue(dateValue);
+  const maxDate = parseDateInputValue(maxDateValue);
+  return Boolean(date && maxDate && date > maxDate);
+}
+
 function isWebsiteReservation(reservation: PublicReservation) {
   return reservation.source === websiteBookingSource;
 }
@@ -205,6 +212,7 @@ export function BookingSection() {
   const { bookingSection, reservationPolicies, site } = siteContent;
   const defaultDates = useMemo(getDefaultDates, []);
   const todayDate = useMemo(() => toDateInputValue(new Date()), []);
+  const maxBookableCheckInDate = useMemo(() => addDaysToDateInputValue(todayDate, publicBookingMaxAdvanceDays), [todayDate]);
   const [mode, setMode] = useState<BookingMode>("new");
   const [bookingStep, setBookingStep] = useState<BookingStep>("search");
   const [checkIn, setCheckIn] = useState(defaultDates.checkIn);
@@ -236,7 +244,7 @@ export function BookingSection() {
   const activeStepIndex = bookingSteps.indexOf(bookingStep);
   const activeRoomIndex = rooms.length ? Math.min(Math.max(roomSlideIndex, 0), rooms.length - 1) : 0;
   const isStayPeriodValid = isValidStayPeriod(checkIn, checkOut);
-  const isSearchPeriodValid = isStayPeriodValid && !isPastDate(checkIn) && !isPastDate(checkOut);
+  const isSearchPeriodValid = isStayPeriodValid && !isPastDate(checkIn) && !isPastDate(checkOut) && !isAfterDate(checkIn, maxBookableCheckInDate);
   const isRoomSelectionValid = Boolean(selectedRoomIds.length && quote && !isQuoteLoading);
   const isContactInfoValid = Boolean(customerName.trim() && isValidMobilePhone(phoneNumber));
 
@@ -330,6 +338,8 @@ export function BookingSection() {
 
     if (nextCheckIn !== value) {
       setErrorMessage(bookingSection.messages.pastDateNotAllowed);
+    } else if (isAfterDate(nextCheckIn, maxBookableCheckInDate)) {
+      setErrorMessage(bookingSection.messages.advanceDateNotAllowed);
     } else {
       setErrorMessage("");
     }
@@ -375,6 +385,16 @@ export function BookingSection() {
       setQuote(null);
       setBookingStep("search");
       setErrorMessage(bookingSection.messages.pastDateNotAllowed);
+      return;
+    }
+    if (isAfterDate(checkIn, maxBookableCheckInDate)) {
+      setRooms([]);
+      setNightlyRoomPrices({});
+      setSelectedRoomIds([]);
+      setExtraBedCounts({});
+      setQuote(null);
+      setBookingStep("search");
+      setErrorMessage(bookingSection.messages.advanceDateNotAllowed);
       return;
     }
     if (!isValidStayPeriod(checkIn, checkOut)) {
@@ -804,7 +824,9 @@ export function BookingSection() {
                 selectLabelPrefix={bookingSection.dateFields.selectPrefix}
                 value={checkIn}
                 minDate={todayDate}
+                maxDate={maxBookableCheckInDate}
                 invalidDateMessage={bookingSection.messages.pastDateNotAllowed}
+                maxInvalidDateMessage={bookingSection.messages.advanceDateNotAllowed}
                 holidayRateDates={holidayRateDates}
                 holidayRateLabel={bookingSection.dateFields.holidayRate}
                 isOpen={activeDatePicker === "checkIn"}

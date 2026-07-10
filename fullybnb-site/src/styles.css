@@ -608,6 +608,10 @@ button:focus-visible {
   color: white;
 }
 
+.booking-calendar-grid button:disabled {
+  color: rgba(102, 112, 96, 0.42);
+}
+
 .booking-date-row input[type="date"] {
   max-width: 100%;
   -webkit-appearance: none;

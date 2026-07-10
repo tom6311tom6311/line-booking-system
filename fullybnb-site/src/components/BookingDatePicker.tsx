@@ -6,7 +6,9 @@ type BookingDatePickerProps = {
   selectLabelPrefix: string;
   value: string;
   minDate: string;
+  maxDate?: string;
   invalidDateMessage: string;
+  maxInvalidDateMessage?: string;
   holidayRateDates?: string[];
   holidayRateLabel?: string;
   isOpen: boolean;
@@ -101,12 +103,23 @@ function isBeforeDateValue(date: Date, dateValue: string) {
   return Boolean(targetDate && date < targetDate);
 }
 
+function isAfterDateValue(date: Date, dateValue?: string) {
+  if (!dateValue) {
+    return false;
+  }
+
+  const targetDate = parseDateInputValue(dateValue);
+  return Boolean(targetDate && date > targetDate);
+}
+
 export function BookingDatePicker({
   label,
   selectLabelPrefix,
   value,
   minDate,
+  maxDate,
   invalidDateMessage,
+  maxInvalidDateMessage,
   holidayRateDates = [],
   holidayRateLabel = "假日價",
   isOpen,
@@ -148,9 +161,23 @@ export function BookingDatePicker({
     return previousMonth >= minimumMonth;
   }
 
+  function canShowNextCalendarMonth() {
+    if (!maxDate) {
+      return true;
+    }
+
+    const nextMonth = addMonths(calendarMonth, 1);
+    const maximumMonth = getMonthStart(maxDate);
+    return nextMonth <= maximumMonth;
+  }
+
   function selectCalendarDate(date: Date) {
     if (isBeforeDateValue(date, minDate)) {
       onInvalidDate(invalidDateMessage);
+      return;
+    }
+    if (isAfterDateValue(date, maxDate)) {
+      onInvalidDate(maxInvalidDateMessage || invalidDateMessage);
       return;
     }
 
@@ -185,6 +212,7 @@ export function BookingDatePicker({
             <button
               type="button"
               onClick={() => setCalendarMonth((current) => addMonths(current, 1))}
+              disabled={!canShowNextCalendarMonth()}
               aria-label="下一個月"
             >
               <ChevronRight size={17} aria-hidden="true" />
@@ -203,7 +231,7 @@ export function BookingDatePicker({
 
               const dateValue = toDateInputValue(date);
               const isSelected = dateValue === value;
-              const isDisabled = isBeforeDateValue(date, minDate);
+              const isDisabled = isBeforeDateValue(date, minDate) || isAfterDateValue(date, maxDate);
               const isHolidayRate = holidayRateDates.includes(dateValue);
               const classNames = [
                 isSelected ? "is-selected" : "",

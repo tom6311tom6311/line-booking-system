@@ -7,9 +7,12 @@ from flask import jsonify, request
 from const.booking_const import EXTRA_BED_PRICE_PER_NIGHT, PUBLIC_BOOKING_SOURCE, ROOM_TYPES
 from utils.datetime_utils import get_local_today
 from utils.input_utils import format_phone_number, format_phone_number_for_display, is_valid_date, is_valid_phone_number
+from utils.taiwan_holiday_utils import is_taiwan_holiday
 
 ROOM_TYPE_LABELS = { room_type: room_type_name for room_type, room_type_name, _ in ROOM_TYPES }
 MIN_CANCEL_DAYS_BEFORE_CHECK_IN = 7
+PUBLIC_BOOKING_MAX_ADVANCE_DAYS = 180
+PUBLIC_BOOKING_CLOSED_WEEKDAYS = {0, 1, 2}
 GENERIC_PUBLIC_API_ERROR_MESSAGE = "系統暫時無法處理，請稍後再試。"
 
 
@@ -49,12 +52,35 @@ def parse_date_value(value, field_name):
 def parse_date_range(source):
   check_in = parse_date_value(source.get('checkIn'), 'checkIn')
   check_out = parse_date_value(source.get('checkOut'), 'checkOut')
-  if check_in < get_local_today():
+  today = get_local_today()
+  if check_in < today:
     raise ValueError("入住日期不能早於今天")
+  if check_in > today + timedelta(days=PUBLIC_BOOKING_MAX_ADVANCE_DAYS):
+    raise ValueError("目前僅開放 180 天內的訂房。")
   nights = (check_out - check_in).days
   if nights < 1 or nights > 15:
     raise ValueError("退房日期需晚於入住日期，且住宿晚數不可超過 15 晚。")
   return check_in, check_out, check_out - timedelta(days=1), nights
+
+
+def iter_stay_nights(check_in_date, last_date):
+  current_date = check_in_date
+  while current_date <= last_date:
+    yield current_date
+    current_date += timedelta(days=1)
+
+
+def is_public_bookable_night(target_date):
+  return target_date.weekday() not in PUBLIC_BOOKING_CLOSED_WEEKDAYS or is_taiwan_holiday(target_date)
+
+
+def is_public_bookable_date_range(check_in_date, last_date):
+  return all(is_public_bookable_night(target_date) for target_date in iter_stay_nights(check_in_date, last_date))
+
+
+def ensure_public_bookable_date_range(check_in_date, last_date):
+  if not is_public_bookable_date_range(check_in_date, last_date):
+    raise ValueError("週一、週二、週三暫不開放線上訂房，國定假日除外。")
 
 
 def normalize_api_phone_number(phone_number):
@@ -175,6 +201,7 @@ def parse_extra_bed_counts(value, room_ids, booking_dao):
 
 
 def ensure_rooms_available(room_ids, check_in_date, last_date, booking_dao, exclude_booking_id=None):
+  ensure_public_bookable_date_range(check_in_date, last_date)
   available_room_ids = booking_dao.get_available_room_ids(check_in_date, last_date, exclude_booking_id) or []
   unavailable_room_ids = [room_id for room_id in room_ids if room_id not in available_room_ids]
   if unavailable_room_ids:

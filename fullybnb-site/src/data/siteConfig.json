@@ -230,6 +230,7 @@
       "noRoomsAvailable": "此日期目前沒有可線上預訂的空房，請更換日期。",
       "invalidStayPeriod": "退房日期必須晚於入住日期。",
       "pastDateNotAllowed": "請選擇今天或今天之後的日期。",
+      "advanceDateNotAllowed": "目前僅開放 180 天內的訂房。",
       "quoteError": "計算房價失敗，請重新選擇房間或稍後再試。",
       "roomsRequired": "請先選擇房間。",
       "nameRequired": "請輸入姓名。",
