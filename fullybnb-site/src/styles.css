@@ -499,10 +499,16 @@ button:focus-visible {
 }
 
 .booking-form input,
+.booking-form textarea,
 .booking-date-row input,
 .booking-date-trigger,
 .extra-bed-options button {
   padding: 0 11px;
+}
+
+.booking-form input,
+.booking-form textarea {
+  font-size: 16px;
 }
 
 .booking-date-field {
@@ -592,7 +598,7 @@ button:focus-visible {
 }
 
 .booking-calendar-grid button.is-holiday-rate {
-  color: var(--clay-dark);
+  color: #c2410c;
 }
 
 .booking-calendar-grid button.is-selected {
