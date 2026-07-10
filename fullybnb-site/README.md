@@ -1,4 +1,4 @@
-# Fully BnB Site
+# FullyBnB Site
 
 Single-page React site for 埔里富莉庭緣民宿.
 
