@@ -194,6 +194,7 @@ export function App() {
   const circularHeroSlides = getCircularSlides(heroSlides);
   const circularStories = getCircularSlides(intro.stories);
   const circularNearbyPlaces = getCircularSlides(nearbyPlaces);
+  const activeHeroSlide = circularHeroSlides[Math.min(Math.max(heroSlideIndex, 0), circularHeroSlides.length - 1)] || heroSlides[0];
   const heroSwipeHandlers = useSwipeNavigation(showPreviousHero, showNextHero, heroCount > 1);
   const storySwipeHandlers = useSwipeNavigation(showPreviousStory, showNextStory, storyCount > 1);
   const nearbySwipeHandlers = useSwipeNavigation(showPreviousNearby, showNextNearby, nearbyCount > 1);
@@ -381,6 +382,11 @@ export function App() {
     <>
       <main id="top" onPointerUpCapture={clearClickedButtonFocus}>
         <section className="hero" aria-label={hero.ariaLabel} {...heroSwipeHandlers.touchHandlers}>
+          <div
+            className="hero-safe-area-backdrop"
+            style={{ backgroundImage: `url(${activeHeroSlide.src})` }}
+            aria-hidden="true"
+          />
           <div
             className="hero-slides"
             style={{

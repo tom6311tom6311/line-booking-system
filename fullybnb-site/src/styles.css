@@ -159,6 +159,10 @@ button:focus-visible {
   touch-action: pan-y;
 }
 
+.hero-safe-area-backdrop {
+  display: none;
+}
+
 @supports (height: 100dvh) {
   .hero {
     min-height: 100dvh;
@@ -232,6 +236,21 @@ button:focus-visible {
 }
 
 @supports (padding: max(0px)) {
+  .hero-safe-area-backdrop {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 0;
+    display: block;
+    height: env(safe-area-inset-top);
+    min-height: env(safe-area-inset-top);
+    background-color: var(--sage-900);
+    background-position: center top;
+    background-size: cover;
+    pointer-events: none;
+  }
+
   .hero {
     margin-top: calc(-1 * env(safe-area-inset-top));
     min-height: calc(100svh + env(safe-area-inset-top));
