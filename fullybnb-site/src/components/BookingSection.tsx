@@ -28,6 +28,7 @@ type BookingMode = "new" | "manage";
 type BookingStep = "search" | "rooms" | "contact" | "review" | "complete";
 type BookingDateField = "checkIn" | "checkOut";
 const minimumCancelDaysBeforeCheckIn = 7;
+const websiteBookingSource = "官網";
 
 function formatCurrency(value: number) {
   return `NT$${value.toLocaleString("zh-TW")}`;
@@ -107,6 +108,10 @@ function normalizeMobilePhoneInput(value: string) {
 
 function isValidMobilePhone(value: string) {
   return /^09\d{8}$/.test(value);
+}
+
+function isWebsiteReservation(reservation: PublicReservation) {
+  return reservation.source === websiteBookingSource;
 }
 
 function getRoomTypeLabel(room: PublicRoom) {
@@ -606,6 +611,27 @@ export function BookingSection() {
     });
   }
 
+  function renderReservationDiscountRows(reservation: PublicReservation) {
+    const websiteDiscountAmount = reservation.websiteDiscountAmount ?? 0;
+    if (websiteDiscountAmount <= 0) {
+      return null;
+    }
+
+    const originalTotalPrice = reservation.originalTotalPrice ?? reservation.totalPrice + websiteDiscountAmount;
+    return (
+      <>
+        <div>
+          <dt>{bookingSection.summary.originalTotalPrice}</dt>
+          <dd>{formatCurrency(originalTotalPrice)}</dd>
+        </div>
+        <div>
+          <dt>{bookingSection.summary.websiteDiscount}</dt>
+          <dd className="booking-discount-amount">-{formatCurrency(websiteDiscountAmount)}</dd>
+        </div>
+      </>
+    );
+  }
+
   const bookingSummaryContent = (
     <>
       <h3>{bookingSection.summary.title}</h3>
@@ -973,18 +999,7 @@ export function BookingSection() {
                   <dt>{bookingSection.manage.rooms}</dt>
                   <dd>{renderRoomDetails(createdReservation.roomIds, createdReservation.extraBedCounts, createdReservation.rooms)}</dd>
                 </div>
-                {createdReservation.websiteDiscountAmount && createdReservation.websiteDiscountAmount > 0 && (
-                  <>
-                    <div>
-                      <dt>{bookingSection.summary.originalTotalPrice}</dt>
-                      <dd>{formatCurrency(createdReservation.originalTotalPrice || createdReservation.totalPrice + createdReservation.websiteDiscountAmount)}</dd>
-                    </div>
-                    <div>
-                      <dt>{bookingSection.summary.websiteDiscount}</dt>
-                      <dd className="booking-discount-amount">-{formatCurrency(createdReservation.websiteDiscountAmount)}</dd>
-                    </div>
-                  </>
-                )}
+                {renderReservationDiscountRows(createdReservation)}
                 <div>
                   <dt>{bookingSection.summary.totalPrice}</dt>
                   <dd>{formatCurrency(createdReservation.totalPrice)}</dd>
@@ -997,10 +1012,12 @@ export function BookingSection() {
                   <dt>{bookingSection.complete.prepaymentStatus}</dt>
                   <dd>{formatPrepaymentStatus(createdReservation.prepaymentStatus)}</dd>
                 </div>
-                <div>
-                  <dt>{bookingSection.summary.notes}</dt>
-                  <dd>{createdReservation.notes || bookingSection.summary.noNotes}</dd>
-                </div>
+                {isWebsiteReservation(createdReservation) && (
+                  <div>
+                    <dt>{bookingSection.summary.notes}</dt>
+                    <dd>{createdReservation.notes || bookingSection.summary.noNotes}</dd>
+                  </div>
+                )}
               </dl>
               <p className="booking-confirmation-note">{bookingSection.complete.prepaymentNotice}</p>
             </aside>
@@ -1074,18 +1091,7 @@ export function BookingSection() {
                     <dt>{bookingSection.manage.rooms}</dt>
                     <dd>{renderRoomDetails(lookupReservation.roomIds, lookupReservation.extraBedCounts, lookupReservation.rooms)}</dd>
                   </div>
-                  {lookupReservation.websiteDiscountAmount && lookupReservation.websiteDiscountAmount > 0 && (
-                    <>
-                      <div>
-                        <dt>{bookingSection.summary.originalTotalPrice}</dt>
-                        <dd>{formatCurrency(lookupReservation.originalTotalPrice || lookupReservation.totalPrice + lookupReservation.websiteDiscountAmount)}</dd>
-                      </div>
-                      <div>
-                        <dt>{bookingSection.summary.websiteDiscount}</dt>
-                        <dd className="booking-discount-amount">-{formatCurrency(lookupReservation.websiteDiscountAmount)}</dd>
-                      </div>
-                    </>
-                  )}
+                  {renderReservationDiscountRows(lookupReservation)}
                   <div>
                     <dt>{bookingSection.manage.totalPrice}</dt>
                     <dd>{formatCurrency(lookupReservation.totalPrice)}</dd>
@@ -1098,10 +1104,12 @@ export function BookingSection() {
                     <dt>{bookingSection.complete.prepaymentStatus}</dt>
                     <dd>{formatPrepaymentStatus(lookupReservation.prepaymentStatus)}</dd>
                   </div>
-                  <div>
-                    <dt>{bookingSection.summary.notes}</dt>
-                    <dd>{lookupReservation.notes || bookingSection.summary.noNotes}</dd>
-                  </div>
+                  {isWebsiteReservation(lookupReservation) && (
+                    <div>
+                      <dt>{bookingSection.summary.notes}</dt>
+                      <dd>{lookupReservation.notes || bookingSection.summary.noNotes}</dd>
+                    </div>
+                  )}
                 </dl>
                 {lookupReservation.status !== "canceled" && getDaysUntilDate(lookupReservation.checkIn) < minimumCancelDaysBeforeCheckIn && (
                   <p>{bookingSection.manage.cancelUnavailable}</p>
