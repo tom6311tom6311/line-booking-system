@@ -1,10 +1,13 @@
 import { expect, test } from "@playwright/test";
 import {
   createReservationFixture,
+  dateFromOffset,
   findBookableRoom,
   formatCurrency,
+  formatDisplayDate,
   newApiContext,
   prepareBookingReview,
+  selectBookingDate,
 } from "./booking-test-utils";
 
 test("empty manage tab does not show an empty booking summary", async ({ page }) => {
@@ -21,10 +24,44 @@ test("invalid date period cannot be searched", async ({ page }) => {
   await page.goto("/#booking");
   const room = await findBookableRoom(api);
 
-  await page.getByLabel("入住日期").fill(room.checkIn);
-  await page.getByLabel("退房日期").fill(room.checkIn);
+  await selectBookingDate(page, "入住日期", room.checkIn);
+  await expect(page.getByRole("button", { name: "選擇退房日期" })).toContainText(formatDisplayDate(room.checkOut));
 
-  await expect(page.getByRole("button", { name: "查詢空房" })).toBeDisabled();
+  await page.getByRole("button", { name: "選擇退房日期" }).click();
+  await expect(page.locator(".booking-calendar").getByRole("button", { name: formatDisplayDate(room.checkIn) })).toBeDisabled();
+
+  await api.dispose();
+});
+
+test("calendar blocks past dates and auto-selects the next checkout date", async ({ page }) => {
+  await page.goto("/#booking");
+
+  const tomorrow = dateFromOffset(1);
+  const dayAfterTomorrow = dateFromOffset(2);
+  const yesterday = dateFromOffset(-1);
+
+  await page.getByRole("button", { name: "選擇入住日期" }).click();
+  await expect(page.locator(".booking-calendar").getByRole("button", { name: formatDisplayDate(yesterday) })).toBeDisabled();
+  await page.locator(".booking-calendar").getByRole("button", { name: formatDisplayDate(tomorrow) }).click();
+
+  await expect(page.getByRole("button", { name: "選擇入住日期" })).toContainText(formatDisplayDate(tomorrow));
+  await expect(page.getByRole("button", { name: "選擇退房日期" })).toContainText(formatDisplayDate(dayAfterTomorrow));
+  await expect(page.getByRole("button", { name: "查詢空房" })).toBeEnabled();
+});
+
+test("public booking API rejects past check-in dates with a localized error", async () => {
+  const api = await newApiContext();
+  const response = await api.get("/api/public/availability", {
+    params: {
+      checkIn: dateFromOffset(-1),
+      checkOut: dateFromOffset(1),
+    },
+  });
+
+  expect(response.ok()).toBe(false);
+  const payload = await response.json();
+  expect(payload.error).toContain("入住日期不能早於今天");
+  expect(payload.error).not.toMatch(/[A-Za-z]{3,}/);
 
   await api.dispose();
 });
@@ -34,8 +71,8 @@ test("phone fields accept only normalized 09 mobile numbers", async ({ page }) =
   const room = await findBookableRoom(api);
 
   await page.goto(`/#booking?roomIds=${encodeURIComponent(room.roomId)}`);
-  await page.getByLabel("入住日期").fill(room.checkIn);
-  await page.getByLabel("退房日期").fill(room.checkOut);
+  await selectBookingDate(page, "入住日期", room.checkIn);
+  await selectBookingDate(page, "退房日期", room.checkOut);
   await page.getByRole("button", { name: "查詢空房" }).click();
   await expect(page.getByRole("button", { name: "下一步" })).toBeEnabled();
   await page.getByRole("button", { name: "下一步" }).click();

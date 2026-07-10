@@ -523,6 +523,7 @@ button:focus-visible {
 
 .booking-form label,
 .booking-date-row label,
+.booking-date-field,
 .extra-bed-control {
   display: grid;
   gap: 6px;
@@ -535,6 +536,7 @@ button:focus-visible {
 .booking-form input,
 .booking-form textarea,
 .booking-date-row input,
+.booking-date-trigger,
 .extra-bed-options button {
   width: 100%;
   min-width: 0;
@@ -548,8 +550,99 @@ button:focus-visible {
 
 .booking-form input,
 .booking-date-row input,
+.booking-date-trigger,
 .extra-bed-options button {
   padding: 0 11px;
+}
+
+.booking-date-field {
+  position: relative;
+}
+
+.booking-date-trigger {
+  cursor: pointer;
+  text-align: center;
+}
+
+.booking-calendar {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 12;
+  width: min(300px, calc(100vw - 64px));
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--paper);
+  box-shadow: 0 18px 40px rgba(51, 64, 53, 0.18);
+}
+
+.booking-calendar-header {
+  display: grid;
+  grid-template-columns: 34px 1fr 34px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.booking-calendar-header strong {
+  text-align: center;
+  font-size: 15px;
+}
+
+.booking-calendar-header button,
+.booking-calendar-grid button {
+  display: inline-grid;
+  place-items: center;
+  min-width: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sage-900);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+}
+
+.booking-calendar-header button {
+  width: 34px;
+  height: 34px;
+}
+
+.booking-calendar-header button:disabled,
+.booking-calendar-grid button:disabled {
+  color: rgba(102, 112, 96, 0.42);
+  cursor: not-allowed;
+}
+
+.booking-calendar-weekdays,
+.booking-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.booking-calendar-weekdays {
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.booking-calendar-grid button,
+.booking-calendar-empty {
+  min-height: 34px;
+}
+
+.booking-calendar-grid button:not(:disabled):hover,
+.booking-calendar-grid button:not(:disabled):focus-visible {
+  border-color: rgba(95, 125, 100, 0.36);
+  background: var(--sage-100);
+}
+
+.booking-calendar-grid button.is-selected {
+  background: var(--sage-900);
+  color: white;
 }
 
 .booking-date-row input[type="date"] {
@@ -1593,6 +1686,11 @@ button:focus-visible {
   .booking-date-row {
     grid-template-columns: 1fr;
     padding: 16px;
+  }
+
+  .booking-calendar {
+    right: 0;
+    width: auto;
   }
 
   .booking-room-carousel.has-controls {

@@ -146,6 +146,7 @@
     "dateFields": {
       "checkIn": "入住日期",
       "checkOut": "退房日期",
+      "selectPrefix": "選擇",
       "search": "查詢空房",
       "searching": "查詢中"
     },

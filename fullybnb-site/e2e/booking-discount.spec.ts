@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { findBookableRoom, formatCurrency, newApiContext, type QuoteResponse } from "./booking-test-utils";
+import { findBookableRoom, formatCurrency, newApiContext, selectBookingDate, type QuoteResponse } from "./booking-test-utils";
 
 test("booking summary shows the site-only discount from the real backend", async ({ page }) => {
   const api = await newApiContext();
@@ -19,8 +19,8 @@ test("booking summary shows the site-only discount from the real backend", async
   expect(quote.originalTotalPrice - quote.websiteDiscountAmount).toBe(quote.totalPrice);
 
   await page.goto(`/#booking?roomIds=${encodeURIComponent(roomId)}`);
-  await page.getByLabel("入住日期").fill(checkIn);
-  await page.getByLabel("退房日期").fill(checkOut);
+  await selectBookingDate(page, "入住日期", checkIn);
+  await selectBookingDate(page, "退房日期", checkOut);
   await page.getByRole("button", { name: "查詢空房" }).click();
 
   await expect(page.getByRole("button", { name: "下一步" })).toBeEnabled();

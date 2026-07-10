@@ -17,6 +17,7 @@ import { SectionHeading } from "./SectionHeading";
 
 type BookingMode = "new" | "manage";
 type BookingStep = "search" | "rooms" | "contact" | "review" | "complete";
+type BookingDateField = "checkIn" | "checkOut";
 const minimumCancelDaysBeforeCheckIn = 7;
 
 function formatCurrency(value: number) {
@@ -63,6 +64,47 @@ function addDaysToDateInputValue(dateValue: string, days: number) {
   return toDateInputValue(date);
 }
 
+function getMonthStart(dateValue: string) {
+  const date = parseDateInputValue(dateValue) || new Date();
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function addMonths(date: Date, months: number) {
+  return new Date(date.getFullYear(), date.getMonth() + months, 1);
+}
+
+function getCalendarDates(monthDate: Date) {
+  const firstDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+  const lastDate = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+  const dates: Array<Date | null> = Array.from({ length: firstDate.getDay() }, () => null);
+
+  for (let day = 1; day <= lastDate.getDate(); day += 1) {
+    dates.push(new Date(monthDate.getFullYear(), monthDate.getMonth(), day));
+  }
+
+  return dates;
+}
+
+function formatDisplayDate(dateValue: string) {
+  const date = parseDateInputValue(dateValue);
+  if (!date) {
+    return "";
+  }
+
+  return date.toLocaleDateString("zh-TW", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function formatMonthTitle(date: Date) {
+  return date.toLocaleDateString("zh-TW", {
+    year: "numeric",
+    month: "long",
+  });
+}
+
 function isValidStayPeriod(checkIn: string, checkOut: string) {
   const checkInDate = parseDateInputValue(checkIn);
   const checkOutDate = parseDateInputValue(checkOut);
@@ -86,6 +128,11 @@ function getUserFacingErrorMessage(error: unknown, fallbackMessage: string) {
   }
 
   return fallbackMessage;
+}
+
+function isBeforeDateValue(date: Date, dateValue: string) {
+  const targetDate = parseDateInputValue(dateValue);
+  return Boolean(targetDate && date < targetDate);
 }
 
 function getPreselectedRoomIdsFromHash() {
@@ -228,6 +275,8 @@ export function BookingSection() {
   const [isQuoteLoading, setIsQuoteLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLookupLoading, setIsLookupLoading] = useState(false);
+  const [activeDatePicker, setActiveDatePicker] = useState<BookingDateField | null>(null);
+  const [calendarMonth, setCalendarMonth] = useState(() => getMonthStart(defaultDates.checkIn));
 
   const roomNameById = Object.fromEntries(rooms.map((room) => [room.roomId, getRoomName(room)]));
   const bookingSteps: BookingStep[] = ["search", "rooms", "contact", "review", "complete"];
@@ -308,9 +357,7 @@ export function BookingSection() {
     }
 
     setCheckIn(nextCheckIn);
-    if (!isValidStayPeriod(nextCheckIn, checkOut) || isPastDate(checkOut)) {
-      setCheckOut(addDaysToDateInputValue(nextCheckIn, 1));
-    }
+    setCheckOut(addDaysToDateInputValue(nextCheckIn, 1));
     setBookingStep("search");
     setCreatedReservation(null);
   }
@@ -336,6 +383,37 @@ export function BookingSection() {
     setCheckOut(value);
     setBookingStep("search");
     setCreatedReservation(null);
+  }
+
+  function openDatePicker(field: BookingDateField) {
+    const selectedDate = field === "checkIn" ? checkIn : checkOut;
+    setCalendarMonth(getMonthStart(selectedDate));
+    setActiveDatePicker((current) => (current === field ? null : field));
+  }
+
+  function getMinimumSelectableDate(field: BookingDateField) {
+    return field === "checkIn" ? todayDate : addDaysToDateInputValue(checkIn, 1);
+  }
+
+  function canShowPreviousCalendarMonth(field: BookingDateField) {
+    const previousMonth = addMonths(calendarMonth, -1);
+    const minimumMonth = getMonthStart(getMinimumSelectableDate(field));
+    return previousMonth >= minimumMonth;
+  }
+
+  function selectCalendarDate(field: BookingDateField, date: Date) {
+    const selectedDate = toDateInputValue(date);
+    if (isBeforeDateValue(date, getMinimumSelectableDate(field))) {
+      setErrorMessage(field === "checkIn" ? bookingSection.messages.pastDateNotAllowed : bookingSection.messages.invalidStayPeriod);
+      return;
+    }
+
+    if (field === "checkIn") {
+      updateCheckIn(selectedDate);
+    } else {
+      updateCheckOut(selectedDate);
+    }
+    setActiveDatePicker(null);
   }
 
   async function handleAvailabilitySearch() {
@@ -605,6 +683,79 @@ export function BookingSection() {
     });
   }
 
+  function renderDateField(field: BookingDateField) {
+    const selectedDate = field === "checkIn" ? checkIn : checkOut;
+    const label = field === "checkIn" ? bookingSection.dateFields.checkIn : bookingSection.dateFields.checkOut;
+    const minimumDate = getMinimumSelectableDate(field);
+    const isOpen = activeDatePicker === field;
+
+    return (
+      <div className="booking-date-field">
+        <span>{label}</span>
+        <button
+          className="booking-date-trigger"
+          type="button"
+          onClick={() => openDatePicker(field)}
+          aria-label={`${bookingSection.dateFields.selectPrefix}${label}`}
+          aria-expanded={isOpen}
+        >
+          {formatDisplayDate(selectedDate)}
+        </button>
+        {isOpen && (
+          <div className="booking-calendar" role="dialog" aria-label={label}>
+            <div className="booking-calendar-header">
+              <button
+                type="button"
+                onClick={() => setCalendarMonth((current) => addMonths(current, -1))}
+                disabled={!canShowPreviousCalendarMonth(field)}
+                aria-label="上一個月"
+              >
+                <ChevronLeft size={17} aria-hidden="true" />
+              </button>
+              <strong>{formatMonthTitle(calendarMonth)}</strong>
+              <button
+                type="button"
+                onClick={() => setCalendarMonth((current) => addMonths(current, 1))}
+                aria-label="下一個月"
+              >
+                <ChevronRight size={17} aria-hidden="true" />
+              </button>
+            </div>
+            <div className="booking-calendar-weekdays" aria-hidden="true">
+              {["日", "一", "二", "三", "四", "五", "六"].map((weekday) => (
+                <span key={weekday}>{weekday}</span>
+              ))}
+            </div>
+            <div className="booking-calendar-grid">
+              {getCalendarDates(calendarMonth).map((date, index) => {
+                if (!date) {
+                  return <span className="booking-calendar-empty" key={`empty-${index}`} />;
+                }
+
+                const dateValue = toDateInputValue(date);
+                const isSelected = dateValue === selectedDate;
+                const isDisabled = isBeforeDateValue(date, minimumDate);
+                return (
+                  <button
+                    className={isSelected ? "is-selected" : ""}
+                    type="button"
+                    key={dateValue}
+                    disabled={isDisabled}
+                    onClick={() => selectCalendarDate(field, date)}
+                    aria-label={formatDisplayDate(dateValue)}
+                    aria-pressed={isSelected}
+                  >
+                    {date.getDate()}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   const bookingSummaryContent = (
     <>
       <h3>{bookingSection.summary.title}</h3>
@@ -723,14 +874,8 @@ export function BookingSection() {
 
           {bookingStep === "search" && (
             <div className="booking-date-row">
-              <label>
-                <span>{bookingSection.dateFields.checkIn}</span>
-                <input type="date" value={checkIn} min={todayDate} onChange={(event) => updateCheckIn(event.target.value)} />
-              </label>
-              <label>
-                <span>{bookingSection.dateFields.checkOut}</span>
-                <input type="date" value={checkOut} min={addDaysToDateInputValue(checkIn, 1)} onChange={(event) => updateCheckOut(event.target.value)} />
-              </label>
+              {renderDateField("checkIn")}
+              {renderDateField("checkOut")}
               <button className="primary-button booking-search-button" type="button" onClick={handleAvailabilitySearch} disabled={isAvailabilityLoading || !isSearchPeriodValid}>
                 <Search size={18} aria-hidden="true" />
                 {isAvailabilityLoading ? bookingSection.dateFields.searching : bookingSection.dateFields.search}

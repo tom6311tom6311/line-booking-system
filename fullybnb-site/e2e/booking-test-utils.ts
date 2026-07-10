@@ -56,6 +56,40 @@ export function formatCurrency(value: number) {
   return `NT$${value.toLocaleString("zh-TW")}`;
 }
 
+export function formatDisplayDate(dateValue: string) {
+  const date = new Date(`${dateValue}T00:00:00`);
+  return date.toLocaleDateString("zh-TW", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function getMonthDifference(fromDateValue: string, toDateValue: string) {
+  const fromDate = new Date(`${fromDateValue}T00:00:00`);
+  const toDate = new Date(`${toDateValue}T00:00:00`);
+  return (toDate.getFullYear() - fromDate.getFullYear()) * 12 + toDate.getMonth() - fromDate.getMonth();
+}
+
+export async function selectBookingDate(page: Page, fieldLabel: "入住日期" | "退房日期", dateValue: string) {
+  const trigger = page.getByRole("button", { name: `選擇${fieldLabel}` });
+  const currentDateText = await trigger.textContent();
+  const currentDateValue = currentDateText
+    ? toDateInputValue(new Date(currentDateText.replace("年", "-").replace("月", "-").replace("日", "")))
+    : dateValue;
+  const monthDifference = getMonthDifference(currentDateValue, dateValue);
+
+  await trigger.click();
+
+  const calendar = page.locator(".booking-calendar");
+  const navigationButtonName = monthDifference >= 0 ? "下一個月" : "上一個月";
+  for (let index = 0; index < Math.abs(monthDifference); index += 1) {
+    await calendar.getByRole("button", { name: navigationButtonName }).click();
+  }
+
+  await calendar.getByRole("button", { name: formatDisplayDate(dateValue) }).click();
+}
+
 export async function newApiContext() {
   const api = await request.newContext({ baseURL: apiBaseURL });
   const healthResponse = await api.get("/health");
@@ -140,8 +174,8 @@ export async function prepareBookingReview(
   const quote = (await quoteResponse.json()) as QuoteResponse;
 
   await page.goto(`/#booking?roomIds=${encodeURIComponent(room.roomId)}`);
-  await page.getByLabel("入住日期").fill(room.checkIn);
-  await page.getByLabel("退房日期").fill(room.checkOut);
+  await selectBookingDate(page, "入住日期", room.checkIn);
+  await selectBookingDate(page, "退房日期", room.checkOut);
   await page.getByRole("button", { name: "查詢空房" }).click();
 
   if (options.requireExtraBed) {
