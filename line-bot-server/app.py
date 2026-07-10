@@ -66,9 +66,9 @@ def api_public_holiday_rate_dates():
     start_date = parse_date_value(request.args.get('start'), 'start')
     end_date = parse_date_value(request.args.get('end'), 'end')
     if end_date < start_date:
-      raise ValueError("end must be after start")
+      raise ValueError("結束日期需晚於開始日期。")
     if (end_date - start_date).days > 730:
-      raise ValueError("date range is too large")
+      raise ValueError("查詢日期範圍不可超過兩年。")
   except ValueError as e:
     return api_error(str(e))
 
@@ -131,7 +131,7 @@ def api_public_quote():
 
   original_total_price = booking_dao.get_total_price_estimation(room_ids, check_in_date, last_date, sum(extra_bed_counts.values()))
   if original_total_price is None:
-    return api_error("Unable to calculate price", 500)
+    return api_error("系統暫時無法計算金額，請稍後再試。", 500)
   total_price, website_discount_amount = apply_public_booking_discount(original_total_price, room_ids, nights)
   return jsonify({
     'checkIn': check_in_date.isoformat(),
@@ -152,7 +152,7 @@ def api_public_create_reservation():
   try:
     customer_name = (payload.get('customerName') or '').strip()
     if not customer_name:
-      raise ValueError("customerName is required")
+      raise ValueError("請輸入訂房人姓名。")
     phone_number = normalize_api_phone_number(payload.get('phoneNumber'))
     check_in_date, _, last_date, nights = parse_date_range(payload)
     room_ids = validate_public_room_ids(payload.get('roomIds'), booking_dao)
@@ -163,7 +163,7 @@ def api_public_create_reservation():
 
   original_total_price = booking_dao.get_total_price_estimation(room_ids, check_in_date, last_date, sum(extra_bed_counts.values()))
   if original_total_price is None:
-    return api_error("Unable to calculate price", 500)
+    return api_error("系統暫時無法計算金額，請稍後再試。", 500)
   total_price, website_discount_amount = apply_public_booking_discount(original_total_price, room_ids, nights)
 
   booking_info = BookingInfo(
@@ -184,7 +184,7 @@ def api_public_create_reservation():
   )
   booking_id = booking_dao.upsert_booking(booking_info)
   if not booking_id:
-    return api_error("Unable to create reservation", 500)
+    return api_error("系統暫時無法建立訂單，請稍後再試。", 500)
 
   created_booking_info = booking_dao.get_booking_info(booking_id)
   room_type_summary = booking_dao.get_booking_room_type_summary(booking_id)
@@ -214,7 +214,7 @@ def api_public_get_reservation(booking_id):
   except ValueError as e:
     return api_error(str(e))
   if not booking_info:
-    return api_error("Reservation not found", 404)
+    return api_error("查無符合資料的訂單，請確認訂單編號與電話。", 404)
   return jsonify({ 'reservation': serialize_booking(booking_info, booking_dao=booking_dao) })
 
 @app.route(f'{PUBLIC_API_PREFIX}/reservations/<int:booking_id>', methods=['PATCH'])
@@ -223,18 +223,18 @@ def api_public_update_reservation(booking_id):
   try:
     booking_info = get_owned_booking_or_error(booking_id, payload.get('phoneNumber'), booking_dao)
     if not booking_info:
-      return api_error("Reservation not found", 404)
+      return api_error("查無符合資料的訂單，請確認訂單編號與電話。", 404)
 
     if 'customerName' in payload:
       customer_name = (payload.get('customerName') or '').strip()
       if not customer_name:
-        raise ValueError("customerName must not be empty")
+        raise ValueError("訂房人姓名不可空白。")
       booking_info.customer_name = customer_name
 
     has_date_change = 'checkIn' in payload or 'checkOut' in payload
     if has_date_change:
       if 'checkIn' not in payload or 'checkOut' not in payload:
-        raise ValueError("checkIn and checkOut must be updated together")
+        raise ValueError("入住與退房日期需一起更新。")
       check_in_date, _, last_date, _ = parse_date_range(payload)
       booking_info.check_in_date = check_in_date
       booking_info.last_date = last_date
@@ -263,7 +263,7 @@ def api_public_update_reservation(booking_id):
 
   original_total_price = booking_dao.get_total_price_estimation(room_ids, booking_info.check_in_date, booking_info.last_date, booking_info.extra_bed_count)
   if original_total_price is None:
-    return api_error("Unable to calculate price", 500)
+    return api_error("系統暫時無法計算金額，請稍後再試。", 500)
   nights = (booking_info.last_date - booking_info.check_in_date).days + 1
   total_price, website_discount_amount = apply_public_booking_discount(original_total_price, room_ids, nights)
   booking_info.total_price = total_price
@@ -273,7 +273,7 @@ def api_public_update_reservation(booking_id):
 
   updated_booking_id = booking_dao.upsert_booking(booking_info)
   if not updated_booking_id:
-    return api_error("Unable to update reservation", 500)
+    return api_error("系統暫時無法更新訂單，請稍後再試。", 500)
 
   updated_booking_info = booking_dao.get_booking_info(updated_booking_id)
   return jsonify({ 'reservation': serialize_booking(updated_booking_info, website_discount_amount, booking_dao) })
@@ -286,13 +286,13 @@ def api_public_cancel_reservation(booking_id):
   except ValueError as e:
     return api_error(str(e))
   if not booking_info:
-    return api_error("Reservation not found", 404)
+    return api_error("查無符合資料的訂單，請確認訂單編號與電話。", 404)
   if not can_cancel_public_booking(booking_info):
-    return api_error("Bookings within 7 days of check-in cannot be canceled online", 403)
+    return api_error("入住日前 7 天內不可線上取消訂房。", 403)
 
   success = booking_dao.cancel_booking(booking_id)
   if not success:
-    return api_error("Unable to cancel reservation", 500)
+    return api_error("系統暫時無法取消訂單，請稍後再試。", 500)
   canceled_booking_info = booking_dao.get_booking_info(booking_id)
   return jsonify({ 'reservation': serialize_booking(canceled_booking_info, booking_dao=booking_dao) })
 

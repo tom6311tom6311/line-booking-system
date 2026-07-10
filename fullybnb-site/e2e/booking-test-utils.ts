@@ -149,6 +149,30 @@ export async function findBookableRoom(
   throw new Error(`No available room found between ${minOffset} and ${maxOffset} days from today.`);
 }
 
+export async function findBookablePeriodForAllIntroducedRooms(api: APIRequestContext) {
+  for (let offset = 30; offset < 180; offset += 1) {
+    const checkIn = dateFromOffset(offset);
+    const checkOut = dateFromOffset(offset + 1);
+    const availabilityResponse = await api.get("/api/public/availability", {
+      params: { checkIn, checkOut },
+    });
+    if (!availabilityResponse.ok()) {
+      continue;
+    }
+
+    const availability = (await availabilityResponse.json()) as AvailabilityResponse;
+    const availableIntroducedRoomIds = availability.rooms
+      .filter((room) => siteIntroducedRoomIds.has(room.roomId) && room.available)
+      .map((room) => room.roomId);
+
+    if (availableIntroducedRoomIds.length === siteIntroducedRoomIds.size) {
+      return { checkIn, checkOut, roomIds: availableIntroducedRoomIds };
+    }
+  }
+
+  throw new Error("No period found with all site-introduced rooms available.");
+}
+
 export async function createReservationFixture(
   api: APIRequestContext,
   options: {

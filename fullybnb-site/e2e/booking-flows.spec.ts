@@ -3,6 +3,7 @@ import {
   type AvailabilityResponse,
   createReservationFixture,
   dateFromOffset,
+  findBookablePeriodForAllIntroducedRooms,
   findBookableRoom,
   formatCurrency,
   formatDisplayDate,
@@ -98,6 +99,53 @@ test("public booking API rejects past check-in dates with a localized error", as
   expect(payload.error).toContain("入住日期不能早於今天");
   expect(payload.error).not.toMatch(/[A-Za-z]{3,}/);
 
+  const invalidDateResponse = await api.get("/api/public/availability", {
+    params: {
+      checkIn: "bad-date",
+      checkOut: dateFromOffset(2),
+    },
+  });
+  expect(invalidDateResponse.ok()).toBe(false);
+  const invalidDatePayload = await invalidDateResponse.json();
+  expect(invalidDatePayload.error).toContain("日期格式不正確");
+  expect(invalidDatePayload.error).not.toMatch(/[A-Za-z]{3,}/);
+
+  const invalidPhoneResponse = await api.get("/api/public/reservations/999999", {
+    params: {
+      phoneNumber: "123",
+    },
+  });
+  expect(invalidPhoneResponse.ok()).toBe(false);
+  const invalidPhonePayload = await invalidPhoneResponse.json();
+  expect(invalidPhonePayload.error).toContain("電話格式不正確");
+  expect(invalidPhonePayload.error).not.toMatch(/[A-Za-z]{3,}/);
+
+  const invalidRoomResponse = await api.post("/api/public/quote", {
+    data: {
+      checkIn: dateFromOffset(20),
+      checkOut: dateFromOffset(21),
+      roomIds: ["不存在"],
+      extraBedCounts: { "不存在": 0 },
+    },
+  });
+  expect(invalidRoomResponse.ok()).toBe(false);
+  const invalidRoomPayload = await invalidRoomResponse.json();
+  expect(invalidRoomPayload.error).toContain("選擇的房間不存在");
+  expect(invalidRoomPayload.error).not.toMatch(/[A-Za-z]{3,}/);
+
+  const invalidExtraBedResponse = await api.post("/api/public/quote", {
+    data: {
+      checkIn: dateFromOffset(20),
+      checkOut: dateFromOffset(21),
+      roomIds: ["稻"],
+      extraBedCounts: { "稻": "many" },
+    },
+  });
+  expect(invalidExtraBedResponse.ok()).toBe(false);
+  const invalidExtraBedPayload = await invalidExtraBedResponse.json();
+  expect(invalidExtraBedPayload.error).toContain("加床數需為整數");
+  expect(invalidExtraBedPayload.error).not.toMatch(/[A-Za-z]{3,}/);
+
   await api.dispose();
 });
 
@@ -118,6 +166,34 @@ test("phone fields accept only normalized 09 mobile numbers", async ({ page }) =
   await expect(phoneInput).toHaveValue("0912345678");
   await page.getByRole("button", { name: "下一步" }).click();
   await expect(page.locator(".booking-summary")).toContainText("0912345678");
+
+  await api.dispose();
+});
+
+test("availability search shows a note when no rooms are available", async ({ page }) => {
+  const api = await newApiContext();
+  const period = await findBookablePeriodForAllIntroducedRooms(api);
+  const createResponse = await api.post("/api/public/reservations", {
+    data: {
+      customerName: "滿房提示測試",
+      phoneNumber: "0955555555",
+      checkIn: period.checkIn,
+      checkOut: period.checkOut,
+      roomIds: period.roomIds,
+      extraBedCounts: Object.fromEntries(period.roomIds.map((roomId) => [roomId, 0])),
+      notes: "占用所有官網房型",
+    },
+  });
+  expect(createResponse.ok()).toBe(true);
+
+  await page.goto("/#booking");
+  await selectBookingDate(page, "入住日期", period.checkIn);
+  await selectBookingDate(page, "退房日期", period.checkOut);
+  await page.getByRole("button", { name: "查詢空房" }).click();
+
+  await expect(page.locator(".booking-result")).toContainText("此日期目前沒有可線上預訂的空房");
+  await expect(page.getByRole("button", { name: "選擇房間" })).toBeDisabled();
+  await expect(page.locator(".booking-room-card")).toHaveCount(0);
 
   await api.dispose();
 });

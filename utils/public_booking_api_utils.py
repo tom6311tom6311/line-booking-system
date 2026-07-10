@@ -42,7 +42,7 @@ def parse_api_json():
 
 def parse_date_value(value, field_name):
   if not value or not is_valid_date(value):
-    raise ValueError(f"{field_name} must be YYYY-MM-DD")
+    raise ValueError("日期格式不正確，請使用像 2026-07-10 這樣的格式。")
   return datetime.strptime(value, '%Y-%m-%d').date()
 
 
@@ -53,13 +53,13 @@ def parse_date_range(source):
     raise ValueError("入住日期不能早於今天")
   nights = (check_out - check_in).days
   if nights < 1 or nights > 15:
-    raise ValueError("checkOut must be 1 to 15 nights after checkIn")
+    raise ValueError("退房日期需晚於入住日期，且住宿晚數不可超過 15 晚。")
   return check_in, check_out, check_out - timedelta(days=1), nights
 
 
 def normalize_api_phone_number(phone_number):
   if not phone_number or not is_valid_phone_number(phone_number):
-    raise ValueError("phoneNumber is invalid")
+    raise ValueError("電話格式不正確，請輸入 09 開頭的 10 碼手機號碼。")
   return format_phone_number(phone_number)
 
 
@@ -128,21 +128,21 @@ def get_rooms_by_id(booking_dao):
 
 def validate_public_room_ids(room_ids, booking_dao):
   if not isinstance(room_ids, list) or not room_ids:
-    raise ValueError("roomIds must be a non-empty list")
+    raise ValueError("請至少選擇一間房間。")
   if not all(isinstance(room_id, str) for room_id in room_ids):
-    raise ValueError("roomIds must contain strings")
+    raise ValueError("房間資料格式不正確，請重新選擇房間。")
   duplicate_room_ids = { room_id for room_id in room_ids if room_ids.count(room_id) > 1 }
   if duplicate_room_ids:
-    raise ValueError("roomIds must not contain duplicates")
+    raise ValueError("房間不可重複選擇，請重新確認。")
 
   rooms = get_rooms_by_id(booking_dao)
   invalid_room_ids = [room_id for room_id in room_ids if room_id not in rooms]
   if invalid_room_ids:
-    raise ValueError(f"Unsupported roomIds: {', '.join(invalid_room_ids)}")
+    raise ValueError("選擇的房間不存在，請重新查詢。")
 
   closed_room_ids = [room_id for room_id in room_ids if rooms[room_id]['room_status'] != 'available']
   if closed_room_ids:
-    raise ValueError(f"Closed roomIds: {', '.join(closed_room_ids)}")
+    raise ValueError("選擇的房間目前未開放訂房，請重新選擇。")
   return room_ids
 
 
@@ -150,26 +150,26 @@ def parse_extra_bed_counts(value, room_ids, booking_dao):
   if value is None:
     return {room_id: 0 for room_id in room_ids}
   if not isinstance(value, dict):
-    raise ValueError("extraBedCounts must be an object keyed by roomId")
+    raise ValueError("加床資料格式不正確，請重新選擇加床數。")
 
   rooms_by_id = get_rooms_by_id(booking_dao)
   extra_bed_counts = {}
   invalid_room_ids = [room_id for room_id in value if room_id not in room_ids]
   if invalid_room_ids:
-    raise ValueError(f"extraBedCounts contains unselected roomIds: {', '.join(invalid_room_ids)}")
+    raise ValueError("加床資料包含未選擇的房間，請重新確認。")
 
   for room_id in room_ids:
     raw_count = value.get(room_id, 0)
     if isinstance(raw_count, bool):
-      raise ValueError(f"extraBedCounts.{room_id} must be an integer")
+      raise ValueError("加床數需為整數。")
     try:
       extra_bed_count = int(raw_count)
     except (TypeError, ValueError):
-      raise ValueError(f"extraBedCounts.{room_id} must be an integer")
+      raise ValueError("加床數需為整數。")
 
     max_extra_bed_count = rooms_by_id[room_id]['extra_bed_number']
     if extra_bed_count < 0 or extra_bed_count > max_extra_bed_count:
-      raise ValueError(f"extraBedCounts.{room_id} must be between 0 and {max_extra_bed_count}")
+      raise ValueError(f"加床數需介於 0 到 {max_extra_bed_count} 床之間。")
     extra_bed_counts[room_id] = extra_bed_count
   return extra_bed_counts
 
@@ -178,7 +178,7 @@ def ensure_rooms_available(room_ids, check_in_date, last_date, booking_dao, excl
   available_room_ids = booking_dao.get_available_room_ids(check_in_date, last_date, exclude_booking_id) or []
   unavailable_room_ids = [room_id for room_id in room_ids if room_id not in available_room_ids]
   if unavailable_room_ids:
-    raise ValueError(f"Unavailable roomIds: {', '.join(unavailable_room_ids)}")
+    raise ValueError("選擇的房間已被預訂，請重新查詢空房。")
 
 
 def get_owned_booking_or_error(booking_id, phone_number, booking_dao):

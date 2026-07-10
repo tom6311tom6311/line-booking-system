@@ -364,6 +364,18 @@ export function BookingSection() {
     try {
       const availability = await getAvailability(checkIn, checkOut);
       const availableRooms = availability.rooms.filter((room) => room.available && isSiteIntroducedRoom(room));
+      if (!availableRooms.length) {
+        setRooms([]);
+        setNightlyRoomPrices(availability.nightlyRoomPrices || {});
+        setSelectedRoomIds([]);
+        setExtraBedCounts({});
+        setQuote(null);
+        setRoomSlideIndex(0);
+        setBookingStep("search");
+        setStatusMessage(bookingSection.messages.noRoomsAvailable);
+        return;
+      }
+
       const [preselectedRoomId] = getPreselectedRoomIdsFromHash();
       const isPreselectedRoomAvailable = availableRooms.some((room) => room.roomId === preselectedRoomId);
       const preselectedRoomIds = isPreselectedRoomAvailable && preselectedRoomId ? [preselectedRoomId] : [];
