@@ -371,7 +371,7 @@ export function BookingSection() {
         setExtraBedCounts({});
         setQuote(null);
         setRoomSlideIndex(0);
-        setBookingStep("search");
+        setBookingStep("rooms");
         setStatusMessage(bookingSection.messages.noRoomsAvailable);
         return;
       }
@@ -448,6 +448,10 @@ export function BookingSection() {
   }
 
   function canNavigateToStep(step: BookingStep) {
+    if (step === bookingStep) {
+      return true;
+    }
+
     if (createdReservation) {
       return step === "search" || step === "complete";
     }
@@ -926,6 +930,14 @@ export function BookingSection() {
                 </button>
               </div>
             </>
+          )}
+
+          {bookingStep === "rooms" && rooms.length === 0 && (
+            <div className="booking-step-actions">
+              <button className="secondary-action" type="button" onClick={() => setBookingStep("search")}>
+                {bookingSection.actions.backToSearch}
+              </button>
+            </div>
           )}
 
           {bookingStep === "contact" && (

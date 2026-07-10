@@ -192,8 +192,11 @@ test("availability search shows a note when no rooms are available", async ({ pa
   await page.getByRole("button", { name: "查詢空房" }).click();
 
   await expect(page.locator(".booking-result")).toContainText("此日期目前沒有可線上預訂的空房");
-  await expect(page.getByRole("button", { name: "選擇房間" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "選擇房間" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "重新查詢" })).toBeVisible();
   await expect(page.locator(".booking-room-card")).toHaveCount(0);
+  await page.getByRole("button", { name: "重新查詢" }).click();
+  await expect(page.getByRole("button", { name: "查詢空房" })).toBeVisible();
 
   await api.dispose();
 });
