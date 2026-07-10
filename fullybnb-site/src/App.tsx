@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight, Facebook, MapPin, Phone } from "lucide-react
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { PointerEvent, TouchEvent } from "react";
 import { BookingSection } from "./components/BookingSection";
+import { PhoneLinkedText } from "./components/PhoneLinkedText";
 import { RoomCard } from "./components/RoomCard";
 import { SectionHeading } from "./components/SectionHeading";
 import { nearbyPlaces, rooms, siteContent } from "./data/siteContent";
@@ -523,7 +524,9 @@ export function App() {
           <SectionHeading eyebrow={sections.rooms.eyebrow} title={sections.rooms.title} />
           <div className="booking-note">
             <strong>{bookingNote.lead}</strong>
-            <span>{bookingNote.description}</span>
+            <span>
+              <PhoneLinkedText text={bookingNote.description} phoneHref={site.phoneHref} />
+            </span>
           </div>
           <div className="room-grid">
             {rooms.map((room) => (

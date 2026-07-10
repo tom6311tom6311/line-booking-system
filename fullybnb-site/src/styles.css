@@ -1104,6 +1104,13 @@ button:focus-visible {
   margin: 0;
 }
 
+.phone-inline-link {
+  color: var(--clay-dark);
+  font-weight: 850;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .room-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

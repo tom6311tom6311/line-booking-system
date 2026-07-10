@@ -22,6 +22,7 @@ import {
   toDateInputValue,
 } from "./BookingDatePicker";
 import { ImageCarousel } from "./ImageCarousel";
+import { PhoneLinkedText } from "./PhoneLinkedText";
 import { SectionHeading } from "./SectionHeading";
 
 type BookingMode = "new" | "manage";
@@ -178,7 +179,7 @@ function getFallbackNightlyPrices(room: PublicRoom, checkIn: string, checkOut: s
 }
 
 export function BookingSection() {
-  const { bookingSection, reservationPolicies } = siteContent;
+  const { bookingSection, reservationPolicies, site } = siteContent;
   const defaultDates = useMemo(getDefaultDates, []);
   const todayDate = useMemo(() => toDateInputValue(new Date()), []);
   const [mode, setMode] = useState<BookingMode>("new");
@@ -627,6 +628,10 @@ export function BookingSection() {
     });
   }
 
+  function renderMessageText(message: string) {
+    return <PhoneLinkedText text={message} phoneHref={site.phoneHref} />;
+  }
+
   function renderReservationDiscountRows(reservation: PublicReservation) {
     const websiteDiscountAmount = reservation.websiteDiscountAmount ?? 0;
     if (websiteDiscountAmount <= 0) {
@@ -1051,8 +1056,8 @@ export function BookingSection() {
 
           {(errorMessage || (statusMessage && bookingStep !== "complete")) && (
             <div className={`booking-result ${errorMessage ? "is-error" : ""}`}>
-              {errorMessage && <p>{errorMessage}</p>}
-              {statusMessage && <p>{statusMessage}</p>}
+              {errorMessage && <p>{renderMessageText(errorMessage)}</p>}
+              {statusMessage && <p>{renderMessageText(statusMessage)}</p>}
             </div>
           )}
         </div>
@@ -1060,7 +1065,7 @@ export function BookingSection() {
         <div className="booking-panel booking-manage-panel">
           <div className="booking-form">
             <h3>{bookingSection.manage.formTitle}</h3>
-            <p className="booking-manage-note">{bookingSection.manage.supportNote}</p>
+            <p className="booking-manage-note">{renderMessageText(bookingSection.manage.supportNote)}</p>
             <label>
               <span>{bookingSection.manage.bookingId}</span>
               <input value={lookupBookingId} onChange={(event) => setLookupBookingId(event.target.value)} placeholder={bookingSection.manage.bookingIdPlaceholder} />
@@ -1138,7 +1143,7 @@ export function BookingSection() {
                   )}
                 </dl>
                 {lookupReservation.status !== "canceled" && getDaysUntilDate(lookupReservation.checkIn) < minimumCancelDaysBeforeCheckIn && (
-                  <p>{bookingSection.manage.cancelUnavailable}</p>
+                  <p>{renderMessageText(bookingSection.manage.cancelUnavailable)}</p>
                 )}
                 {lookupReservation.status !== "canceled" && (
                   <button
@@ -1154,8 +1159,8 @@ export function BookingSection() {
           )}
           {(errorMessage || statusMessage) && (
             <div className={`booking-result ${errorMessage ? "is-error" : ""}`}>
-              {errorMessage && <p>{errorMessage}</p>}
-              {statusMessage && <p>{statusMessage}</p>}
+              {errorMessage && <p>{renderMessageText(errorMessage)}</p>}
+              {statusMessage && <p>{renderMessageText(statusMessage)}</p>}
             </div>
           )}
         </div>
