@@ -1111,6 +1111,11 @@ button:focus-visible {
   text-underline-offset: 3px;
 }
 
+.booking-policies .phone-inline-link {
+  color: inherit;
+  font-weight: inherit;
+}
+
 .room-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

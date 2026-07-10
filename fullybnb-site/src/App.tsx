@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight, Facebook, MapPin, Phone } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { PointerEvent, TouchEvent } from "react";
+import type { MouseEvent, PointerEvent, TouchEvent } from "react";
 import { BookingSection } from "./components/BookingSection";
 import { PhoneLinkedText } from "./components/PhoneLinkedText";
 import { RoomCard } from "./components/RoomCard";
@@ -384,6 +384,16 @@ export function App() {
     target.closest("button")?.blur();
   }
 
+  function handleHeroPrimaryCtaClick(event: MouseEvent<HTMLAnchorElement>) {
+    if (!hero.primaryCtaHref.startsWith("#booking")) {
+      return;
+    }
+
+    event.preventDefault();
+    window.history.pushState(null, "", hero.primaryCtaHref);
+    window.dispatchEvent(new Event("hashchange"));
+  }
+
   return (
     <>
       <main id="top" onPointerUpCapture={clearClickedButtonFocus}>
@@ -440,7 +450,7 @@ export function App() {
             <h1>{hero.title}</h1>
             <p>{hero.description}</p>
             <div className="hero-actions">
-              <a className="primary-button" href={hero.primaryCtaHref}>
+              <a className="primary-button" href={hero.primaryCtaHref} onClick={handleHeroPrimaryCtaClick}>
                 {hero.primaryCtaLabel}
               </a>
               <a className="secondary-button" href={hero.secondaryCtaHref}>

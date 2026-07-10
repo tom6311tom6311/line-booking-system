@@ -1,4 +1,5 @@
 import { CalendarCheck } from "lucide-react";
+import type { MouseEvent } from "react";
 import { ImageCarousel } from "./ImageCarousel";
 import { siteContent, type Room } from "../data/siteContent";
 
@@ -10,10 +11,10 @@ export function RoomCard({ room }: Props) {
   const { roomCard } = siteContent;
   const bookingHref = `#booking${room.roomIds?.length ? `?roomIds=${encodeURIComponent(room.roomIds.join(","))}` : ""}`;
 
-  function handleBookingClick() {
-    window.setTimeout(() => {
-      window.dispatchEvent(new Event("hashchange"));
-    }, 0);
+  function handleBookingClick(event: MouseEvent<HTMLAnchorElement>) {
+    event.preventDefault();
+    window.history.pushState(null, "", bookingHref);
+    window.dispatchEvent(new Event("hashchange"));
   }
 
   return (

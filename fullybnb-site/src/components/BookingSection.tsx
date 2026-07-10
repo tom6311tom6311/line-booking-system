@@ -30,6 +30,7 @@ type BookingStep = "search" | "rooms" | "contact" | "review" | "complete";
 type BookingDateField = "checkIn" | "checkOut";
 const minimumCancelDaysBeforeCheckIn = 7;
 const websiteBookingSource = "官網";
+const bookingScrollOffsetPx = 18;
 
 function formatCurrency(value: number) {
   return `NT$${value.toLocaleString("zh-TW")}`;
@@ -69,6 +70,28 @@ function getPreselectedRoomIdsFromHash() {
 
 function normalizeBookingUrl() {
   window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#booking`);
+}
+
+function scrollBookingIntoView() {
+  const bookingElement = document.getElementById("booking");
+
+  if (!bookingElement) {
+    return;
+  }
+
+  const headerHeight = document.querySelector(".site-header")?.getBoundingClientRect().height || 0;
+  const scrollTop = bookingElement.getBoundingClientRect().top + window.scrollY - headerHeight - bookingScrollOffsetPx;
+
+  window.scrollTo({
+    top: Math.max(scrollTop, 0),
+    behavior: "smooth",
+  });
+}
+
+function scheduleBookingScroll() {
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(scrollBookingIntoView);
+  });
 }
 
 function getRoomName(room: PublicRoom) {
@@ -245,8 +268,11 @@ export function BookingSection() {
 
   useEffect(() => {
     function handleHashChange() {
+      if (window.location.hash.startsWith("#booking")) {
+        scheduleBookingScroll();
+      }
+
       if (window.location.hash.startsWith("#booking?roomIds=")) {
-        document.getElementById("booking")?.scrollIntoView();
         setMode("new");
         setBookingStep("search");
         setRooms([]);
@@ -720,7 +746,7 @@ export function BookingSection() {
       <h3>{reservationPolicies.title}</h3>
       <ul>
         {reservationPolicies.items.map((item) => (
-          <li key={item}>{item}</li>
+          <li key={item}>{renderMessageText(item)}</li>
         ))}
       </ul>
     </div>
