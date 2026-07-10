@@ -64,6 +64,14 @@ export type ReservationPayload = {
 
 const publicApiBasePath = "/api/public";
 
+function getLocalizedApiErrorMessage(errorMessage: unknown) {
+  if (typeof errorMessage === "string" && /[\u3400-\u9fff]/.test(errorMessage)) {
+    return errorMessage;
+  }
+
+  return "系統暫時無法處理，請稍後再試。";
+}
+
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${publicApiBasePath}${path}`, {
     headers: {
@@ -75,7 +83,7 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(payload.error || "系統暫時無法處理，請稍後再試。");
+    throw new Error(getLocalizedApiErrorMessage(payload.error));
   }
 
   return payload as T;

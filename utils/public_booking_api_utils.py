@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import datetime, timedelta
 
 from flask import jsonify, request
@@ -9,6 +10,7 @@ from utils.input_utils import format_phone_number, format_phone_number_for_displ
 
 ROOM_TYPE_LABELS = { room_type: room_type_name for room_type, room_type_name, _ in ROOM_TYPES }
 MIN_CANCEL_DAYS_BEFORE_CHECK_IN = 7
+GENERIC_PUBLIC_API_ERROR_MESSAGE = "系統暫時無法處理，請稍後再試。"
 
 
 def get_public_booking_discount_per_room_night():
@@ -28,6 +30,8 @@ def apply_public_booking_discount(total_price, room_ids, nights):
 
 
 def api_error(message, status_code=400):
+  if not isinstance(message, str) or not re.search(r'[\u3400-\u9fff]', message):
+    message = GENERIC_PUBLIC_API_ERROR_MESSAGE
   return jsonify({ 'error': message }), status_code
 
 
@@ -45,6 +49,8 @@ def parse_date_value(value, field_name):
 def parse_date_range(source):
   check_in = parse_date_value(source.get('checkIn'), 'checkIn')
   check_out = parse_date_value(source.get('checkOut'), 'checkOut')
+  if check_in < get_local_today():
+    raise ValueError("入住日期不能早於今天")
   nights = (check_out - check_in).days
   if nights < 1 or nights > 15:
     raise ValueError("checkOut must be 1 to 15 nights after checkIn")

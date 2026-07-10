@@ -69,6 +69,25 @@ function isValidStayPeriod(checkIn: string, checkOut: string) {
   return Boolean(checkInDate && checkOutDate && checkOutDate > checkInDate);
 }
 
+function isPastDate(dateValue: string) {
+  const date = parseDateInputValue(dateValue);
+  if (!date) {
+    return false;
+  }
+
+  const today = new Date();
+  const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  return date < todayDate;
+}
+
+function getUserFacingErrorMessage(error: unknown, fallbackMessage: string) {
+  if (error instanceof Error && /[\u3400-\u9fff]/.test(error.message)) {
+    return error.message;
+  }
+
+  return fallbackMessage;
+}
+
 function getPreselectedRoomIdsFromHash() {
   const [, hashQuery = ""] = window.location.hash.split("?");
   const roomIds = new URLSearchParams(hashQuery).get("roomIds");
@@ -215,6 +234,7 @@ export function BookingSection() {
   const activeStepIndex = bookingSteps.indexOf(bookingStep);
   const activeRoomIndex = rooms.length ? Math.min(Math.max(roomSlideIndex, 0), rooms.length - 1) : 0;
   const isStayPeriodValid = isValidStayPeriod(checkIn, checkOut);
+  const isSearchPeriodValid = isStayPeriodValid && !isPastDate(checkIn) && !isPastDate(checkOut);
   const isRoomSelectionValid = Boolean(selectedRoomIds.length && quote && !isQuoteLoading);
   const isContactInfoValid = Boolean(customerName.trim() && isValidMobilePhone(phoneNumber));
 
@@ -264,7 +284,7 @@ export function BookingSection() {
       .catch((error: Error) => {
         if (isCurrent) {
           setQuote(null);
-          setErrorMessage(error.message);
+          setErrorMessage(getUserFacingErrorMessage(error, bookingSection.messages.quoteError));
         }
       })
       .finally(() => {
@@ -297,6 +317,16 @@ export function BookingSection() {
     setErrorMessage("");
     setStatusMessage("");
     setCreatedReservation(null);
+    if (isPastDate(checkIn) || isPastDate(checkOut)) {
+      setRooms([]);
+      setNightlyRoomPrices({});
+      setSelectedRoomIds([]);
+      setExtraBedCounts({});
+      setQuote(null);
+      setBookingStep("search");
+      setErrorMessage(bookingSection.messages.pastDateNotAllowed);
+      return;
+    }
     if (!isValidStayPeriod(checkIn, checkOut)) {
       setRooms([]);
       setNightlyRoomPrices({});
@@ -324,7 +354,7 @@ export function BookingSection() {
     } catch (error) {
       setRooms([]);
       setNightlyRoomPrices({});
-      setErrorMessage(error instanceof Error ? error.message : bookingSection.messages.availabilityError);
+      setErrorMessage(getUserFacingErrorMessage(error, bookingSection.messages.availabilityError));
     } finally {
       setIsAvailabilityLoading(false);
     }
@@ -482,7 +512,7 @@ export function BookingSection() {
       setStatusMessage(`${bookingSection.messages.createSuccessPrefix} ${result.reservation.bookingId} ${bookingSection.messages.createSuccessSuffix}`);
       setBookingStep("complete");
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : bookingSection.messages.createError);
+      setErrorMessage(getUserFacingErrorMessage(error, bookingSection.messages.createError));
     } finally {
       setIsSubmitting(false);
     }
@@ -512,7 +542,7 @@ export function BookingSection() {
       const result = await getReservation(bookingId, lookupPhoneNumber);
       setLookupReservation(result.reservation);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : bookingSection.messages.lookupError);
+      setErrorMessage(getUserFacingErrorMessage(error, bookingSection.messages.lookupError));
     } finally {
       setIsLookupLoading(false);
     }
@@ -531,7 +561,7 @@ export function BookingSection() {
       setLookupReservation(result.reservation);
       setStatusMessage(`${bookingSection.messages.cancelSuccessPrefix} ${result.reservation.bookingId} ${bookingSection.messages.cancelSuccessSuffix}`);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : bookingSection.messages.cancelError);
+      setErrorMessage(getUserFacingErrorMessage(error, bookingSection.messages.cancelError));
     } finally {
       setIsLookupLoading(false);
     }
@@ -676,7 +706,7 @@ export function BookingSection() {
                 <span>{bookingSection.dateFields.checkOut}</span>
                 <input type="date" value={checkOut} min={addDaysToDateInputValue(checkIn, 1)} onChange={(event) => updateCheckOut(event.target.value)} />
               </label>
-              <button className="primary-button booking-search-button" type="button" onClick={handleAvailabilitySearch} disabled={isAvailabilityLoading || !isStayPeriodValid}>
+              <button className="primary-button booking-search-button" type="button" onClick={handleAvailabilitySearch} disabled={isAvailabilityLoading || !isSearchPeriodValid}>
                 <Search size={18} aria-hidden="true" />
                 {isAvailabilityLoading ? bookingSection.dateFields.searching : bookingSection.dateFields.search}
               </button>
