@@ -1,0 +1,16 @@
+.git
+.gitignore
+.env*
+backup
+certs
+secrets
+scheduler/data
+**/__pycache__
+**/*.pyc
+fullybnb-site/node_modules
+fullybnb-site/dist
+fullybnb-site/test-results
+fullybnb-site/playwright-report
+fullybnb-site/.vite
+fullybnb-site/.DS_Store
+**/.DS_Store

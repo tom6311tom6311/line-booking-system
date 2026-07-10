@@ -1,0 +1,12 @@
+.git
+.env*
+node_modules
+dist
+test-results
+playwright-report
+.vite
+.DS_Store
+Dockerfile
+README.md
+e2e
+playwright.config.ts
