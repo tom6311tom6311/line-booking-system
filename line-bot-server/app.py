@@ -1,5 +1,6 @@
 import os
 import json
+import logging
 from datetime import timedelta
 from flask import Flask, request, abort, jsonify
 from linebot import LineBotApi, WebhookHandler
@@ -52,6 +53,10 @@ booking_dao = BookingDAO.get_instance(db_config, app.logger)
 
 PUBLIC_API_PREFIX = '/api/public'
 LINE_EVENT_LOGGING_ENABLED = os.getenv('LINE_EVENT_LOGGING', '').lower() in ('1', 'true', 'yes', 'on')
+
+if LINE_EVENT_LOGGING_ENABLED:
+  app.logger.setLevel(logging.INFO)
+  app.logger.info("LINE event logging enabled")
 
 def log_line_source(event, event_type):
   if not LINE_EVENT_LOGGING_ENABLED:
