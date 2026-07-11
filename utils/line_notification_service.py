@@ -35,7 +35,7 @@ class LineNotificationService:
 
     try:
       nights = (booking_info.last_date - booking_info.check_in_date).days + 1
-      room_brief = get_booking_room_brief(room_type_summary)
+      room_brief = get_booking_room_brief(room_type_summary, booking_info.extra_bed_count)
       sms_body = ASK_FOR_PREPAYMENT.format(
         property_name=property_config.PROPERTY_NAME,
         check_in_date=booking_info.check_in_date.strftime('%m/%d'),
@@ -45,6 +45,10 @@ class LineNotificationService:
         prepayment=int(booking_info.prepayment),
         bank_account_info=property_config.BANK_ACCOUNT_INFO
       ).strip()
+      sms_body = (
+        f"訂單編號：{booking_info.booking_id}\n"
+        f"{sms_body}\n\n"
+      )
       sms_url = f"sms:{format_phone_number_for_display(booking_info.phone_number)}?body={quote(sms_body)}"
       messages = [
         TextSendMessage(text=f"官網訂單已建立，請發送訂金簡訊：\n\n{format_booking_info(booking_info)}"),

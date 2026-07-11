@@ -201,10 +201,12 @@ def generate_report(year_month: str, bookings: list[BookingInfo]):
 
   return message
 
-def get_booking_room_brief(room_type_summary: dict[str, int]={}):
+def get_booking_room_brief(room_type_summary: dict[str, int]={}, extra_bed_count=0):
   """Returns a brief of rooms grouped by types"""
   brief_parts = []
   for room_type, room_type_name, unit in ROOM_TYPES:
     if room_type in room_type_summary:
       brief_parts.append(f"{room_type_name}{room_type_summary[room_type]}{unit}")
+  if int(extra_bed_count or 0) > 0:
+    brief_parts.append(f"共加{int(extra_bed_count)}床")
   return '、'.join(brief_parts)
