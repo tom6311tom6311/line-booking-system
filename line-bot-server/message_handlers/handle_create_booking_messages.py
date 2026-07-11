@@ -31,10 +31,11 @@ def append_customer_phone_quick_reply(quick_reply_buttons, customer_name, bookin
 
   customer = booking_dao.get_customer_by_name(customer_name)
   if customer and customer.phone_number:
+    phone_number = format_phone_number_for_display(customer.phone_number)
     quick_reply_buttons.append(
       QuickReplyButton(action=MessageAction(
-        label=customer.phone_number,
-        text=customer.phone_number)
+        label=phone_number,
+        text=phone_number)
       )
     )
 
