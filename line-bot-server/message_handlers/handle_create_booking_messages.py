@@ -419,6 +419,7 @@ def handle_create_booking_messages(user_message: str, session: dict, booking_dao
         room_brief = get_booking_room_brief(room_type_summary, booking_info.extra_bed_count)
         sms_body = ASK_FOR_PREPAYMENT.format(
           property_name=property_config.PROPERTY_NAME,
+          booking_id_text='',
           check_in_date=booking_info.check_in_date.strftime('%m/%d'),
           nights=session['data']['num_nights'],
           room_brief=room_brief,
