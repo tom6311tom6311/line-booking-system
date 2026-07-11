@@ -1014,6 +1014,12 @@ button:focus-visible {
   color: var(--muted);
 }
 
+.booking-summary .booking-cancel-unavailable-note {
+  display: block;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
 .booking-summary dl {
   display: grid;
   gap: 8px;

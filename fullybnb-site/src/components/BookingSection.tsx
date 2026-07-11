@@ -1203,7 +1203,7 @@ export function BookingSection() {
                   )}
                 </dl>
                 {lookupReservation.status !== "canceled" && getDaysUntilDate(lookupReservation.checkIn) < minimumCancelDaysBeforeCheckIn && (
-                  <p>{renderMessageText(bookingSection.manage.cancelUnavailable)}</p>
+                  <p className="booking-cancel-unavailable-note">{renderMessageText(bookingSection.manage.cancelUnavailable)}</p>
                 )}
                 {lookupReservation.status !== "canceled" && (
                   <button
