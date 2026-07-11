@@ -51,6 +51,21 @@ handler = WebhookHandler(line_config.LINE_CHANNEL_SECRET)
 booking_dao = BookingDAO.get_instance(db_config, app.logger)
 
 PUBLIC_API_PREFIX = '/api/public'
+LINE_EVENT_LOGGING_ENABLED = os.getenv('LINE_EVENT_LOGGING', '').lower() in ('1', 'true', 'yes', 'on')
+
+def log_line_source(event, event_type):
+  if not LINE_EVENT_LOGGING_ENABLED:
+    return
+
+  source = event.source
+  app.logger.info(
+    "LINE %s source_type=%s user_id=%s group_id=%s room_id=%s",
+    event_type,
+    getattr(source, 'type', None),
+    getattr(source, 'user_id', None),
+    getattr(source, 'group_id', None),
+    getattr(source, 'room_id', None),
+  )
 
 @app.route('/health')
 def health():
@@ -355,6 +370,8 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
+  log_line_source(event, 'message')
+
   # Do not reply free form group messages
   if (event.source.type == 'group'):
     app.logger.debug(f"Ignoring message from group #{event.source.group_id}")
@@ -405,6 +422,8 @@ def handle_message(event):
 
 @handler.add(PostbackEvent)
 def handle_message_postback(event):
+  log_line_source(event, 'postback')
+
   user_id = event.source.user_id
   command_obj = None
   try:
