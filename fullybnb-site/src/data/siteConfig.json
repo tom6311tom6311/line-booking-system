@@ -222,7 +222,7 @@
       "title": "訂房完成",
       "bookingId": "訂單編號",
       "prepaymentStatus": "訂金狀態",
-      "prepaymentNotice": "我們將在1日內透過簡訊發送訂金匯款資訊給您，務請留意並依指示於3日內完成匯款，感謝您！"
+      "prepaymentNotice": "請保存訂單編號 {bookingId}，之後可用電話查詢訂單。我們將在1日內透過簡訊發送訂金匯款資訊給您，務請留意並依指示於3日內完成匯款，感謝您！"
     },
     "messages": {
       "tabsAriaLabel": "訂房功能",
@@ -244,9 +244,7 @@
       "lookupError": "查詢訂單失敗。",
       "cancelSuccessPrefix": "訂單",
       "cancelSuccessSuffix": "已取消。",
-      "cancelError": "取消訂單失敗。",
-      "saveBookingId": "請保存訂單編號",
-      "saveBookingIdSuffix": "之後可用電話查詢訂單。"
+      "cancelError": "取消訂單失敗。"
     },
     "breakdown": {
       "roomSubtotal": "房費",

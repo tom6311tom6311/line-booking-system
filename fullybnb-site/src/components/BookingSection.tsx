@@ -1058,10 +1058,6 @@ export function BookingSection() {
           {bookingStep === "complete" && createdReservation && (
             <aside className="booking-summary booking-complete">
               <h3>{bookingSection.complete.title}</h3>
-              <p>
-                <Check size={17} aria-hidden="true" />
-                {bookingSection.messages.saveBookingId} {createdReservation.bookingId}，{bookingSection.messages.saveBookingIdSuffix}
-              </p>
               <dl>
                 <div>
                   <dt>{bookingSection.complete.bookingId}</dt>
@@ -1111,7 +1107,10 @@ export function BookingSection() {
                   </div>
                 )}
               </dl>
-              <p className="booking-confirmation-note">{bookingSection.complete.prepaymentNotice}</p>
+              <p className="booking-confirmation-note">
+                <Check size={17} aria-hidden="true" />
+                {bookingSection.complete.prepaymentNotice.replace("{bookingId}", String(createdReservation.bookingId))}
+              </p>
             </aside>
           )}
 

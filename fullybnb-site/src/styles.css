@@ -852,6 +852,17 @@ button:focus-visible {
   letter-spacing: 0;
 }
 
+.booking-complete h3 {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--sage-900);
+  color: white;
+  font-size: 20px;
+}
+
 .booking-room-card p:not(.eyebrow) {
   margin: 8px 0 0;
   color: var(--muted);
