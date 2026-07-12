@@ -1108,7 +1108,6 @@ export function BookingSection() {
                 )}
               </dl>
               <p className="booking-confirmation-note">
-                <Check size={17} aria-hidden="true" />
                 {bookingSection.complete.prepaymentNotice.replace("{bookingId}", String(createdReservation.bookingId))}
               </p>
             </aside>

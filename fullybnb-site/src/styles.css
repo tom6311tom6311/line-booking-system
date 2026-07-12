@@ -995,6 +995,17 @@ button:focus-visible {
   top: 88px;
 }
 
+.booking-complete {
+  border-color: rgba(95, 125, 100, 0.42);
+  background:
+    linear-gradient(180deg, rgba(232, 237, 223, 0.88), rgba(255, 253, 247, 0.98));
+  box-shadow: 0 16px 34px rgba(51, 72, 57, 0.14);
+}
+
+.booking-complete dl div {
+  border-top-color: rgba(95, 125, 100, 0.24);
+}
+
 .booking-manage-note {
   margin: 0;
   padding: 12px;
